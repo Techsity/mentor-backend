@@ -1,0 +1,104 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type User {
+  id: ID!
+  email: String!
+  name: String!
+  phone: String
+  avatar: String
+  country: String
+  is_online: Boolean!
+  is_active: Boolean!
+  is_verified: Boolean!
+  is_admin: Boolean!
+  created_at: DateTime!
+  updated_at: DateTime!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type LoginResponse {
+  access_token: String!
+  user: User!
+}
+
+type UserDetails {
+  name: String!
+  email: String!
+}
+
+type RegisterResponse {
+  message: String!
+  user: UserDetails!
+  errors: [String]
+}
+
+type BasicMessageResponse {
+  message: String!
+}
+
+type Course {
+  """Example field (placeholder)"""
+  exampleField: Int!
+}
+
+type Mentor {
+  """Example field (placeholder)"""
+  exampleField: Int!
+}
+
+type Query {
+  me: User
+  course(id: Int!): Course!
+}
+
+type Mutation {
+  registerUser(createRegisterInput: CreateRegisterInput!): RegisterResponse!
+  loginUser(createLoginInput: CreateLoginInput!): LoginResponse!
+  verifyUser(otp: String!): BasicMessageResponse!
+  forgetPassword(email: String!): BasicMessageResponse!
+  resetPassword(resetData: ResetPasswordInput!): BasicMessageResponse!
+  createCourse(createCourseInput: CreateCourseInput!): Course!
+  updateCourse(updateCourseInput: UpdateCourseInput!): Course!
+  removeCourse(id: Int!): Course!
+  createMentorProfile(createMentorInput: CreateMentorInput!): Mentor!
+}
+
+input CreateRegisterInput {
+  email: String!
+  name: String!
+  country: String!
+  phone: String!
+  password: String!
+}
+
+input CreateLoginInput {
+  email: String!
+  password: String!
+}
+
+input ResetPasswordInput {
+  otp: String!
+  email: String!
+}
+
+input CreateCourseInput {
+  """Example field (placeholder)"""
+  exampleField: Int!
+}
+
+input UpdateCourseInput {
+  """Example field (placeholder)"""
+  exampleField: Int
+  id: Int!
+}
+
+input CreateMentorInput {
+  """Example field (placeholder)"""
+  exampleField: Int!
+}
