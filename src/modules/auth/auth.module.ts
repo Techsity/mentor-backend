@@ -1,5 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { UserModule } from '../user/user.module';
+import { GqlAuthGuard } from './guards/gql-auth.guard';
 import { AuthService } from './services/auth.service';
 import { AuthResolver } from './resolvers/auth.resolver';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -18,6 +19,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     }),
     TypeOrmModule.forFeature([User, Auth]),
   ],
-  providers: [AuthResolver, AuthService, JwtStrategy],
+  providers: [AuthResolver, AuthService, JwtStrategy, GqlAuthGuard],
+  exports: [GqlAuthGuard],
 })
 export class AuthModule {}

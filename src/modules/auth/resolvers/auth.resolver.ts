@@ -2,7 +2,7 @@ import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
 import { CurrentUser } from '../../../lib/custom-decorators';
 import { CreateLoginInput } from '../dto/login-auth.input';
 import { ResetPasswordInput } from '../dto/reset-password.input';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { GqlAuthGuard } from '../guards/gql-auth.guard';
 import { AuthService } from '../services/auth.service';
 import { Auth } from '../entities/auth.entity';
 import { CreateRegisterInput } from '../dto/register-auth.input';
@@ -77,6 +77,24 @@ export class AuthResolver {
   }
 
   @Mutation(() => BasicMessageResponse)
+  requestOtp(@Args('userId') userId: string): Promise<any> {
+    try {
+      return this.authService.createUpdateOtp(userId);
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error: {
+            message: 'Error Occurred!',
+            cause: error.message || error,
+          },
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Mutation(() => BasicMessageResponse)
   forgetPassword(@Args('email') email: string): Promise<BasicMessageResponse> {
     try {
       return this.authService.forgetPassword(email);
@@ -114,9 +132,9 @@ export class AuthResolver {
     }
   }
 
-  // @UseGuards(JwtAuthGuard)
-  @Query((returns) => User, { nullable: true })
-  me(@CurrentUser() user: any): any {
+  @UseGuards(GqlAuthGuard)
+  @Query((returns) => User)
+  me(@CurrentUser() user: User): User {
     return user;
   }
 }

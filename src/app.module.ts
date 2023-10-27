@@ -5,6 +5,8 @@ import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { join } from 'path';
 import { AppController } from './app.controller';
+import { CourseCategory } from './modules/course/entities/category.entity';
+import { Mentor } from './modules/mentor/entities/mentor.entity';
 import { User } from './modules/user/entities/user.entity';
 import { Auth } from './modules/auth/entities/auth.entity';
 import { UserModule } from './modules/user/user.module';
@@ -14,6 +16,7 @@ import { MentorModule } from './modules/mentor/mentor.module';
 import { GraphQLError, GraphQLFormattedError } from 'graphql';
 import { WorkshopModule } from './modules/workshop/workshop.module';
 import { SubscriptionModule } from './modules/subscription/subscription.module';
+import { Course } from './modules/course/entities/course.entity';
 
 @Module({
   imports: [
@@ -24,8 +27,10 @@ import { SubscriptionModule } from './modules/subscription/subscription.module';
       username: 'mentor_user',
       password: 'mentor_password',
       database: 'mentor_db',
-      entities: [User, Auth],
+      entities: [Auth, User, Mentor, Course, CourseCategory],
       synchronize: true,
+      logging: true,
+      logger: 'advanced-console',
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
