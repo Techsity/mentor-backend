@@ -21,8 +21,8 @@ export class Auth {
   token: string;
 
   @OneToOne(() => User)
-  @JoinColumn({ name: 'userId' })
-  userId: string;
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   @Field()

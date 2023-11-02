@@ -20,15 +20,9 @@ export class AuthService {
   async login(loginPayload: any) {
     const { email, password } = loginPayload;
     const user = await this.validateUser(email, password);
-    if (!user) {
-      throw new Error('Invalid credentials');
-    }
-    if (!user.isActive) {
-      throw new Error('Your account is not active.');
-    }
-    if (!user.isVerified) {
-      throw new Error('Kindly verify your email.');
-    }
+    if (!user) throw new Error('Invalid credentials');
+    if (!user.is_active) throw new Error('Your account is not active.');
+    if (!user.is_verified) throw new Error('Kindly verify your email.');
     const payload = { email: email, sub: user.id };
     return {
       access_token: this.jwtService.sign(payload, {
@@ -83,7 +77,7 @@ export class AuthService {
   async verifyUser(otp: string) {
     const user: any = await this.otpVerification(otp);
 
-    const { id, is_verified, is_active } = user.userId;
+    const { id, is_verified, is_active } = user;
 
     if (is_verified && is_active)
       throw new CustomResponseMessage(CustomStatusCodes.OTP_ALREADY_VERIFIED);
@@ -110,9 +104,8 @@ export class AuthService {
   }
   async resetPassword(resetData: any) {
     const { otp, password } = resetData;
-    const user: any = await this.otpVerification(otp);
-
-    const { id } = user.userId;
+    const userOtp: any = await this.otpVerification(otp);
+    const { id } = userOtp;
 
     const hashedPassword = await hashPassword(password);
     await this.userRepository.update(
@@ -121,37 +114,34 @@ export class AuthService {
         password: hashedPassword,
       },
     );
-    await this.authRepository.delete({ id: user.id }); // Delete OTP from DB
+    await this.authRepository.delete({ id: userOtp.id }); // Delete OTP from DB
     return { message: 'User Password Reset Successful.' };
   }
-
-  async createUpdateOtp(userId: any) {
+  async createUpdateOtp(userId: string) {
     const otp = generateOTP(userId);
     const OTP_EXPIRY_DURATION_MS = 10 * 60 * 1000; // 10 minutes in milliseconds
-    let data;
     try {
-      // Check if there's an existing otp
-      const checkUserOtp = await this.authRepository.findOne({
-        where: { userId },
+      // Find existing OTP for the user
+      const existingOtp = await this.authRepository.findOne({
+        where: { user: { id: userId } },
       });
-      if (checkUserOtp) {
-        // update existing otp
-        data = await this.authRepository.update(
-          { userId },
-          {
-            token: otp.toString(),
-            expiry: new Date(Date.now() + OTP_EXPIRY_DURATION_MS),
-          },
-        );
+      if (existingOtp) {
+        // Update the existing OTP
+        existingOtp.token = otp.toString();
+        existingOtp.expiry = new Date(Date.now() + OTP_EXPIRY_DURATION_MS);
+        await this.authRepository.save(existingOtp);
       } else {
-        data = await this.authRepository.save({
+        // Create a new OTP entry
+        await this.authRepository.save({
           token: otp.toString(),
-          userId,
+          user: { id: userId },
           expiry: new Date(Date.now() + OTP_EXPIRY_DURATION_MS),
         });
       }
-      return data;
+
+      return { message: 'Otp sent' };
     } catch (error) {
+      console.log('error', error);
       throw new HttpException(
         {
           status: HttpStatus.BAD_REQUEST,
@@ -165,12 +155,14 @@ export class AuthService {
     }
   }
   async otpVerification(otp: string) {
-    const user: any = await this.authRepository.findOne({
+    const response: any = await this.authRepository.findOne({
       where: { token: otp },
-      relations: ['userId'],
+      relations: ['user'],
     });
     // Verify OTP
-    if (!user) throw new CustomResponseMessage(CustomStatusCodes.INVALID_OTP);
+    if (!response)
+      throw new CustomResponseMessage(CustomStatusCodes.INVALID_OTP);
+    const { user } = response;
     return user;
   }
 }

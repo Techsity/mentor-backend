@@ -1,14 +1,27 @@
-import { ObjectType, Field, Int, ID } from '@nestjs/graphql';
+import {
+  ObjectType,
+  Field,
+  Int,
+  ID,
+  registerEnumType,
+  Float,
+} from '@nestjs/graphql';
 import {
   Column,
   CreateDateColumn,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   ManyToOne,
+  Entity,
+  Check,
+  JoinColumn,
 } from 'typeorm';
+import { CourseContent } from '../dto/course.dto';
+import { CourseLevel, CourseType } from '../enums/course.enums';
 import { CourseCategory } from './category.entity';
 
 @ObjectType()
+@Entity('courses')
 export class Course {
   @Field((type) => ID)
   @PrimaryGeneratedColumn('uuid')
@@ -18,31 +31,33 @@ export class Course {
   @Column({ type: 'varchar' })
   title: string;
 
-  @Field()
-  @Column({ type: 'varchar' })
-  level: string;
+  @Field(() => CourseLevel)
+  @Column({ type: 'enum', enum: CourseLevel })
+  course_level: string;
 
   @Field()
   @Column({ type: 'text' })
   description: string;
 
-  @Field()
-  @Column({ type: 'text' })
-  courseType: string;
+  @Field(() => CourseType)
+  @Column({ type: 'enum', enum: CourseType })
+  course_type: string;
 
   @ManyToOne(() => CourseCategory, (category) => category.courses)
+  @JoinColumn({ name: 'category_id' })
   category: CourseCategory;
 
   @Field(() => [String])
-  @Column('text', { array: true, default: () => 'ARRAY[]::text[]' })
+  @Column('text', { array: true })
   what_to_learn: string[];
 
   @Field(() => [String])
-  @Column('text', { array: true, default: () => 'ARRAY[]::text[]' })
+  @Column('text', { array: true })
   requirements: string[];
 
-  @Field()
-  @Column({ type: 'double' })
+  @Field(() => Float)
+  @Column({ type: 'double precision' })
+  @Check('price >= 0')
   price: number;
 
   @Field()
@@ -50,7 +65,7 @@ export class Course {
   course_images: string;
 
   @Field(() => [CourseContent])
-  @Column('jsonb', { default: () => '[]' })
+  @Column('jsonb')
   course_contents: CourseContent[];
 
   @Field()
@@ -62,27 +77,12 @@ export class Course {
   updated_at: Date;
 }
 
-@ObjectType()
-class CourseContent {
-  @Field()
-  @Column({ type: 'varchar', length: 255 })
-  title: string;
-  @Field(() => [CourseSection])
-  @Column('jsonb', { default: () => '[]' })
-  course_sections: CourseSection[];
-}
+registerEnumType(CourseLevel, {
+  name: 'CourseLevel',
+  description: 'Different roles of mentors',
+});
 
-@ObjectType()
-class CourseSection {
-  @Field()
-  @Column({ type: 'varchar', length: 255 })
-  section_name: string;
-
-  @Field()
-  @Column({ type: 'varchar' })
-  video_url: string;
-
-  @Field()
-  @Column({ type: 'text' })
-  notes: string;
-}
+registerEnumType(CourseType, {
+  name: 'CourseType',
+  description: 'Different roles of mentors',
+});

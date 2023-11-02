@@ -5,10 +5,12 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   OneToMany,
+  Entity,
 } from 'typeorm';
 import { Course } from './course.entity';
 
 @ObjectType()
+@Entity('course-categories')
 export class CourseCategory {
   @Field((type) => ID)
   @PrimaryGeneratedColumn('uuid')

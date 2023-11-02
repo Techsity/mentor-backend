@@ -1,5 +1,5 @@
 import { Resolver } from '@nestjs/graphql';
-import { SubscriptionService } from './subscription.service';
+import { SubscriptionService } from '../services/subscription.service';
 
 @Resolver()
 export class SubscriptionResolver {

@@ -8,6 +8,6 @@ export class ResetPasswordInput {
   otp: string;
 
   @Field()
-  @IsEmail()
-  email: string;
+  @IsNotEmpty()
+  password: string;
 }

@@ -2,6 +2,52 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type CourseSection {
+  section_name: String!
+  video_url: String!
+  notes: String!
+}
+
+type CourseContent {
+  title: String!
+  course_sections: [CourseSection!]!
+}
+
+type Course {
+  id: ID!
+  title: String!
+  course_level: CourseLevel!
+  description: String!
+  course_type: CourseType!
+  what_to_learn: [String!]!
+  requirements: [String!]!
+  price: Float!
+  course_images: String!
+  course_contents: [CourseContent!]!
+  created_at: DateTime!
+  updated_at: DateTime!
+}
+
+"""Different roles of mentors"""
+enum CourseLevel {
+  ALL_LEVELS
+  BEGINNER
+  INTERMMEDIATE
+  SENIOR
+}
+
+"""Different roles of mentors"""
+enum CourseType {
+  TECHNICAL
+  EDUCATIONAL
+  VOCATIONAL
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
 type User {
   id: ID!
   email: String!
@@ -17,10 +63,87 @@ type User {
   updated_at: DateTime!
 }
 
-"""
-A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
-"""
-scalar DateTime
+type SkillDTO {
+  skill_name: String!
+  years_of_exp: Int!
+}
+
+type WorkExperienceDTO {
+  company: String!
+  job_role: String!
+  description: String!
+  from_year: DateTime!
+  to_year: DateTime!
+}
+
+type EducationDTO {
+  school: String!
+  credential_type: String!
+  course_of_study: String!
+  from_year: DateTime!
+  to_year: DateTime!
+}
+
+type UserAvailabilityDTO {
+  day: String!
+  from_time: String!
+  to_time: String!
+}
+
+type PastProjectsDTO {
+  company: String!
+  job_role: String!
+  description: String!
+}
+
+type CertificationDTO {
+  organization: String!
+  title: String!
+  year: DateTime!
+}
+
+type MentorDTO {
+  id: String!
+  user: User!
+  about: String!
+  role: MentorRole!
+  skills: [SkillDTO!]!
+  work_experience: [WorkExperienceDTO!]
+  projects: [PastProjectsDTO!]
+  exp_level: MentorExpLevel!
+  education_bg: [EducationDTO!]
+  certifications: [CertificationDTO!]
+  hourly_rate: Float!
+  availability: [UserAvailabilityDTO!]
+  language: [String!]
+  mentor_verified: Boolean!
+  created_at: DateTime!
+  updated_at: DateTime!
+}
+
+"""Different roles of mentors"""
+enum MentorRole {
+  FRONTEND_DEVELOPER
+  BACKEND_DEVELOPER
+  MOBILE_DEVELOPER
+  PRODUCT_DESIGNER
+  GRAPHIC_DESIGNER
+  PRODUCT_MANAGER
+  PRODUCT_OWNER
+  SOLUTIONS_ARCHITECT
+  CYBER_SECURITY
+  SCRUM_MASTER
+  QA_ENGINEER
+  TECHNICAL_WRITER
+}
+
+"""Experience level of mentors"""
+enum MentorExpLevel {
+  LEVEL_1
+  LEVEL_2
+  LEVEL_3
+  LEVEL_4
+}
 
 type LoginResponse {
   access_token: String!
@@ -42,31 +165,93 @@ type BasicMessageResponse {
   message: String!
 }
 
-type Course {
-  """Example field (placeholder)"""
-  exampleField: Int!
-}
-
-type Mentor {
-  """Example field (placeholder)"""
-  exampleField: Int!
-}
-
 type Query {
-  me: User
+  getMentorProfile: MentorDTO!
+  viewMentor(id: String!): MentorDTO!
+  viewAllMentors: [MentorDTO!]!
+  me: User!
   course(id: Int!): Course!
 }
 
 type Mutation {
+  createMentorProfile(createMentorInput: CreateMentorInput!): MentorDTO!
+  updateMentorProfile(updateMentorInput: UpdateMentorInput!): MentorDTO!
   registerUser(createRegisterInput: CreateRegisterInput!): RegisterResponse!
   loginUser(createLoginInput: CreateLoginInput!): LoginResponse!
   verifyUser(otp: String!): BasicMessageResponse!
+  requestOtp(userId: String!): BasicMessageResponse!
   forgetPassword(email: String!): BasicMessageResponse!
   resetPassword(resetData: ResetPasswordInput!): BasicMessageResponse!
   createCourse(createCourseInput: CreateCourseInput!): Course!
   updateCourse(updateCourseInput: UpdateCourseInput!): Course!
   removeCourse(id: Int!): Course!
-  createMentorProfile(createMentorInput: CreateMentorInput!): Mentor!
+}
+
+input CreateMentorInput {
+  about: String!
+  role: MentorRole!
+  skills: [SkillInput!]!
+  work_experience: [WorkExperienceInput!]
+  projects: [PastProjectsInput!]
+  exp_level: MentorExpLevel!
+  education_bg: [EducationInput!]
+  certifications: [CertificationInput!]
+  hourly_rate: Float!
+  availability: [UserAvailabilityInput!]
+  language: [String!]
+}
+
+input SkillInput {
+  skill_name: String!
+  years_of_exp: Int!
+}
+
+input WorkExperienceInput {
+  company: String!
+  job_role: String!
+  description: String!
+  from_year: DateTime!
+  to_year: DateTime!
+}
+
+input PastProjectsInput {
+  company: String!
+  job_role: String!
+  description: String!
+}
+
+input EducationInput {
+  school: String!
+  credential_type: String!
+  course_of_study: String!
+  from_year: DateTime!
+  to_year: DateTime!
+}
+
+input CertificationInput {
+  organization: String!
+  title: String!
+  year: DateTime!
+}
+
+input UserAvailabilityInput {
+  day: String!
+  from_time: String!
+  to_time: String!
+}
+
+input UpdateMentorInput {
+  about: String
+  role: MentorRole
+  skills: [SkillInput!]
+  work_experience: [WorkExperienceInput!]
+  projects: [PastProjectsInput!]
+  exp_level: MentorExpLevel
+  education_bg: [EducationInput!]
+  certifications: [CertificationInput!]
+  hourly_rate: Float
+  availability: [UserAvailabilityInput!]
+  language: [String!]
 }
 
 input CreateRegisterInput {
@@ -84,7 +269,7 @@ input CreateLoginInput {
 
 input ResetPasswordInput {
   otp: String!
-  email: String!
+  password: String!
 }
 
 input CreateCourseInput {
@@ -96,9 +281,4 @@ input UpdateCourseInput {
   """Example field (placeholder)"""
   exampleField: Int
   id: Int!
-}
-
-input CreateMentorInput {
-  """Example field (placeholder)"""
-  exampleField: Int!
 }

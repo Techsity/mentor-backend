@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SubscriptionResolver } from './subscription.resolver';
-import { SubscriptionService } from './subscription.service';
+import { SubscriptionService } from '../services/subscription.service';
 
 describe('SubscriptionResolver', () => {
   let resolver: SubscriptionResolver;

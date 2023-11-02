@@ -5,7 +5,6 @@ export const CurrentUser = createParamDecorator(
   (data: unknown, context: ExecutionContext) => {
     if (!context) throw new Error('Execution context is undefined');
     const ctx = GqlExecutionContext.create(context);
-    // console.log('Req', ctx.getContext().req);
     return ctx.getContext().req.user;
   },
 );

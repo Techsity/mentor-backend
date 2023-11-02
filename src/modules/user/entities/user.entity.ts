@@ -49,7 +49,6 @@ export class User extends BaseEntity {
   @Column({ type: 'boolean', default: false })
   is_verified: boolean;
 
-  // NOTE: Password is not exposed in the GraphQL schema for security reasons.
   @Column({ type: 'varchar', length: 255, nullable: false })
   password: string;
 
