@@ -13,19 +13,19 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - mentor_network
-#  app:
-#    image: node:18-alpine
-#    ports:
-#      - '10005:3000'
-#    volumes:
-#      - ./:/usr/app
-#    working_dir: /usr/app/
-#    command: >
-#      sh -c "yarn install && yarn run start:dev"
-#    depends_on:
-#      - db
-#    networks:
-#      - mentor_network
+  app:
+   image: node:18-alpine
+   ports:
+     - '10005:10005'
+   volumes:
+     - ./:/usr/app
+   working_dir: /usr/app/
+   command: >
+     sh -c "yarn install && yarn run start:dev"
+   depends_on:
+     - db
+   networks:
+     - mentor_network
 
 volumes:
   postgres_data:
