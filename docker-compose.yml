@@ -16,7 +16,7 @@ services:
   app:
    image: node:18-alpine
    ports:
-     - '10005:3000'
+     - '10005:10005'
    volumes:
      - ./:/usr/app
    working_dir: /usr/app/
