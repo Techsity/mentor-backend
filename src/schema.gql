@@ -2,45 +2,11 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type CourseSection {
-  section_name: String!
-  video_url: String!
-  notes: String!
-}
-
-type CourseContent {
-  title: String!
-  course_sections: [CourseSection!]!
-}
-
-type Course {
+type Subscription {
   id: ID!
-  title: String!
-  course_level: CourseLevel!
-  description: String!
-  course_type: CourseType!
-  what_to_learn: [String!]!
-  requirements: [String!]!
-  price: Float!
-  course_images: String!
-  course_contents: [CourseContent!]!
+  is_completed: Boolean!
   created_at: DateTime!
   updated_at: DateTime!
-}
-
-"""Different roles of mentors"""
-enum CourseLevel {
-  ALL_LEVELS
-  BEGINNER
-  INTERMMEDIATE
-  SENIOR
-}
-
-"""Different roles of mentors"""
-enum CourseType {
-  TECHNICAL
-  EDUCATIONAL
-  VOCATIONAL
 }
 
 """
@@ -61,6 +27,90 @@ type User {
   is_admin: Boolean!
   created_at: DateTime!
   updated_at: DateTime!
+}
+
+type LoginResponse {
+  access_token: String!
+  user: User!
+}
+
+type UserDetails {
+  name: String!
+  email: String!
+}
+
+type RegisterResponse {
+  message: String!
+  user: UserDetails!
+  errors: [String]
+}
+
+type BasicMessageResponse {
+  message: String!
+}
+
+type UserDTO {
+  id: String!
+  email: String!
+  name: String!
+  phone: String
+  avatar: String
+  country: String
+  subsciptions: Subscription!
+  is_online: Boolean!
+  is_active: Boolean!
+  is_verified: Boolean!
+  is_admin: Boolean!
+  created_at: DateTime!
+  updated_at: DateTime!
+}
+
+type CourseCategoryDto {
+  title: String!
+  description: String!
+  created_at: DateTime!
+  updated_at: DateTime!
+}
+
+type CourseSection {
+  section_name: String!
+  video_url: String!
+  notes: String!
+}
+
+type CourseContent {
+  title: String!
+  course_sections: [CourseSection!]!
+}
+
+type CourseDto {
+  title: String!
+  course_level: CourseLevel!
+  description: String!
+  category: CourseCategoryDto!
+  what_to_learn: [String!]!
+  requirements: [String!]!
+  price: Float!
+  course_images: String!
+  course_contents: [CourseContent!]!
+  created_at: DateTime!
+  updated_at: DateTime!
+}
+
+"""Different roles of mentors"""
+enum CourseLevel {
+  ALL_LEVELS
+  BEGINNER
+  INTERMMEDIATE
+  SENIOR
+}
+
+type ReviewDto {
+  type: String!
+  content: String!
+  mentorId: String!
+  courseId: String!
+  rating: Float!
 }
 
 type SkillDTO {
@@ -105,6 +155,8 @@ type CertificationDTO {
 type MentorDTO {
   id: String!
   user: User!
+  courses: CourseDto
+  reviews: ReviewDto
   about: String!
   role: MentorRole!
   skills: [SkillDTO!]!
@@ -145,46 +197,66 @@ enum MentorExpLevel {
   LEVEL_4
 }
 
-type LoginResponse {
-  access_token: String!
-  user: User!
-}
-
-type UserDetails {
-  name: String!
-  email: String!
-}
-
-type RegisterResponse {
-  message: String!
-  user: UserDetails!
-  errors: [String]
-}
-
-type BasicMessageResponse {
-  message: String!
+type SubscriptionDto {
+  id: ID
+  course: CourseDto!
+  is_completed: Boolean!
+  created_at: DateTime!
+  updated_at: DateTime!
 }
 
 type Query {
+  userProfile: UserDTO!
   getMentorProfile: MentorDTO!
   viewMentor(id: String!): MentorDTO!
   viewAllMentors: [MentorDTO!]!
-  me: User!
-  course(id: Int!): Course!
+  allCourses(take: Float!, skip: Float!, courseType: String!): [CourseDto!]!
+  searchCoursesByCategory(take: Float!, skip: Float!, courseId: String!): [CourseDto!]!
+  viewCourse(courseId: String!): CourseDto!
+  getAllCategories: [CourseCategoryDto!]!
+  viewSubscribedCourses: [SubscriptionDto!]!
+  viewSubscribedCourse(courseId: String!): Subscription!
 }
 
 type Mutation {
-  createMentorProfile(createMentorInput: CreateMentorInput!): MentorDTO!
-  updateMentorProfile(updateMentorInput: UpdateMentorInput!): MentorDTO!
   registerUser(createRegisterInput: CreateRegisterInput!): RegisterResponse!
   loginUser(createLoginInput: CreateLoginInput!): LoginResponse!
   verifyUser(otp: String!): BasicMessageResponse!
   requestOtp(userId: String!): BasicMessageResponse!
   forgetPassword(email: String!): BasicMessageResponse!
   resetPassword(resetData: ResetPasswordInput!): BasicMessageResponse!
-  createCourse(createCourseInput: CreateCourseInput!): Course!
-  updateCourse(updateCourseInput: UpdateCourseInput!): Course!
-  removeCourse(id: Int!): Course!
+  updateUserProfile(userUpdateInput: UpdateUserInput!): UserDTO!
+  toggleFollowMentor(mentorId: String!, follow: Boolean!): Boolean!
+  createMentorProfile(createMentorInput: CreateMentorInput!): MentorDTO!
+  updateMentorProfile(updateMentorInput: UpdateMentorInput!): MentorDTO!
+  createCourse(createCourseInput: CreateCourseInput!, files: [Upload!]!): CourseDto!
+  createCategory(createCourseCatInput: CreateCourseCatInput!): CourseCategoryDto!
+  subscribeToCourse(courseId: String!): Subscription!
+}
+
+input CreateRegisterInput {
+  email: String!
+  name: String!
+  country: String!
+  phone: String!
+  password: String!
+}
+
+input CreateLoginInput {
+  email: String!
+  password: String!
+}
+
+input ResetPasswordInput {
+  otp: String!
+  password: String!
+}
+
+input UpdateUserInput {
+  name: String!
+  phone: String
+  avatar: String
+  country: String
 }
 
 input CreateMentorInput {
@@ -254,31 +326,34 @@ input UpdateMentorInput {
   language: [String!]
 }
 
-input CreateRegisterInput {
-  email: String!
-  name: String!
-  country: String!
-  phone: String!
-  password: String!
-}
-
-input CreateLoginInput {
-  email: String!
-  password: String!
-}
-
-input ResetPasswordInput {
-  otp: String!
-  password: String!
-}
-
 input CreateCourseInput {
-  """Example field (placeholder)"""
-  exampleField: Int!
+  title: String!
+  course_level: CourseLevel!
+  description: String!
+  course_type: String
+  category: String!
+  what_to_learn: [String!]!
+  requirements: [String!]!
+  price: Float!
+  course_images: String!
+  course_contents: [CourseContentInput!]!
 }
 
-input UpdateCourseInput {
-  """Example field (placeholder)"""
-  exampleField: Int
-  id: Int!
+input CourseContentInput {
+  title: String!
+  course_sections: [CourseSectionInput!]!
+}
+
+input CourseSectionInput {
+  section_name: String!
+  video_url: String!
+  notes: String!
+}
+
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
+
+input CreateCourseCatInput {
+  title: String!
+  description: String!
 }
