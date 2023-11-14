@@ -1,0 +1,95 @@
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { AuthService } from '../auth/services/auth.service';
+import { Course } from '../course/entities/course.entity';
+import { Mentor } from '../mentor/entities/mentor.entity';
+import { UserDTO } from './dto/user.dto';
+import { User } from './entities/user.entity';
+
+@Injectable()
+export class UserService {
+  constructor(
+    @Inject(REQUEST) private readonly request: any,
+    @InjectRepository(Course)
+    private courseRepository: Repository<Course>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+    @InjectRepository(Mentor)
+    private mentorRepository: Repository<Mentor>,
+    private authService: AuthService,
+  ) {}
+  async userProfile(): Promise<UserDTO> {
+    try {
+      const authUser = this.request.req.user.user;
+      const userProfile: any = await this.userRepository.findOne({
+        where: { id: authUser.id },
+        relations: ['mentor'],
+      });
+      // Update the video_url for each course and section
+      // userProfile.courses.forEach((course) => {
+      //   course.course_contents.forEach((content) => {
+      //     content.course_sections.forEach((section) => {
+      //       if (section.video_url) {
+      //         section.video_url = `${baseURL}/${section.video_url}`;
+      //       }
+      //     });
+      //   });
+      // });
+      return userProfile;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateProfile(userUpdateInput: any): Promise<any> {
+    try {
+      const authUser = this.request.req.user.user;
+      await this.userRepository.update({ id: authUser.id }, userUpdateInput);
+      const user = await this.userProfile();
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async toggleFollowMentor(
+    mentorId: string,
+    follow: boolean,
+  ): Promise<boolean> {
+    const authUser = this.request.req.user.user;
+    const mentor = await this.mentorRepository.findOne({
+      where: { id: mentorId },
+      relations: ['followers'],
+    });
+    if (!mentor) {
+      throw new NotFoundException(`Mentor with ID ${mentorId} not found`);
+    }
+
+    const user = await this.userRepository.findOne({
+      where: { id: authUser.id },
+    });
+    if (!user) {
+      throw new NotFoundException(`User with ID not found`);
+    }
+
+    const isFollowing = mentor.followers.some(
+      (follower) => follower.id === user.id,
+    );
+
+    if (follow && !isFollowing) {
+      mentor.followers.push(user);
+    } else if (!follow && isFollowing) {
+      mentor.followers = mentor.followers.filter(
+        (follower) => follower.id !== user.id,
+      );
+    } else {
+      // No action needed (user is already following/unfollowing)
+      return true;
+    }
+
+    await this.mentorRepository.save(mentor);
+    return true;
+  }
+}

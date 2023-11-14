@@ -5,29 +5,49 @@ import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { join } from 'path';
 import { AppController } from './app.controller';
-import { CourseCategory } from './modules/course/entities/category.entity';
-import { Mentor } from './modules/mentor/entities/mentor.entity';
-import { User } from './modules/user/entities/user.entity';
-import { Auth } from './modules/auth/entities/auth.entity';
-import { UserModule } from './modules/user/user.module';
-import { AuthModule } from './modules/auth/auth.module';
-import { CourseModule } from './modules/course/course.module';
-import { MentorModule } from './modules/mentor/mentor.module';
+import { CourseCategory } from './modules/user-modules/course/entities/category.entity';
+import { CourseType } from './modules/user-modules/course/entities/course-type.entity';
+import { Mentor } from './modules/user-modules/mentor/entities/mentor.entity';
+import { Review } from './modules/user-modules/review/entities/review.entity';
+import { Subscription } from './modules/user-modules/subscription/entities/subscription.entity';
+import { User } from './modules/user-modules/user/entities/user.entity';
+import { Auth } from './modules/user-modules/auth/entities/auth.entity';
+import { UserModule } from './modules/user-modules/user/user.module';
+import { AuthModule } from './modules/user-modules/auth/auth.module';
+import { CourseModule } from './modules/user-modules/course/course.module';
+import { MentorModule } from './modules/user-modules/mentor/mentor.module';
 import { GraphQLError, GraphQLFormattedError } from 'graphql';
-import { WorkshopModule } from './modules/workshop/workshop.module';
-import { SubscriptionModule } from './modules/subscription/subscription.module';
-import { Course } from './modules/course/entities/course.entity';
+import { WorkshopModule } from './modules/user-modules/workshop/workshop.module';
+import { SubscriptionModule } from './modules/user-modules/subscription/subscription.module';
+import { Course } from './modules/user-modules/course/entities/course.entity';
+import { MediaModule } from './modules/user-modules/media/media.module';
+import { PaymentModule } from './modules/user-modules/payment/payment.module';
+import { AdminModule } from './modules/admin-modules/admin/admin.module';
+import { AdminCourseModule } from './modules/admin-modules/course/course.module';
+import { AdminUserModule } from './modules/admin-modules/user/user.module';
+import { RoleModule } from './modules/admin-modules/role/role.module';
+import { SessionModule } from './modules/user-modules/session/session.module';
+import { ReviewModule } from './modules/user-modules/review/review.module';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'db',
+      host: 'localhost',
       port: 5432,
       username: 'mentor_user',
       password: 'mentor_password',
       database: 'mentor_db',
-      entities: [Auth, User, Mentor, Course, CourseCategory],
+      entities: [
+        Auth,
+        User,
+        Mentor,
+        Course,
+        CourseCategory,
+        CourseType,
+        Subscription,
+        Review,
+      ],
       synchronize: true,
       logging: true,
       logger: 'advanced-console',
@@ -48,12 +68,18 @@ import { Course } from './modules/course/entities/course.entity';
         return graphQLFormattedError;
       },
     }),
-    UserModule,
     AuthModule,
+    UserModule,
     CourseModule,
     MentorModule,
     WorkshopModule,
     SubscriptionModule,
+    MediaModule,
+    PaymentModule,
+    AdminModule,
+    RoleModule,
+    SessionModule,
+    ReviewModule,
   ],
   controllers: [AppController],
 })

@@ -72,3 +72,14 @@ export class CustomResponseMessage extends HttpException {
     }
   }
 }
+
+export const imageUploadValidation = {
+  ALLOWED_MIME_IMG_TYPES: ['image/jpeg', 'image/png', 'image/jpg'],
+  EXTENSIONS: ['.jpg', '.png', '.jpeg'],
+  MAX_FILE_SIZE: 5 * 1024 * 1024, // 5 MB
+};
+export const videoUploadValidation = {
+  ALLOWED_MIME_VID_TYPES: ['video/mp4', 'video/mpeg', 'video/webm'],
+  EXTENSIONS: ['.mp4', '.mpeg', '.webm'],
+  MAX_FILE_SIZE: 200 * 1024 * 1024, // 200 MB
+};
