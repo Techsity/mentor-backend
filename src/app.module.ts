@@ -33,7 +33,7 @@ import { ReviewModule } from './modules/user-modules/review/review.module';
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
+      host: 'db',
       port: 5432,
       username: 'mentor_user',
       password: 'mentor_password',

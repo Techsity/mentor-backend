@@ -10,6 +10,6 @@ async function bootstrap() {
     '/graphql',
     graphqlUploadExpress({ maxFileSize: 100000000, maxFiles: 10 }),
   );
-  await app.listen(10005);
+  await app.listen(3000);
 }
 bootstrap();
