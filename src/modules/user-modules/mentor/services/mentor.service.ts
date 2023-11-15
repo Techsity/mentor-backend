@@ -1,4 +1,10 @@
-import { Inject, Injectable, Scope } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  Scope,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -57,11 +63,13 @@ export class MentorService {
   }
   async getMentorProfile(): Promise<any> {
     try {
-      const user = await this.findLoggedInUser();
+      const user = this.request.req.user.user;
       const mentorProfile = await this.mentorRepository.findOne({
         where: { user: { id: user.id } },
         relations: ['user', 'courses', 'reviews'],
       });
+      if (!mentorProfile)
+        throw new NotFoundException(`No Mentor Profile found!`);
       return mentorProfile;
     } catch (error) {
       throw error;

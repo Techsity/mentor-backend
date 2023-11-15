@@ -33,6 +33,6 @@ export class UserResolver {
     @Args('follow') follow: boolean,
   ): Promise<boolean> {
     const result = await this.userService.toggleFollowMentor(mentorId, follow);
-    return !!result; // Convert the result to a boolean
+    return !!result;
   }
 }
