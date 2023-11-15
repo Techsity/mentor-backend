@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  app:
+    image: node:18-alpine
+    ports:
+      - '${NODE_PORT}:3000'
+    volumes:
+      - ./:/usr/app
+    working_dir: /usr/app/
+    command: >
+      sh -c "yarn install && yarn run start:dev"
+    networks:
+      - mentor_network
+
+networks:
+  mentor_network:
