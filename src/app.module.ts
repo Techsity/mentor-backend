@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
@@ -28,29 +29,36 @@ import { AdminUserModule } from './modules/admin-modules/user/user.module';
 import { RoleModule } from './modules/admin-modules/role/role.module';
 import { SessionModule } from './modules/user-modules/session/session.module';
 import { ReviewModule } from './modules/user-modules/review/review.module';
-
+import DBConfig from './config/db.config';
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'db',
-      port: 5432,
-      username: 'mentor_user',
-      password: 'mentor_password',
-      database: 'mentor_db',
-      entities: [
-        Auth,
-        User,
-        Mentor,
-        Course,
-        CourseCategory,
-        CourseType,
-        Subscription,
-        Review,
-      ],
-      synchronize: true,
-      logging: true,
-      logger: 'advanced-console',
+    ConfigModule.forRoot({
+      isGlobal: true, // Makes the config globally available
+      load: [DBConfig],
+    }),
+    TypeOrmModule.forRootAsync({
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('DB_HOST'),
+        port: parseInt(configService.get<string>('DB_PORT'), 10) || 5432,
+        username: configService.get<string>('DB_USER'),
+        password: configService.get<string>('DB_PASSWORD'),
+        database: configService.get<string>('DB_NAME'),
+        entities: [
+          Auth,
+          User,
+          Mentor,
+          Course,
+          CourseCategory,
+          CourseType,
+          Subscription,
+          Review,
+        ],
+        synchronize: true,
+        logging: true,
+        logger: 'advanced-console',
+      }),
+      inject: [ConfigService],
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
