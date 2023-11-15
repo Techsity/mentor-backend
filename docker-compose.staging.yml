@@ -1,6 +1,18 @@
 version: '3.8'
 
 services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mentor_network
   app:
     image: node:18-alpine
     ports:
@@ -10,8 +22,13 @@ services:
     working_dir: /usr/app/
     command: >
       sh -c "yarn install && yarn run start:dev"
+    depends_on:
+      - db
     networks:
       - mentor_network
+
+volumes:
+  postgres_data:
 
 networks:
   mentor_network:
