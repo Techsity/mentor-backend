@@ -1,3 +1,5 @@
+import { AvailailabilityDays } from '../enums/mentor.enum';
+
 export type Skill = {
   skill_name: string;
 
@@ -44,12 +46,11 @@ export type Certification = {
 
 export type UserAvailability = {
   day: string;
-
-  from_time: string;
-
-  to_time: string;
+  isOpen: boolean;
+  timeSlots: TimeSlot[];
 };
 
-export type BasicMessageResponse = {
-  message: string;
+type TimeSlot = {
+  startTime: string; // e.g., '9:00 AM'
+  endTime: string; // e.g., '1:00 PM'
 };

@@ -2,18 +2,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type Subscription {
-  id: ID!
-  is_completed: Boolean!
-  created_at: DateTime!
-  updated_at: DateTime!
-}
-
-"""
-A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
-"""
-scalar DateTime
-
 type User {
   id: ID!
   email: String!
@@ -23,8 +11,21 @@ type User {
   country: String
   is_online: Boolean!
   is_active: Boolean!
+  isPremium: Boolean!
   is_verified: Boolean!
   is_admin: Boolean!
+  created_at: DateTime!
+  updated_at: DateTime!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Subscription {
+  id: ID!
+  is_completed: Boolean!
   created_at: DateTime!
   updated_at: DateTime!
 }
@@ -63,6 +64,25 @@ type UserDTO {
   is_admin: Boolean!
   created_at: DateTime!
   updated_at: DateTime!
+}
+
+type AppointmentDTO {
+  id: ID!
+  date: DateTime!
+  time: String!
+  status: AppointmentStatus!
+  created_at: DateTime!
+  updated_at: DateTime!
+}
+
+"""The status of an appointment"""
+enum AppointmentStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELED
+  NO_SHOW
+  COMPLETED
 }
 
 type CourseCategoryDto {
@@ -134,10 +154,14 @@ type EducationDTO {
   to_year: DateTime!
 }
 
+type TimeSlot {
+  startTime: String!
+  endTime: String!
+}
+
 type UserAvailabilityDTO {
   day: String!
-  from_time: String!
-  to_time: String!
+  timeSlots: [TimeSlot!]!
 }
 
 type PastProjectsDTO {
@@ -214,6 +238,7 @@ type Query {
   searchCoursesByCategory(take: Float!, skip: Float!, courseId: String!): [CourseDto!]!
   viewCourse(courseId: String!): CourseDto!
   getAllCategories: [CourseCategoryDto!]!
+  viewAppointment(appointmentId: String!): AppointmentDTO!
   viewSubscribedCourses: [SubscriptionDto!]!
   viewSubscribedCourse(courseId: String!): Subscription!
 }
@@ -231,6 +256,8 @@ type Mutation {
   updateMentorProfile(updateMentorInput: UpdateMentorInput!): MentorDTO!
   createCourse(createCourseInput: CreateCourseInput!, files: [Upload!]!): CourseDto!
   createCategory(createCourseCatInput: CreateCourseCatInput!): CourseCategoryDto!
+  createAppointment(createAppointmentInput: CreateAppointmentInput!, mentor: String!): AppointmentDTO!
+  toggleAppointmentStatus(mentorId: String!, appointmentId: String!, status: String!): AppointmentDTO!
   subscribeToCourse(courseId: String!): Subscription!
 }
 
@@ -308,8 +335,12 @@ input CertificationInput {
 
 input UserAvailabilityInput {
   day: String!
-  from_time: String!
-  to_time: String!
+  timeSlots: [TimeSlotInput!]!
+}
+
+input TimeSlotInput {
+  startTime: String!
+  endTime: String!
 }
 
 input UpdateMentorInput {
@@ -356,4 +387,9 @@ scalar Upload
 input CreateCourseCatInput {
   title: String!
   description: String!
+}
+
+input CreateAppointmentInput {
+  date: DateTime!
+  time: String!
 }

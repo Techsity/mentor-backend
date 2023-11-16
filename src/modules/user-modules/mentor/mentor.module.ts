@@ -1,5 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AppointmentModule } from '../appointment/appointment.module';
 import { ReviewModule } from '../review/review.module';
 import { User } from '../user/entities/user.entity';
 import { UserModule } from '../user/user.module';
@@ -11,6 +12,7 @@ import { AuthModule } from '../auth/auth.module';
 @Module({
   imports: [
     forwardRef(() => UserModule),
+    forwardRef(() => AppointmentModule),
     ReviewModule,
     TypeOrmModule.forFeature([Mentor]),
   ],

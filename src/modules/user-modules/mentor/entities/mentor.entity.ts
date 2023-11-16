@@ -13,6 +13,7 @@ import {
 } from 'typeorm';
 import { Course } from '../../course/entities/course.entity';
 import { Review } from '../../review/entities/review.entity';
+import { Appointment } from '../../appointment/entities/appointment.entity';
 import { User } from '../../user/entities/user.entity';
 import { MentorExpLevel, MentorRole } from '../enums/mentor.enum';
 import {
@@ -42,6 +43,9 @@ export class Mentor extends BaseEntity {
 
   @OneToMany(() => Review, (review) => review.mentor)
   reviews: Review[];
+
+  @OneToMany(() => Appointment, (appointment) => appointment.mentor)
+  appointments: Appointment[];
 
   @Column({ type: 'text' })
   about: string;

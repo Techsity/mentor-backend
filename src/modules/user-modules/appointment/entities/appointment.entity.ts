@@ -1,0 +1,48 @@
+import { registerEnumType } from '@nestjs/graphql';
+import {
+  BaseEntity,
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { Mentor } from '../../mentor/entities/mentor.entity';
+import { User } from '../../user/entities/user.entity';
+import { AppointmentStatus } from '../enums/appointment.enum';
+
+@Entity('appointments')
+export class Appointment extends BaseEntity {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @ManyToOne(() => Mentor, (mentor) => mentor.appointments)
+  @JoinColumn({ name: 'mentor_id' })
+  mentor: Mentor;
+
+  @ManyToOne(() => User, (user) => user.appointments)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
+
+  @Column()
+  date: Date;
+
+  @Column()
+  time: string;
+
+  @Column({ type: 'enum', enum: AppointmentStatus, default: 'pending' })
+  status: AppointmentStatus;
+
+  @CreateDateColumn()
+  created_at: Date;
+
+  @UpdateDateColumn()
+  updated_at: Date;
+}
+registerEnumType(AppointmentStatus, {
+  name: 'AppointmentStatus',
+  description: 'Appointment Statuses',
+});
