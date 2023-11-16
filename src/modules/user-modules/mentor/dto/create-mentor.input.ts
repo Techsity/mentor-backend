@@ -1,7 +1,11 @@
 import { InputType, Field, Int, Float } from '@nestjs/graphql';
 import { Column } from 'typeorm';
 
-import { MentorExpLevel, MentorRole } from '../enums/mentor.enum';
+import {
+  AvailailabilityDays,
+  MentorExpLevel,
+  MentorRole,
+} from '../enums/mentor.enum';
 
 @InputType()
 export class SkillInput {
@@ -49,20 +53,23 @@ export class CertificationInput {
   @Field(() => Date)
   year: Date;
 }
+@InputType()
+class TimeSlotInput {
+  @Field()
+  @Column({ type: 'time' })
+  startTime: string;
 
+  @Field()
+  @Column({ type: 'time' })
+  endTime: string;
+}
 @InputType()
 export class UserAvailabilityInput {
   @Field()
-  @Column({ type: 'varchar', length: 255 })
   day: string;
 
-  @Field()
-  @Column({ type: 'time' })
-  from_time: string;
-
-  @Field()
-  @Column({ type: 'time' })
-  to_time: string;
+  @Field(() => [TimeSlotInput])
+  timeSlots: TimeSlotInput[];
 }
 
 @InputType()

@@ -6,6 +6,7 @@ import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { join } from 'path';
 import { AppController } from './app.controller';
+import { Appointment } from './modules/user-modules/appointment/entities/appointment.entity';
 import { CourseCategory } from './modules/user-modules/course/entities/category.entity';
 import { CourseType } from './modules/user-modules/course/entities/course-type.entity';
 import { Mentor } from './modules/user-modules/mentor/entities/mentor.entity';
@@ -27,14 +28,16 @@ import { AdminModule } from './modules/admin-modules/admin/admin.module';
 import { AdminCourseModule } from './modules/admin-modules/course/course.module';
 import { AdminUserModule } from './modules/admin-modules/user/user.module';
 import { RoleModule } from './modules/admin-modules/role/role.module';
-import { SessionModule } from './modules/user-modules/session/session.module';
+import { AppointmentModule } from './modules/user-modules/appointment/appointment.module';
 import { ReviewModule } from './modules/user-modules/review/review.module';
+import { MailerModule } from './common/mailer/mailer.module';
 import DBConfig from './config/db.config';
+import AppConfig from './config/app.config';
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true, // Makes the config globally available
-      load: [DBConfig],
+      load: [DBConfig, AppConfig],
     }),
     TypeOrmModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
@@ -53,6 +56,7 @@ import DBConfig from './config/db.config';
           CourseType,
           Subscription,
           Review,
+          Appointment,
         ],
         synchronize: true,
         logging: true,
@@ -86,8 +90,10 @@ import DBConfig from './config/db.config';
     PaymentModule,
     AdminModule,
     RoleModule,
-    SessionModule,
+    AppointmentModule,
     ReviewModule,
+    AppointmentModule,
+    MailerModule,
   ],
   controllers: [AppController],
 })

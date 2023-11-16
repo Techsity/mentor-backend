@@ -3,7 +3,11 @@ import { Column } from 'typeorm';
 import { CourseDto } from '../../course/dto/course.dto';
 import { ReviewDto } from '../../review/dto/review.dto';
 import { User } from '../../user/entities/user.entity';
-import { MentorRole, MentorExpLevel } from '../enums/mentor.enum';
+import {
+  MentorRole,
+  MentorExpLevel,
+  AvailailabilityDays,
+} from '../enums/mentor.enum';
 
 @ObjectType()
 export class SkillDTO {
@@ -42,20 +46,23 @@ export class EducationDTO {
 }
 
 @ObjectType()
+class TimeSlot {
+  @Field()
+  @Column({ type: 'time' })
+  startTime: string;
+
+  @Field()
+  @Column({ type: 'time' })
+  endTime: string;
+}
+@ObjectType()
 export class UserAvailabilityDTO {
   @Field()
-  @Column({ type: 'varchar', length: 255 })
   day: string;
 
-  @Field()
-  @Column({ type: 'time' })
-  from_time: string;
-
-  @Field()
-  @Column({ type: 'time' })
-  to_time: string;
+  @Field(() => [TimeSlot])
+  timeSlots: TimeSlot[];
 }
-
 @ObjectType()
 export class PastProjectsDTO {
   @Field()

@@ -12,6 +12,7 @@ import {
   JoinColumn,
   ManyToMany,
 } from 'typeorm';
+import { Appointment } from '../../appointment/entities/appointment.entity';
 import { Course } from '../../course/entities/course.entity';
 import { Mentor } from '../../mentor/entities/mentor.entity';
 import { Subscription } from '../../subscription/entities/subscription.entity';
@@ -53,6 +54,10 @@ export class User extends BaseEntity {
 
   @Field()
   @Column({ type: 'boolean', default: false })
+  isPremium: boolean;
+
+  @Field()
+  @Column({ type: 'boolean', default: false })
   is_verified: boolean;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
@@ -64,6 +69,9 @@ export class User extends BaseEntity {
 
   @OneToOne(() => Mentor, (mentor) => mentor.user)
   mentor: Mentor;
+
+  @OneToMany(() => Appointment, (appointment) => appointment.mentor)
+  appointments: Appointment[];
 
   @OneToMany(() => Subscription, (subscription) => subscription.user)
   subscriptions: Subscription[];
