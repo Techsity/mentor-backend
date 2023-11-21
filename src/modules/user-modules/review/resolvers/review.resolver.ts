@@ -1,5 +1,5 @@
 import { Resolver } from '@nestjs/graphql';
-import { ReviewService } from './review.service';
+import { ReviewService } from '../services/review.service';
 
 @Resolver()
 export class ReviewResolver {

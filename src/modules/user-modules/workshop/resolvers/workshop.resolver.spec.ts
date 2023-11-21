@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { WorkshopResolver } from './workshop.resolver';
-import { WorkshopService } from './workshop.service';
+import { WorkshopService } from '../services/workshop.service';
 
 describe('WorkshopResolver', () => {
   let resolver: WorkshopResolver;
