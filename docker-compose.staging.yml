@@ -14,14 +14,14 @@ services:
     networks:
       - mentor_network
   app:
-    image: node:18-alpine
+    image: node:20-alpine
     ports:
       - '${NODE_PORT}:3000'
     volumes:
       - ./:/usr/app
     working_dir: /usr/app/
     command: >
-      sh -c "yarn install && yarn run start:dev"
+      sh -c "yarn install && yarn build&& yarn run start:prod"
     depends_on:
       - db
     networks:

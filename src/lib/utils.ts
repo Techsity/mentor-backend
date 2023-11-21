@@ -1,17 +1,28 @@
-import * as bcrypt from 'bcrypt';
+import argon2 from 'argon2';
 
 export async function hashPassword(password: string): Promise<string> {
-  const saltRounds = 10;
-  const hash = await bcrypt.hash(password, saltRounds);
-  return hash;
+  try {
+    // The `hash` function returns a Promise<string>
+    const hash = await argon2.hash(password);
+    return hash;
+  } catch (err) {
+    // Handle errors if necessary
+    throw err;
+  }
 }
 
 export async function checkPassword(
   inputPassword: string,
   storedHash: string,
 ): Promise<boolean> {
-  const match = await bcrypt.compare(inputPassword, storedHash);
-  return match; // true if matching, false if not
+  try {
+    // The `verify` function returns a Promise<boolean>
+    const match = await argon2.verify(storedHash, inputPassword);
+    return match; // true if matching, false if not
+  } catch (err) {
+    // Handle errors if necessary
+    throw err;
+  }
 }
 
 function customHash(value) {
