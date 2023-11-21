@@ -1,5 +1,5 @@
 import { Resolver } from '@nestjs/graphql';
-import { WorkshopService } from './workshop.service';
+import { WorkshopService } from '../services/workshop.service';
 
 @Resolver()
 export class WorkshopResolver {

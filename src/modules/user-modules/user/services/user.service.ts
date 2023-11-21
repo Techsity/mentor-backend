@@ -2,11 +2,11 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { AuthService } from '../auth/services/auth.service';
-import { Course } from '../course/entities/course.entity';
-import { Mentor } from '../mentor/entities/mentor.entity';
-import { UserDTO } from './dto/user.dto';
-import { User } from './entities/user.entity';
+import { AuthService } from '../../auth/services/auth.service';
+import { Course } from '../../course/entities/course.entity';
+import { Mentor } from '../../mentor/entities/mentor.entity';
+import { UserDTO } from '../dto/user.dto';
+import { User } from '../entities/user.entity';
 
 @Injectable()
 export class UserService {

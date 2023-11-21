@@ -1,12 +1,10 @@
-import argon2 from 'argon2';
+import * as argon2 from 'argon2';
 
 export async function hashPassword(password: string): Promise<string> {
   try {
-    // The `hash` function returns a Promise<string>
     const hash = await argon2.hash(password);
     return hash;
   } catch (err) {
-    // Handle errors if necessary
     throw err;
   }
 }
@@ -16,11 +14,9 @@ export async function checkPassword(
   storedHash: string,
 ): Promise<boolean> {
   try {
-    // The `verify` function returns a Promise<boolean>
     const match = await argon2.verify(storedHash, inputPassword);
-    return match; // true if matching, false if not
+    return match; // true or false
   } catch (err) {
-    // Handle errors if necessary
     throw err;
   }
 }
