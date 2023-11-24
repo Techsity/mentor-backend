@@ -1,5 +1,3 @@
-// appointment.dto.ts
-
 import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { MentorDTO } from '../../mentor/dto/mentor.dto';
 import { UserDTO } from '../../user/dto/user.dto';
@@ -9,9 +7,6 @@ import { User } from '../../user/entities/user.entity';
 
 @ObjectType()
 export class AppointmentDTO {
-  @Field(() => ID)
-  id: string;
-
   @Field()
   date: Date;
 

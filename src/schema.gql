@@ -67,7 +67,6 @@ type UserDTO {
 }
 
 type AppointmentDTO {
-  id: ID!
   date: DateTime!
   time: String!
   status: AppointmentStatus!
@@ -239,6 +238,7 @@ type Query {
   viewCourse(courseId: String!): CourseDto!
   getAllCategories: [CourseCategoryDto!]!
   viewAppointment(appointmentId: String!): AppointmentDTO!
+  viewAppointments(statuses: [String!]!): [AppointmentDTO!]!
   viewSubscribedCourses: [SubscriptionDto!]!
   viewSubscribedCourse(courseId: String!): Subscription!
 }

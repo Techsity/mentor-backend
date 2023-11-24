@@ -30,7 +30,7 @@ export class Mentor extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @OneToOne(() => User)
+  @OneToOne(() => User, (user) => user.mentor)
   @JoinColumn({ name: 'user_id' })
   user: User;
 

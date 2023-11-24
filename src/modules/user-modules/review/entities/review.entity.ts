@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { Course } from '../../course/entities/course.entity';
 import { Mentor } from '../../mentor/entities/mentor.entity';
+import { User } from '../../user/entities/user.entity';
 import { ReviewType } from '../enums/review.enum';
 
 @Entity('reviews')
@@ -23,11 +24,15 @@ export class Review {
 
   @ManyToOne(() => Mentor, { nullable: true })
   @JoinColumn({ name: 'mentor_id' })
-  mentor: Mentor;
+  mentor?: Mentor;
 
   @ManyToOne(() => Course, { nullable: true })
   @JoinColumn({ name: 'course_id' })
-  course: Course;
+  course?: Course;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'user_id' })
+  reviewed_by: User;
 
   @Column()
   content: string;

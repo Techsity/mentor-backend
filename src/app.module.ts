@@ -31,6 +31,11 @@ import { RoleModule } from './modules/admin-modules/role/role.module';
 import { AppointmentModule } from './modules/user-modules/appointment/appointment.module';
 import { ReviewModule } from './modules/user-modules/review/review.module';
 import { MailerModule } from './common/mailer/mailer.module';
+import { ArticleModule } from './modules/user-modules/blog/article/article.module';
+import { ArticleCategoryModule } from './modules/user-modules/blog/article-category/article-category.module';
+import { WishlistModule } from './modules/user-modules/wishlist/wishlist.module';
+import { CartModule } from './modules/user-modules/cart/cart.module';
+import { WalletModule } from './modules/user-modules/wallet/wallet.module';
 import DBConfig from './config/db.config';
 import AppConfig from './config/app.config';
 @Module({
@@ -94,6 +99,11 @@ import AppConfig from './config/app.config';
     ReviewModule,
     AppointmentModule,
     MailerModule,
+    ArticleModule,
+    ArticleCategoryModule,
+    WishlistModule,
+    CartModule,
+    WalletModule,
   ],
   controllers: [AppController],
 })

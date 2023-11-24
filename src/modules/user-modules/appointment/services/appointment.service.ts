@@ -2,12 +2,12 @@ import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { MailerService } from '../../../common/mailer/mailer.service';
-import { Mentor } from '../mentor/entities/mentor.entity';
-import { User } from '../user/entities/user.entity';
-import { AppointmentDTO } from './dto/appointment.dto';
-import { Appointment } from './entities/appointment.entity';
-import { AppointmentStatus } from './enums/appointment.enum';
+import { MailerService } from '../../../../common/mailer/mailer.service';
+import { Mentor } from '../../mentor/entities/mentor.entity';
+import { User } from '../../user/entities/user.entity';
+import { AppointmentDTO } from '../dto/appointment.dto';
+import { Appointment } from '../entities/appointment.entity';
+import { AppointmentStatus } from '../enums/appointment.enum';
 
 @Injectable()
 export class AppointmentService {
@@ -63,27 +63,19 @@ export class AppointmentService {
     }
   }
 
-  async viewAppointments(
-    statuses?: AppointmentStatus[],
-  ): Promise<AppointmentDTO[]> {
+  async viewAppointments(statuses?: string[]): Promise<any> {
     try {
-      // const authUser = this.request.req.user.user;
-      // const query = this.appointmentRepository
-      //   .createQueryBuilder('appointment')
-      //   .where('appointment.user.id = :userId', { userId: authUser.id });
-      // // .leftJoinAndSelect('appointment.mentor', 'mentor')
-      // // .leftJoinAndSelect('appointment.user', 'user');
-      //
-      // if (statuses && statuses.length > 0) {
-      //   query.andWhere('appointment.status IN (:...statuses)', { statuses });
-      // }
-      // return query.getMany();
       const authUser = this.request.req.user.user;
-      const appointments = await this.appointmentRepository.find({
-        where: { user: { id: authUser.id } },
-        relations: ['mentor', 'user'],
-      });
-      return appointments;
+      const query = this.appointmentRepository
+        .createQueryBuilder('appointment')
+        .where('appointment.user.id = :userId', { userId: authUser.id })
+        .leftJoinAndSelect('appointment.mentor', 'mentor');
+      // .leftJoinAndSelect('appointment.user', 'user');
+
+      if (statuses && statuses.length > 0) {
+        query.andWhere('appointment.status IN (:...statuses)', { statuses });
+      }
+      return query.getMany();
     } catch (error) {
       throw error;
     }

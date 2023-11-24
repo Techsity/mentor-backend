@@ -8,6 +8,7 @@
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "seed": "ts-node src/factories/seed.ts",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
@@ -21,6 +22,7 @@
   },
   "dependencies": {
     "@apollo/server": "^4.9.3",
+    "@faker-js/faker": "^8.3.1",
     "@graphql-tools/utils": "^10.0.8",
     "@nestjs/apollo": "^12.0.9",
     "@nestjs/common": "^9.0.0",
