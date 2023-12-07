@@ -2,6 +2,18 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type Subscription {
+  id: ID!
+  is_completed: Boolean!
+  created_at: DateTime!
+  updated_at: DateTime!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
 type User {
   id: ID!
   email: String!
@@ -18,18 +30,6 @@ type User {
   updated_at: DateTime!
 }
 
-"""
-A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
-"""
-scalar DateTime
-
-type Subscription {
-  id: ID!
-  is_completed: Boolean!
-  created_at: DateTime!
-  updated_at: DateTime!
-}
-
 type LoginResponse {
   access_token: String!
   user: User!
@@ -38,6 +38,7 @@ type LoginResponse {
 type UserDetails {
   name: String!
   email: String!
+  id: String!
 }
 
 type RegisterResponse {
@@ -91,45 +92,11 @@ type CourseCategoryDto {
   updated_at: DateTime!
 }
 
-type CourseSection {
-  section_name: String!
-  video_url: String!
-  notes: String!
-}
-
-type CourseContent {
-  title: String!
-  course_sections: [CourseSection!]!
-}
-
-type CourseDto {
-  title: String!
-  course_level: CourseLevel!
-  description: String!
-  category: CourseCategoryDto!
-  what_to_learn: [String!]!
-  requirements: [String!]!
-  price: Float!
-  course_images: String!
-  course_contents: [CourseContent!]!
-  created_at: DateTime!
-  updated_at: DateTime!
-}
-
-"""Different roles of mentors"""
-enum CourseLevel {
-  ALL_LEVELS
-  BEGINNER
-  INTERMMEDIATE
-  SENIOR
-}
-
 type ReviewDto {
   type: String!
   content: String!
-  mentorId: String!
-  courseId: String!
-  rating: Float!
+  reviewed_by: UserDTO!
+  ratings: Float!
 }
 
 type SkillDTO {
@@ -220,6 +187,41 @@ enum MentorExpLevel {
   LEVEL_4
 }
 
+type CourseSection {
+  section_name: String!
+  video_url: String!
+  notes: String!
+}
+
+type CourseContent {
+  title: String!
+  course_sections: [CourseSection!]!
+}
+
+type CourseDto {
+  title: String!
+  course_level: CourseLevel!
+  description: String!
+  category: CourseCategoryDto!
+  what_to_learn: [String!]!
+  requirements: [String!]!
+  price: Float!
+  course_images: String!
+  course_contents: [CourseContent!]!
+  mentor: MentorDTO!
+  reviews: [ReviewDto!]!
+  created_at: DateTime!
+  updated_at: DateTime!
+}
+
+"""Different roles of mentors"""
+enum CourseLevel {
+  ALL_LEVELS
+  BEGINNER
+  INTERMMEDIATE
+  SENIOR
+}
+
 type SubscriptionDto {
   id: ID
   course: CourseDto!
@@ -233,7 +235,7 @@ type Query {
   getMentorProfile: MentorDTO!
   viewMentor(id: String!): MentorDTO!
   viewAllMentors: [MentorDTO!]!
-  allCourses(take: Float!, skip: Float!, courseType: String!): [CourseDto!]!
+  allCourses(take: Float!, skip: Float!, courseType: String, category: String): [CourseDto!]!
   searchCoursesByCategory(take: Float!, skip: Float!, courseId: String!): [CourseDto!]!
   viewCourse(courseId: String!): CourseDto!
   getAllCategories: [CourseCategoryDto!]!
@@ -258,6 +260,7 @@ type Mutation {
   createCategory(createCourseCatInput: CreateCourseCatInput!): CourseCategoryDto!
   createAppointment(createAppointmentInput: CreateAppointmentInput!, mentor: String!): AppointmentDTO!
   toggleAppointmentStatus(mentorId: String!, appointmentId: String!, status: String!): AppointmentDTO!
+  createReview(createReviewInput: CreateReviewInput!, mentorId: String, courseId: String): ReviewDto!
   subscribeToCourse(courseId: String!): Subscription!
 }
 
@@ -392,4 +395,9 @@ input CreateCourseCatInput {
 input CreateAppointmentInput {
   date: DateTime!
   time: String!
+}
+
+input CreateReviewInput {
+  content: String!
+  ratings: Float!
 }

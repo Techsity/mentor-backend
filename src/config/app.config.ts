@@ -1,17 +1,19 @@
 interface AppConfig {
-  ses: {
+  aws: {
     region: string;
     accessKey: string;
     secretAccessKey: string;
-    sender: string;
+    emailSender: string;
+    sesBucket: string;
   };
 }
 
 export default (): AppConfig => ({
-  ses: {
-    region: process.env.EMAIL_REGION,
-    accessKey: process.env.EMAIL_ACCESS_KEY_ID,
-    secretAccessKey: process.env.EMAIL_SECRET_ACCESS_KEY,
-    sender: process.env.EMAIL_SENDER,
+  aws: {
+    region: process.env.AWS_REGION,
+    accessKey: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    emailSender: process.env.EMAIL_SENDER,
+    sesBucket: process.env.S3_BUCKET,
   },
 });

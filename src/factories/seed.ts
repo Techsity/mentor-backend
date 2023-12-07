@@ -2,8 +2,8 @@
 import { DataSource } from 'typeorm';
 import { createUser } from './user.factory';
 import { createMentor } from './mentor.factory';
-import { User } from '../modules/user-modules/user/entities/user.entity';
-import { Mentor } from '../modules/user-modules/mentor/entities/mentor.entity';
+import { User } from '../modules/user/entities/user.entity';
+import { Mentor } from '../modules/mentor/entities/mentor.entity';
 
 async function connectToDatabase() {
   return new DataSource({

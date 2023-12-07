@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
+import { AwsModule } from 'src/aws/aws.module';
+import { SesService } from '../../aws/ses.service';
 import { MailerService } from './mailer.service';
 @Module({
-  providers: [MailerService],
+  imports: [AwsModule],
+  providers: [MailerService, SesService],
 })
 export class MailerModule {}

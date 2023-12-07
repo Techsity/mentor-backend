@@ -44,5 +44,5 @@ export function generateOTP(userId: string) {
   // Convert the combined value to a 6-digit OTP
   const otp = Math.abs(combinedValue) % 1000000;
 
-  return Math.floor(otp);
+  return Math.floor(otp).toString();
 }

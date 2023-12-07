@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { User } from '../modules/user-modules/user/entities/user.entity';
+import { User } from '../modules/user/entities/user.entity';
 export function createUser(): User {
   const user = new User();
   user.name = faker.internet.displayName();

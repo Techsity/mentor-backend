@@ -1,10 +1,10 @@
 import { faker } from '@faker-js/faker';
-import { Mentor } from '../modules/user-modules/mentor/entities/mentor.entity';
+import { Mentor } from '../modules/mentor/entities/mentor.entity';
 import {
   MentorExpLevel,
   MentorRole,
-} from '../modules/user-modules/mentor/enums/mentor.enum';
-import { User } from '../modules/user-modules/user/entities/user.entity';
+} from '../modules/mentor/enums/mentor.enum';
+import { User } from '../modules/user/entities/user.entity';
 export function createMentor(user: User): Mentor {
   const mentor = new Mentor();
   mentor.about = faker.lorem.sentence();
