@@ -5,40 +5,45 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { join } from 'path';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AppController } from './app.controller';
-import { Appointment } from './modules/user-modules/appointment/entities/appointment.entity';
-import { CourseCategory } from './modules/user-modules/course/entities/category.entity';
-import { CourseType } from './modules/user-modules/course/entities/course-type.entity';
-import { Mentor } from './modules/user-modules/mentor/entities/mentor.entity';
-import { Review } from './modules/user-modules/review/entities/review.entity';
-import { Subscription } from './modules/user-modules/subscription/entities/subscription.entity';
-import { User } from './modules/user-modules/user/entities/user.entity';
-import { Auth } from './modules/user-modules/auth/entities/auth.entity';
-import { UserModule } from './modules/user-modules/user/user.module';
-import { AuthModule } from './modules/user-modules/auth/auth.module';
-import { CourseModule } from './modules/user-modules/course/course.module';
-import { MentorModule } from './modules/user-modules/mentor/mentor.module';
+import { AwsModule } from './aws/aws.module';
+import { Appointment } from './modules/appointment/entities/appointment.entity';
+import { CourseCategory } from './modules/course/entities/category.entity';
+import { CourseType } from './modules/course/entities/course-type.entity';
+import { Mentor } from './modules/mentor/entities/mentor.entity';
+import { Review } from './modules/review/entities/review.entity';
+import { Subscription } from './modules/subscription/entities/subscription.entity';
+import { User } from './modules/user/entities/user.entity';
+import { Auth } from './modules/auth/entities/auth.entity';
+import { UserModule } from './modules/user/user.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { CourseModule } from './modules/course/course.module';
+import { MentorModule } from './modules/mentor/mentor.module';
 import { GraphQLError, GraphQLFormattedError } from 'graphql';
-import { WorkshopModule } from './modules/user-modules/workshop/workshop.module';
-import { SubscriptionModule } from './modules/user-modules/subscription/subscription.module';
-import { Course } from './modules/user-modules/course/entities/course.entity';
-import { MediaModule } from './modules/user-modules/media/media.module';
-import { PaymentModule } from './modules/user-modules/payment/payment.module';
-import { AdminModule } from './modules/admin-modules/admin/admin.module';
-import { AdminCourseModule } from './modules/admin-modules/course/course.module';
-import { AdminUserModule } from './modules/admin-modules/user/user.module';
-import { RoleModule } from './modules/admin-modules/role/role.module';
-import { AppointmentModule } from './modules/user-modules/appointment/appointment.module';
-import { ReviewModule } from './modules/user-modules/review/review.module';
+import { WorkshopModule } from './modules/workshop/workshop.module';
+import { SubscriptionModule } from './modules/subscription/subscription.module';
+import { Course } from './modules/course/entities/course.entity';
+import { MediaModule } from './modules/media/media.module';
+import { PaymentModule } from './modules/payment/payment.module';
+import { AppointmentModule } from './modules/appointment/appointment.module';
+import { ReviewModule } from './modules/review/review.module';
 import { MailerModule } from './common/mailer/mailer.module';
+import { ArticleModule } from './modules/blog/article/article.module';
+import { ArticleCategoryModule } from './modules/blog/article-category/article-category.module';
+import { WishlistModule } from './modules/wishlist/wishlist.module';
+import { CartModule } from './modules/cart/cart.module';
+import { WalletModule } from './modules/wallet/wallet.module';
 import DBConfig from './config/db.config';
 import AppConfig from './config/app.config';
+import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true, // Makes the config globally available
+      isGlobal: true,
       load: [DBConfig, AppConfig],
     }),
+    EventEmitterModule.forRoot(),
     TypeOrmModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
@@ -80,6 +85,7 @@ import AppConfig from './config/app.config';
         return graphQLFormattedError;
       },
     }),
+    AwsModule,
     AuthModule,
     UserModule,
     CourseModule,
@@ -88,12 +94,17 @@ import AppConfig from './config/app.config';
     SubscriptionModule,
     MediaModule,
     PaymentModule,
-    AdminModule,
-    RoleModule,
     AppointmentModule,
     ReviewModule,
     AppointmentModule,
     MailerModule,
+    ArticleModule,
+    ArticleCategoryModule,
+    WishlistModule,
+    CartModule,
+    WalletModule,
+    EventEmitterModule.forRoot(),
+    RabbitMQModule,
   ],
   controllers: [AppController],
 })
