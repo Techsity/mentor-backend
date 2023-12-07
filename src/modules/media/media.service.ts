@@ -14,14 +14,14 @@ import { PassThrough } from 'stream';
 @Injectable()
 export class MediaService {
   constructor(
-    @Inject('RABBITMQ_SERVICE')
-    private readonly client: ClientProxy,
+    // @Inject('RABBITMQ_SERVICE')
+    // private readonly client: ClientProxy,
     private readonly uploadToS3: UploadToS3,
   ) {}
 
-  async onModuleInit() {
-    await this.client.connect();
-  }
+  // async onModuleInit() {
+  //   await this.client.connect();
+  // }
 
   async uploadImage(file: any): Promise<boolean> {
     const { filename, mimetype, createReadStream } = file;
