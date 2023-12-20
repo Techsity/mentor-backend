@@ -124,7 +124,7 @@ export class CourseService {
       const query = this.courseRepository
         .createQueryBuilder('courses')
         .leftJoinAndSelect('courses.category', 'category')
-        .leftJoinAndSelect('courses.course_type', 'course_type')
+        .leftJoinAndSelect('courses.category_type', 'category_type')
         .orderBy('courses.id', 'ASC');
 
       let hasCategoryCondition = false;
@@ -137,9 +137,9 @@ export class CourseService {
 
       if (courseType) {
         if (hasCategoryCondition) {
-          query.andWhere('course_type.type = :type', { type: courseType });
+          query.andWhere('category_type.type = :type', { type: courseType });
         } else {
-          query.where('course_type.type = :type', { type: courseType });
+          query.where('category_type.type = :type', { type: courseType });
         }
         hasCourseTypeCondition = true;
       }
