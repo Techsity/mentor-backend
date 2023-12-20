@@ -50,7 +50,7 @@ export class Mentor extends BaseEntity {
   @Column({ type: 'text' })
   about: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'text', nullable: true })
   role: string;
 
   @Column('jsonb')
