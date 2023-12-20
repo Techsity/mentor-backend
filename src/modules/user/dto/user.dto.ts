@@ -25,7 +25,7 @@ export class UserDTO {
   @Field({ nullable: true })
   country: string;
 
-  @Field()
+  @Field({ nullable: true })
   subsciptions: Subscription;
 
   @Field()

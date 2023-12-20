@@ -35,6 +35,7 @@ export class AuthService {
         secret: `secretKey`,
       }),
       user,
+      is_mentor: user.mentor ? true : false,
     };
   }
   async register(registerPayload: CreateRegisterInput) {
@@ -67,7 +68,10 @@ export class AuthService {
     return user;
   }
   async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.userRepository.findOne({ where: { email } });
+    const user = await this.userRepository.findOne({
+      where: { email },
+      relations: ['mentor'],
+    });
 
     if (!user) return null;
 
@@ -91,7 +95,7 @@ export class AuthService {
         is_verified: true,
       },
     );
-    await this.authRepository.delete({ id: user.id }); // Delete OTP from DB
+    await this.authRepository.delete({ user: { id: user.id } }); // Delete OTP from DB
     return { message: 'User verified successfully' };
   }
   async forgetPassword(email: string) {

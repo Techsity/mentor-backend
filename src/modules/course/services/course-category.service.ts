@@ -24,6 +24,8 @@ export class CourseCategoryService {
   }
 
   async viewCourseCategories(): Promise<any> {
-    return this.categoryRepository.find();
+    return await this.categoryRepository.find({
+      relations: ['category_type'],
+    });
   }
 }

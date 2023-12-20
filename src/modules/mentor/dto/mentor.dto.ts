@@ -99,8 +99,8 @@ export class MentorDTO {
   @Field()
   about: string;
 
-  @Field(() => MentorRole)
-  role: MentorRole;
+  @Field()
+  role: string;
 
   @Field(() => [SkillDTO])
   skills: SkillDTO[];

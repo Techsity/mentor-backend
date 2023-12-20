@@ -1,4 +1,4 @@
-import { ObjectType, registerEnumType } from '@nestjs/graphql';
+import { Field, ObjectType, registerEnumType } from '@nestjs/graphql';
 import {
   Column,
   CreateDateColumn,
@@ -20,21 +20,23 @@ export class CourseType {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Field()
   @Column({ type: 'enum', enum: CourseTypeEnum })
   type: string;
 
-  @OneToMany(() => CourseCategory, (category) => category.course_types, {
+  @OneToMany(() => CourseCategory, (category) => category.category_type, {
     nullable: true,
     onDelete: 'SET NULL',
   })
   categories: CourseCategory[];
 
-  @OneToMany(() => Course, (course) => course.course_type, {
+  @OneToMany(() => Course, (course) => course.category_type, {
     nullable: true,
     onDelete: 'SET NULL',
   })
   courses: Course[];
 
+  @Field()
   @Column({ type: 'text', nullable: true })
   description: string;
 
