@@ -67,7 +67,7 @@ export class User extends BaseEntity {
   @Column({ type: 'boolean', default: false })
   is_admin: boolean;
 
-  @OneToOne(() => Mentor, (mentor) => mentor.user)
+  @OneToOne(() => Mentor, (mentor) => mentor.user, { eager: true })
   mentor: Mentor;
 
   @OneToMany(() => Appointment, (appointment) => appointment.mentor)

@@ -86,8 +86,8 @@ export class CreateMentorInput {
   @Field()
   about: string;
 
-  @Field(() => MentorRole)
-  role: MentorRole;
+  @Field()
+  role: string;
 
   @Field(() => [SkillInput])
   skills: SkillInput[];

@@ -30,9 +30,31 @@ type User {
   updated_at: DateTime!
 }
 
+type CourseType {
+  type: String!
+  description: String!
+}
+
+type UserDTO {
+  id: String!
+  email: String!
+  name: String!
+  phone: String
+  avatar: String
+  country: String
+  subsciptions: Subscription
+  is_online: Boolean!
+  is_active: Boolean!
+  is_verified: Boolean!
+  is_admin: Boolean!
+  created_at: DateTime!
+  updated_at: DateTime!
+}
+
 type LoginResponse {
   access_token: String!
-  user: User!
+  user: UserDTO!
+  is_mentor: Boolean!
 }
 
 type UserDetails {
@@ -49,22 +71,6 @@ type RegisterResponse {
 
 type BasicMessageResponse {
   message: String!
-}
-
-type UserDTO {
-  id: String!
-  email: String!
-  name: String!
-  phone: String
-  avatar: String
-  country: String
-  subsciptions: Subscription!
-  is_online: Boolean!
-  is_active: Boolean!
-  is_verified: Boolean!
-  is_admin: Boolean!
-  created_at: DateTime!
-  updated_at: DateTime!
 }
 
 type AppointmentDTO {
@@ -88,6 +94,7 @@ enum AppointmentStatus {
 type CourseCategoryDto {
   title: String!
   description: String!
+  category_type: CourseType!
   created_at: DateTime!
   updated_at: DateTime!
 }
@@ -148,7 +155,7 @@ type MentorDTO {
   courses: CourseDto
   reviews: ReviewDto
   about: String!
-  role: MentorRole!
+  role: String!
   skills: [SkillDTO!]!
   work_experience: [WorkExperienceDTO!]
   projects: [PastProjectsDTO!]
@@ -161,22 +168,6 @@ type MentorDTO {
   mentor_verified: Boolean!
   created_at: DateTime!
   updated_at: DateTime!
-}
-
-"""Different roles of mentors"""
-enum MentorRole {
-  FRONTEND_DEVELOPER
-  BACKEND_DEVELOPER
-  MOBILE_DEVELOPER
-  PRODUCT_DESIGNER
-  GRAPHIC_DESIGNER
-  PRODUCT_MANAGER
-  PRODUCT_OWNER
-  SOLUTIONS_ARCHITECT
-  CYBER_SECURITY
-  SCRUM_MASTER
-  QA_ENGINEER
-  TECHNICAL_WRITER
 }
 
 """Experience level of mentors"""
@@ -291,7 +282,7 @@ input UpdateUserInput {
 
 input CreateMentorInput {
   about: String!
-  role: MentorRole!
+  role: String!
   skills: [SkillInput!]!
   work_experience: [WorkExperienceInput!]
   projects: [PastProjectsInput!]
@@ -358,6 +349,22 @@ input UpdateMentorInput {
   hourly_rate: Float
   availability: [UserAvailabilityInput!]
   language: [String!]
+}
+
+"""Different roles of mentors"""
+enum MentorRole {
+  FRONTEND_DEVELOPER
+  BACKEND_DEVELOPER
+  MOBILE_DEVELOPER
+  PRODUCT_DESIGNER
+  GRAPHIC_DESIGNER
+  PRODUCT_MANAGER
+  PRODUCT_OWNER
+  SOLUTIONS_ARCHITECT
+  CYBER_SECURITY
+  SCRUM_MASTER
+  QA_ENGINEER
+  TECHNICAL_WRITER
 }
 
 input CreateCourseInput {

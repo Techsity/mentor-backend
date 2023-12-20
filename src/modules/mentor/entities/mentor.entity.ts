@@ -50,8 +50,8 @@ export class Mentor extends BaseEntity {
   @Column({ type: 'text' })
   about: string;
 
-  @Column({ type: 'enum', enum: MentorRole })
-  role: MentorRole;
+  @Column({ type: 'text' })
+  role: string;
 
   @Column('jsonb')
   skills: Skill[];

@@ -1,12 +1,15 @@
 import { ObjectType, Field } from '@nestjs/graphql';
 import { User } from '../../user/entities/user.entity';
+import { UserDTO } from 'src/modules/user/dto/user.dto';
 
 @ObjectType()
 export class LoginResponse {
   @Field()
   access_token: string;
-  @Field((type) => User)
-  user: User;
+  @Field((type) => UserDTO)
+  user: UserDTO;
+  @Field()
+  is_mentor: boolean;
 }
 
 @ObjectType()

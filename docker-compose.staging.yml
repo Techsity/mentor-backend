@@ -21,7 +21,7 @@ services:
       - ./:/usr/app
     working_dir: /usr/app/
     command: >
-      sh -c "yarn install && yarn build&& yarn run start:prod"
+      sh -c "yarn install && yarn build && yarn run start:prod"
     depends_on:
       - db
     networks:
