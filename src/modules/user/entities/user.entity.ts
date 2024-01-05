@@ -9,11 +9,9 @@ import {
   OneToOne,
   OneToMany,
   JoinTable,
-  JoinColumn,
   ManyToMany,
 } from 'typeorm';
 import { Appointment } from '../../appointment/entities/appointment.entity';
-import { Course } from '../../course/entities/course.entity';
 import { Mentor } from '../../mentor/entities/mentor.entity';
 import { Subscription } from '../../subscription/entities/subscription.entity';
 

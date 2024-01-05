@@ -5,7 +5,6 @@ import { GqlAuthGuard } from '../../auth/guards/gql-auth.guard';
 import { UserDTO } from '../dto/user.dto';
 import { UserService } from '../services/user.service';
 import { User } from '../entities/user.entity';
-import { CreateUserInput } from '../dto/create-user.input';
 import { UpdateUserInput } from '../dto/update-user.input';
 
 @Resolver(() => User)
@@ -21,6 +20,7 @@ export class UserResolver {
   @UseGuards(GqlAuthGuard)
   @Mutation((returns) => UserDTO)
   async updateUserProfile(
+    @CurrentUser() user: User,
     @Args('userUpdateInput') userUpdateInput: UpdateUserInput,
   ): Promise<any> {
     return this.userService.updateProfile(userUpdateInput);

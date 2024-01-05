@@ -1,4 +1,11 @@
-import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -12,6 +19,8 @@ import { JwtService } from '@nestjs/jwt';
 import { checkPassword, generateOTP, hashPassword } from 'src/lib/utils';
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @Inject(REQUEST) private readonly request: any,
     private eventEmitter: EventEmitter2,
@@ -42,24 +51,22 @@ export class AuthService {
     try {
       const hashedPassword = await hashPassword(registerPayload.password);
       registerPayload.password = hashedPassword;
-      const user = await this.userRepository.save(registerPayload);
+      const user = new User();
+      user.id = '54160d2c-24d1-4dc7-8373-3dcf8610c418';
+      // !
+      // const user = await this.userRepository.save(registerPayload);
+      // !
+
       // Create OTP
       await this.createUpdateOtp(user.id);
       return { message: 'Check your email for otp!', user };
     } catch (error) {
+      const stackTrace = new Error().stack;
+      this.logger.error(error, stackTrace);
       if (error?.code === '23505') {
         throw new CustomResponseMessage(CustomStatusCodes.REG_DUPLICATE_USER);
       }
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          error: {
-            message: 'Error creating user',
-            cause: error.message || error,
-          },
-        },
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new InternalServerErrorException('An Error Occured');
     }
   }
 
@@ -139,22 +146,29 @@ export class AuthService {
         await this.authRepository.save(existingOtp);
       } else {
         // Create a new OTP entry
-        await this.authRepository.save({
-          token: otp.toString(),
-          user: { id: userId },
-          expiry: new Date(Date.now() + OTP_EXPIRY_DURATION_MS),
-        });
-        const getUser = await this.userRepository.findOne({
-          where: { id: userId },
-        });
+        // !
+        // await this.authRepository.save({
+        //   token: otp.toString(),
+        //   user: { id: userId },
+        //   expiry: new Date(Date.now() + OTP_EXPIRY_DURATION_MS),
+        // });
+        // !
+        // const getUser = await this.userRepository.findOne({
+        //   where: { id: userId },
+        // });
+        // if (!getUser) throw new HttpException('User not found', 404);
+        // !
+
         await this.mailService.sendOtpEmail(
-          getUser.email,
-          getUser.name,
+          'getUser.email',
+          'getUser.name',
           otp.toString(),
         );
       }
       return { message: 'Otp sent', otp };
     } catch (error) {
+      const stackTrace = new Error().stack;
+      this.logger.error(error, stackTrace);
       throw new HttpException(
         {
           status: HttpStatus.BAD_REQUEST,
