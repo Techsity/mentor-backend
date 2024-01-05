@@ -33,7 +33,7 @@ export class User extends BaseEntity {
   name: string;
 
   @Field({ nullable: true })
-  @Column({ type: 'varchar', length: 10, nullable: true, unique: true })
+  @Column({ type: 'varchar', length: 15, nullable: true, unique: true })
   phone: string;
 
   @Field({ nullable: true })
