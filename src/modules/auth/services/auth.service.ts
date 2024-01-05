@@ -66,7 +66,9 @@ export class AuthService {
       if (error?.code === '23505') {
         throw new CustomResponseMessage(CustomStatusCodes.REG_DUPLICATE_USER);
       }
-      throw new InternalServerErrorException('An Error Occured');
+      throw new InternalServerErrorException(
+        'An Error Occured. Please try again.',
+      );
     }
   }
 
