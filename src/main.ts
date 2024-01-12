@@ -10,6 +10,7 @@ async function bootstrap() {
     '/graphql',
     graphqlUploadExpress({ maxFileSize: 100000000, maxFiles: 10 }),
   );
-  await app.listen(3000);
+  const PORT = Number(process.env.NODE_PORT) || 3000;
+  await app.listen(PORT);
 }
 bootstrap();

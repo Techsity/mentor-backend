@@ -9,11 +9,9 @@ import {
   OneToOne,
   OneToMany,
   JoinTable,
-  JoinColumn,
   ManyToMany,
 } from 'typeorm';
 import { Appointment } from '../../appointment/entities/appointment.entity';
-import { Course } from '../../course/entities/course.entity';
 import { Mentor } from '../../mentor/entities/mentor.entity';
 import { Subscription } from '../../subscription/entities/subscription.entity';
 
@@ -33,7 +31,7 @@ export class User extends BaseEntity {
   name: string;
 
   @Field({ nullable: true })
-  @Column({ type: 'varchar', length: 10, nullable: true, unique: true })
+  @Column({ type: 'varchar', length: 15, nullable: true, unique: true })
   phone: string;
 
   @Field({ nullable: true })

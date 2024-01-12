@@ -1,4 +1,7 @@
+import { Logger } from '@nestjs/common';
 import * as argon2 from 'argon2';
+
+const logger = new Logger('Utils');
 
 export async function hashPassword(password: string): Promise<string> {
   try {
@@ -32,6 +35,11 @@ function customHash(value) {
 }
 
 export function generateOTP(userId: string) {
+  if (!userId) {
+    // logger.error('Provide a user id to generate otp');
+    // return;
+    throw new Error('Provide a user id to generate otp');
+  }
   // Obtain current timestamp
   const timestamp = Date.now();
 
