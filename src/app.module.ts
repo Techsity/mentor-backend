@@ -37,6 +37,7 @@ import { WalletModule } from './modules/wallet/wallet.module';
 import DBConfig from './config/db.config';
 import AppConfig from './config/app.config';
 import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({

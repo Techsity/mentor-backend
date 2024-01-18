@@ -1,23 +1,21 @@
-import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
-import { CurrentUser } from '../../../lib/custom-decorators';
+import { Resolver, Mutation, Args } from '@nestjs/graphql';
 import { CreateLoginInput } from '../dto/login-auth.input';
 import { ResetPasswordInput } from '../dto/reset-password.input';
-import { GqlAuthGuard } from '../guards/gql-auth.guard';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { AuthService } from '../services/auth.service';
 import { Auth } from '../entities/auth.entity';
 import { CreateRegisterInput } from '../dto/register-auth.input';
-import { User } from '../../user/entities/user.entity';
 import {
   BasicMessageResponse,
   LoginResponse,
   RegisterResponse,
 } from '../types/auth.type';
-import { HttpException, HttpStatus, UseGuards } from '@nestjs/common';
+import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 
 @Resolver(() => Auth)
 export class AuthResolver {
   constructor(private readonly authService: AuthService) {}
+
+  private logger = new Logger(AuthResolver.name);
 
   @Mutation(() => RegisterResponse)
   registerUser(
@@ -26,6 +24,8 @@ export class AuthResolver {
     try {
       return this.authService.register(createRegisterInput);
     } catch (error) {
+      const stackTrace = new Error().stack;
+      this.logger.error(error, stackTrace);
       throw new HttpException(
         {
           status: HttpStatus.BAD_REQUEST,
@@ -46,6 +46,8 @@ export class AuthResolver {
     try {
       return this.authService.login(createLoginInput);
     } catch (error) {
+      const stackTrace = new Error().stack;
+      this.logger.error(error, stackTrace);
       throw new HttpException(
         {
           status: HttpStatus.BAD_REQUEST,
@@ -64,6 +66,8 @@ export class AuthResolver {
     try {
       return this.authService.verifyUser(otp);
     } catch (error) {
+      const stackTrace = new Error().stack;
+      this.logger.error(error, stackTrace);
       throw new HttpException(
         {
           status: HttpStatus.BAD_REQUEST,
@@ -82,6 +86,8 @@ export class AuthResolver {
     try {
       return this.authService.createUpdateOtp(userId);
     } catch (error) {
+      const stackTrace = new Error().stack;
+      this.logger.error(error, stackTrace);
       throw new HttpException(
         {
           status: HttpStatus.BAD_REQUEST,
@@ -100,6 +106,8 @@ export class AuthResolver {
     try {
       return this.authService.forgetPassword(email);
     } catch (error) {
+      const stackTrace = new Error().stack;
+      this.logger.error(error, stackTrace);
       throw new HttpException(
         {
           status: HttpStatus.BAD_REQUEST,
@@ -120,6 +128,8 @@ export class AuthResolver {
     try {
       return this.authService.resetPassword(resetData);
     } catch (error) {
+      const stackTrace = new Error().stack;
+      this.logger.error(error, stackTrace);
       throw new HttpException(
         {
           status: HttpStatus.BAD_REQUEST,
