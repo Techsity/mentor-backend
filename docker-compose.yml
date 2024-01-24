@@ -14,16 +14,21 @@ services:
     networks:
       - mentor_network
   app:
-    image: node:20-alpine
+    container_name: mentor-backend-service
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - '${NODE_PORT}:3000'
     volumes:
-      - ./:/usr/app
-    working_dir: /usr/app/
-    command: >
-      sh -c "yarn install && yarn build && yarn run start:prod"
+      - .:/usr/src/app
+    working_dir: /usr/src/app/
+    environment:
+    - NODE_ENV=development
+    # - DATABASE_URL=postgres://username:password@db:5432/dbname
     depends_on:
       - db
+    command: yarn run start:dev
     networks:
       - mentor_network
 
