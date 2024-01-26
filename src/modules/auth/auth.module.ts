@@ -1,5 +1,5 @@
 import { forwardRef, Global, Module } from '@nestjs/common';
-import {SesService} from "../../aws/ses.service";
+import { SesService } from '../../aws/ses.service';
 import { MailerModule } from '../../common/mailer/mailer.module';
 import { MailerService } from '../../common/mailer/mailer.service';
 import { UserModule } from '../user/user.module';
