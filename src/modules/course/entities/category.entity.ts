@@ -22,7 +22,7 @@ export class CourseCategory {
   @Column({ type: 'varchar' })
   title: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'text', nullable: true })
   description: string;
 
   @OneToMany(() => Course, (course) => course.category, {

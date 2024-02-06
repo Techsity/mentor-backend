@@ -42,6 +42,7 @@ export class AuthService {
     return {
       access_token: this.jwtService.sign(payload, {
         secret: `secretKey`,
+        expiresIn: 3600, //1h
       }),
       user,
       is_mentor: user.mentor ? true : false,
@@ -49,17 +50,27 @@ export class AuthService {
   }
   async register(registerPayload: CreateRegisterInput) {
     try {
+      const { email, name, country, phone } = registerPayload;
       const hashedPassword = await hashPassword(registerPayload.password);
       registerPayload.password = hashedPassword;
       const user = new User();
-      user.id = '54160d2c-24d1-4dc7-8373-3dcf8610c418';
+      user.password = hashedPassword;
+      user.email = email;
+      user.name = name;
+      user.country = country;
+      user.phone = phone;
+      await user.save();
+      // user.id = '54160d2c-24d1-4dc7-8373-3dcf8610c418';
       // !
       // const user = await this.userRepository.save(registerPayload);
       // !
 
       // Create OTP
-      await this.createUpdateOtp(user.id);
-      return { message: 'Check your email for otp!', user };
+      // await this.createUpdateOtp(user.id);
+      return {
+        message: 'Check your email for otp!',
+        user: { id: user.id, name: user.name, email: user.email },
+      };
     } catch (error) {
       const stackTrace = new Error().stack;
       this.logger.error(error, stackTrace);
@@ -76,6 +87,7 @@ export class AuthService {
     const user = await this.userRepository.findOne({ where: { id } });
     return user;
   }
+
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.userRepository.findOne({
       where: { email },
