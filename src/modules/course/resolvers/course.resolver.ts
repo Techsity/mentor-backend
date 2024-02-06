@@ -1,12 +1,13 @@
 import { UseGuards } from '@nestjs/common';
-import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, Int, Context } from '@nestjs/graphql';
 import * as GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
 import { GqlAuthGuard } from '../../auth/guards/gql-auth.guard';
 import { CourseDto } from '../dto/course.dto';
 import { CourseService } from '../services/course.service';
 import { Course } from '../entities/course.entity';
 import { CreateCourseInput } from '../dto/create-course.input';
-import { UpdateCourseInput } from '../dto/update-course.input';
+import { User } from 'src/modules/user/entities/user.entity';
+import { CurrentUser } from 'src/lib/custom-decorators';
 
 @Resolver(() => Course)
 export class CourseResolver {
@@ -17,6 +18,7 @@ export class CourseResolver {
   createCourse(
     @Args('createCourseInput') createCourseInput: CreateCourseInput,
     @Args({ name: 'files', type: () => [GraphQLUpload] }) files: any[],
+    @CurrentUser() user: User,
   ) {
     return this.courseService.createCourse(createCourseInput, files);
   }

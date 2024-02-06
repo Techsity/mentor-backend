@@ -33,6 +33,8 @@ type User {
 type CourseType {
   type: String!
   description: String!
+  created_at: DateTime!
+  updated_at: DateTime!
 }
 
 type UserDTO {
@@ -230,6 +232,7 @@ type Query {
   searchCoursesByCategory(take: Float!, skip: Float!, courseId: String!): [CourseDto!]!
   viewCourse(courseId: String!): CourseDto!
   getAllCategories: [CourseCategoryDto!]!
+  getAllCourseTypes: [CourseType!]!
   viewAppointment(appointmentId: String!): AppointmentDTO!
   viewAppointments(statuses: [String!]!): [AppointmentDTO!]!
   viewSubscribedCourses: [SubscriptionDto!]!
@@ -396,7 +399,15 @@ scalar Upload
 
 input CreateCourseCatInput {
   title: String!
-  description: String!
+  description: String
+  type: CourseTypeEnum!
+}
+
+"""Course types"""
+enum CourseTypeEnum {
+  TECHNICAL
+  EDUCATIONAL
+  VOCATIONAL
 }
 
 input CreateAppointmentInput {

@@ -6,9 +6,6 @@ import {
   UpdateDateColumn,
   OneToMany,
   Entity,
-  ManyToOne,
-  JoinColumn,
-  OneToOne,
 } from 'typeorm';
 import { CourseCategory } from './category.entity';
 import { Course } from './course.entity';
@@ -21,7 +18,7 @@ export class CourseType {
   id: string;
 
   @Field()
-  @Column({ type: 'enum', enum: CourseTypeEnum })
+  @Column({ type: 'enum', enum: CourseTypeEnum, unique: true })
   type: string;
 
   @OneToMany(() => CourseCategory, (category) => category.category_type, {
@@ -40,9 +37,11 @@ export class CourseType {
   @Column({ type: 'text', nullable: true })
   description: string;
 
+  @Field()
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
 
+  @Field()
   @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at: Date;
 }

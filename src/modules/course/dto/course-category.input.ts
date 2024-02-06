@@ -1,12 +1,22 @@
 import { Field, InputType } from '@nestjs/graphql';
+import { CourseTypeEnum } from '../enums/course.enums';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 @InputType()
 export class CreateCourseCatInput {
   @Field()
+  @IsString({ message: 'Title is required' })
+  @IsNotEmpty({ message: 'Title is required' })
   title: string;
 
-  @Field()
-  description: string;
+  @Field({ nullable: true })
+  @IsOptional()
+  description?: string;
+
+  @Field(() => CourseTypeEnum)
+  @IsString({ message: 'Type is required' })
+  @IsNotEmpty({ message: 'Type is required' })
+  type: CourseTypeEnum;
 }
 
 @InputType()
