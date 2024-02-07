@@ -63,7 +63,8 @@ export class CourseService {
   async deleteCourse(courseId: string) {
     return this.courseRepository.delete(courseId);
   }
-  async viewMentoCourse() {}
+
+  async viewMentorCourse() {}
   async userMentorCourses(
     skip: number,
     take: number,

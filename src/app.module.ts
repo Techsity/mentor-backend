@@ -37,6 +37,7 @@ import { WalletModule } from './modules/wallet/wallet.module';
 import DBConfig from './config/db.config';
 import AppConfig from './config/app.config';
 import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -45,6 +46,13 @@ import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
       load: [DBConfig, AppConfig],
     }),
     EventEmitterModule.forRoot(),
+    JwtModule.register({
+      secret: 'secretKey', // Use something more secure in production
+      signOptions: {
+        expiresIn: 3600, //1h
+      },
+      global: true,
+    }),
     TypeOrmModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
@@ -65,7 +73,7 @@ import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
           Appointment,
         ],
         synchronize: true,
-        logging: true,
+        logging: !true,
         logger: 'advanced-console',
       }),
       inject: [ConfigService],
