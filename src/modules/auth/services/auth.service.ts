@@ -174,8 +174,8 @@ export class AuthService {
         });
 
         await this.mailService.sendOtpEmail(
-          'oluwasegunstar@gmail.com',
-          'Techsity Mentor',
+          user.email || 'info@techsity.io',
+          user.name || 'Techsity Mentor',
           otp.toString(),
         );
       }
