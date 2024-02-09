@@ -57,7 +57,7 @@ export class MentorService {
   async findLoggedInUser() {
     const authUser = this.request.req.user;
     const user = await this.userRepository.findOne({
-      where: { id: authUser.id },
+      where: { id: authUser.user.id },
     });
     return user;
   }

@@ -81,7 +81,3 @@ registerEnumType(CourseLevel, {
   description: 'Different roles of mentors',
 });
 
-registerEnumType(CourseTypeEnum, {
-  name: 'CourseType',
-  description: 'Different roles of mentors',
-});
