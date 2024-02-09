@@ -50,23 +50,23 @@ export class AuthService {
   }
   async register(registerPayload: CreateRegisterInput) {
     try {
-      const { email, name, country, phone } = registerPayload;
+      // const { email, name, country, phone } = registerPayload;
       const hashedPassword = await hashPassword(registerPayload.password);
       registerPayload.password = hashedPassword;
-      const user = new User();
-      user.password = hashedPassword;
-      user.email = email;
-      user.name = name;
-      user.country = country;
-      user.phone = phone;
-      await user.save();
+      // const user = new User();
+      // user.password = hashedPassword;
+      // user.email = email;
+      // user.name = name;
+      // user.country = country;
+      // user.phone = phone;
+      // await user.save();
       // user.id = '54160d2c-24d1-4dc7-8373-3dcf8610c418';
       // !
-      // const user = await this.userRepository.save(registerPayload);
+      const user = await this.userRepository.save(registerPayload);
       // !
 
       // Create OTP
-      // await this.createUpdateOtp(user.id);
+      await this.createUpdateOtp(user.id);
       return {
         message: 'Check your email for otp!',
         user: { id: user.id, name: user.name, email: user.email },
@@ -149,9 +149,16 @@ export class AuthService {
     const otp = generateOTP(userId);
     const OTP_EXPIRY_DURATION_MS = 10 * 60 * 1000; // 10 minutes in milliseconds
     try {
+      // Verify user
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+      });
+
+      if (!user) throw new HttpException('User not found', 404);
+
       // Find existing OTP for the user
       const existingOtp = await this.authRepository.findOne({
-        where: { user: { id: userId } },
+        where: { user: { id: user.id } },
       });
       if (existingOtp) {
         // Update the existing OTP
@@ -160,22 +167,15 @@ export class AuthService {
         await this.authRepository.save(existingOtp);
       } else {
         // Create a new OTP entry
-        // !
-        // await this.authRepository.save({
-        //   token: otp.toString(),
-        //   user: { id: userId },
-        //   expiry: new Date(Date.now() + OTP_EXPIRY_DURATION_MS),
-        // });
-        // !
-        // const getUser = await this.userRepository.findOne({
-        //   where: { id: userId },
-        // });
-        // if (!getUser) throw new HttpException('User not found', 404);
-        // !
+        await this.authRepository.save({
+          token: otp.toString(),
+          user: { id: user.id },
+          expiry: new Date(Date.now() + OTP_EXPIRY_DURATION_MS),
+        });
 
         await this.mailService.sendOtpEmail(
-          'getUser.email',
-          'getUser.name',
+          'oluwasegunstar@gmail.com',
+          'Techsity Mentor',
           otp.toString(),
         );
       }
