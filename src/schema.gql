@@ -104,7 +104,7 @@ type CourseCategoryDto {
 type ReviewDto {
   type: String!
   content: String!
-  reviewed_by: UserDTO!
+  reviewed_by: String!
   ratings: Float!
 }
 
@@ -154,8 +154,8 @@ type CertificationDTO {
 type MentorDTO {
   id: String!
   user: User!
-  courses: CourseDto
-  reviews: ReviewDto
+  courses: [CourseDto!]
+  reviews: [ReviewDto!]
   about: String!
   role: String!
   skills: [SkillDTO!]!
@@ -243,7 +243,7 @@ type Mutation {
   registerUser(createRegisterInput: CreateRegisterInput!): RegisterResponse!
   loginUser(createLoginInput: CreateLoginInput!): LoginResponse!
   verifyUser(otp: String!): BasicMessageResponse!
-  requestOtp(userId: String!): BasicMessageResponse!
+  requestOtp(email: String!): BasicMessageResponse!
   forgetPassword(email: String!): BasicMessageResponse!
   resetPassword(resetData: ResetPasswordInput!): BasicMessageResponse!
   updateUserProfile(userUpdateInput: UpdateUserInput!): UserDTO!

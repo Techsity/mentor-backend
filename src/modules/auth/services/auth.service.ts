@@ -145,15 +145,16 @@ export class AuthService {
     await this.authRepository.delete({ id: userOtp.id }); // Delete OTP from DB
     return { message: 'User Password Reset Successful.' };
   }
-  async createUpdateOtp(userId: string) {
-    const otp = generateOTP(userId);
+  async createUpdateOtp(email: string) {
+    // @todo: use typeorm entity transactions
+    // Verify user
+    const user = await this.userRepository.findOne({
+      where: { email: email },
+    });
+    const otp = generateOTP(user.id);
+
     const OTP_EXPIRY_DURATION_MS = 10 * 60 * 1000; // 10 minutes in milliseconds
     try {
-      // Verify user
-      const user = await this.userRepository.findOne({
-        where: { id: userId },
-      });
-
       if (!user) throw new HttpException('User not found', 404);
 
       // Find existing OTP for the user
@@ -172,13 +173,13 @@ export class AuthService {
           user: { id: user.id },
           expiry: new Date(Date.now() + OTP_EXPIRY_DURATION_MS),
         });
-
-        await this.mailService.sendOtpEmail(
-          user.email || 'info@techsity.io',
-          user.name || 'Techsity Mentor',
-          otp.toString(),
-        );
       }
+      await this.mailService.sendOtpEmail(
+        user.email || 'info@techsity.io',
+        user.name || 'Techsity Mentor',
+        otp.toString(),
+      );
+
       return { message: 'Otp sent', otp };
     } catch (error) {
       const stackTrace = new Error().stack;
