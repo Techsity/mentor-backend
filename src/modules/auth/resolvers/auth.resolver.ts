@@ -82,9 +82,9 @@ export class AuthResolver {
   }
 
   @Mutation(() => BasicMessageResponse)
-  requestOtp(@Args('userId') userId: string): Promise<any> {
+  requestOtp(@Args('email') email: string): Promise<any> {
     try {
-      return this.authService.createUpdateOtp(userId);
+      return this.authService.createUpdateOtp(email);
     } catch (error) {
       const stackTrace = new Error().stack;
       this.logger.error(error, stackTrace);

@@ -24,7 +24,7 @@ export class ReviewDto {
 
   @IsOptional()
   @Field()
-  reviewed_by?: UserDTO;
+  reviewed_by?: string;
 
   @IsOptional()
   @IsInt()

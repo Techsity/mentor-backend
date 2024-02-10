@@ -80,7 +80,7 @@ export class MentorService {
     try {
       const mentorProfile = await this.mentorRepository.findOne({
         where: { id },
-        relations: ['user'],
+        relations: ['user', 'courses', 'reviews'],
       });
       return mentorProfile;
     } catch (error) {
