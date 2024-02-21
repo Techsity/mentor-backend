@@ -125,22 +125,28 @@ export class CourseService {
       const query = this.courseRepository
         .createQueryBuilder('courses')
         .leftJoinAndSelect('courses.category', 'category')
-        .leftJoinAndSelect('courses.category_type', 'category_type')
+        .leftJoinAndSelect('courses.mentor', 'mentor')
+        .leftJoinAndSelect('mentor.user', 'user')
+        .leftJoinAndSelect('courses.reviews', 'reviews')
+        .leftJoinAndSelect('reviews.reviewed_by', 'reviewed_by')
+        .leftJoinAndSelect('courses.course_type', 'course_type')
         .orderBy('courses.id', 'ASC');
 
       let hasCategoryCondition = false;
       let hasCourseTypeCondition = false;
 
       if (category) {
-        query.where('category.title = :title', { title: category });
+        query.where('category.title = :title', {
+          title: category.charAt(0).toUpperCase() + category.slice(1),
+        });
         hasCategoryCondition = true;
       }
 
       if (courseType) {
         if (hasCategoryCondition) {
-          query.andWhere('category_type.type = :type', { type: courseType });
+          query.andWhere('course_type.type = :type', { type: courseType });
         } else {
-          query.where('category_type.type = :type', { type: courseType });
+          query.where('course_type.type = :type', { type: courseType });
         }
         hasCourseTypeCondition = true;
       }

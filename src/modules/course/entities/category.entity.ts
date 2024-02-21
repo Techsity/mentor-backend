@@ -31,12 +31,12 @@ export class CourseCategory {
   })
   courses: Course[];
 
-  @ManyToOne(() => CourseType, (category_type) => category_type.categories, {
+  @ManyToOne(() => CourseType, (course_type) => course_type.categories, {
     nullable: true,
     onDelete: 'SET NULL',
   })
-  @JoinColumn({ name: 'category_type_id' })
-  category_type: CourseType;
+  @JoinColumn({ name: 'course_type' })
+  course_type: CourseType;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;

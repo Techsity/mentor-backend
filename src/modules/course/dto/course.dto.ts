@@ -12,6 +12,7 @@ import { User } from '../../user/entities/user.entity';
 import { CourseCategory } from '../entities/category.entity';
 import { CourseLevel, CourseTypeEnum } from '../enums/course.enums';
 import { CourseCategoryDto } from './course-category.dto';
+import { CourseTypeDto } from './course-type.dto';
 
 @ObjectType()
 class CourseSection {
@@ -47,6 +48,9 @@ export class CourseDto {
   // course_type: string;
   @Field(() => CourseCategoryDto)
   category: CourseCategoryDto;
+
+  @Field(() => CourseTypeDto)
+  course_type: CourseTypeDto;
 
   @Field(() => [String])
   what_to_learn: string[];

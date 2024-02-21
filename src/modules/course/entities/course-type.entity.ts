@@ -21,13 +21,13 @@ export class CourseType {
   @Column({ type: 'enum', enum: CourseTypeEnum, unique: true })
   type: string;
 
-  @OneToMany(() => CourseCategory, (category) => category.category_type, {
+  @OneToMany(() => CourseCategory, (category) => category.course_type, {
     nullable: true,
     onDelete: 'SET NULL',
   })
   categories: CourseCategory[];
 
-  @OneToMany(() => Course, (course) => course.category_type, {
+  @OneToMany(() => Course, (course) => course.course_type, {
     nullable: true,
     onDelete: 'SET NULL',
   })

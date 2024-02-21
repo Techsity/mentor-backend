@@ -31,7 +31,7 @@ export class Review {
   course?: Course;
 
   @ManyToOne(() => User)
-  @JoinColumn({ name: 'user_id' })
+  @JoinColumn({ name: 'reviewed_by' })
   reviewed_by: User;
 
   @Column()
