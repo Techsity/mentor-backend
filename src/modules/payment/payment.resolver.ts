@@ -16,4 +16,9 @@ export class PaymentResolver {
     );
     return paymentResponse.data.authorization_url;
   }
+
+  @Mutation(() => String)
+  async addNewCard(@Args('email') email: string): Promise<string> {
+    return this.paymentService.addNewCard(email);
+  }
 }
