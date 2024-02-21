@@ -90,10 +90,10 @@ export class MentorDTO {
   @Field()
   user: User;
 
-  @Field(() => CourseDto, { nullable: true })
+  @Field(() => [CourseDto], { nullable: true })
   courses?: CourseDto[];
 
-  @Field(() => ReviewDto, { nullable: true })
+  @Field(() => [ReviewDto], { nullable: true })
   reviews?: ReviewDto[];
 
   @Field()

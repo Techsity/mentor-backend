@@ -93,10 +93,17 @@ enum AppointmentStatus {
   COMPLETED
 }
 
+type CourseTypeDto {
+  type: String!
+  description: String!
+  created_at: DateTime!
+  updated_at: DateTime!
+}
+
 type CourseCategoryDto {
   title: String!
   description: String!
-  category_type: CourseType!
+  course_type: CourseTypeDto!
   created_at: DateTime!
   updated_at: DateTime!
 }
@@ -104,7 +111,7 @@ type CourseCategoryDto {
 type ReviewDto {
   type: String!
   content: String!
-  reviewed_by: UserDTO!
+  reviewed_by: UserDTO
   ratings: Float!
 }
 
@@ -154,8 +161,8 @@ type CertificationDTO {
 type MentorDTO {
   id: String!
   user: User!
-  courses: CourseDto
-  reviews: ReviewDto
+  courses: [CourseDto!]
+  reviews: [ReviewDto!]
   about: String!
   role: String!
   skills: [SkillDTO!]!
@@ -196,6 +203,7 @@ type CourseDto {
   course_level: CourseLevel!
   description: String!
   category: CourseCategoryDto!
+  course_type: CourseTypeDto!
   what_to_learn: [String!]!
   requirements: [String!]!
   price: Float!
@@ -243,7 +251,7 @@ type Mutation {
   registerUser(createRegisterInput: CreateRegisterInput!): RegisterResponse!
   loginUser(createLoginInput: CreateLoginInput!): LoginResponse!
   verifyUser(otp: String!): BasicMessageResponse!
-  requestOtp(userId: String!): BasicMessageResponse!
+  requestOtp(email: String!): BasicMessageResponse!
   forgetPassword(email: String!): BasicMessageResponse!
   resetPassword(resetData: ResetPasswordInput!): BasicMessageResponse!
   updateUserProfile(userUpdateInput: UpdateUserInput!): UserDTO!

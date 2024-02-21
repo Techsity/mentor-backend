@@ -14,7 +14,7 @@ services:
     networks:
       - mentor_network
   app:
-    container_name: mentor-backend-service
+    container_name: mentor-backend-service  
     build:
       context: .
       dockerfile: Dockerfile
