@@ -22,11 +22,11 @@ export class ReviewDto {
   @Field()
   content: string;
 
-  @IsOptional()
-  @Field()
-  reviewed_by?: string;
+  @Field(() => UserDTO, {
+    nullable: true,
+  })
+  reviewed_by?: UserDTO;
 
-  @IsOptional()
   @IsInt()
   @Field()
   ratings: number;

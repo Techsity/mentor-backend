@@ -35,7 +35,7 @@ export class CourseCategoryService {
         await this.courseTypeRepository.save(categoryType);
       }
       const category = new CourseCategory();
-      category.category_type = categoryType;
+      category.course_type = categoryType;
       category.description = description;
       category.title = title;
       await this.categoryRepository.save(category);
@@ -48,7 +48,7 @@ export class CourseCategoryService {
 
   async viewCourseCategories(): Promise<any> {
     return await this.categoryRepository.find({
-      relations: ['category_type'],
+      relations: ['course_type'],
     });
   }
 
