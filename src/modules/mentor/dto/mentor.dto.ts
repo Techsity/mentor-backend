@@ -82,6 +82,13 @@ export class CertificationDTO {
   @Field(() => Date)
   year: Date;
 }
+
+@ObjectType()
+class IMentorFollowerDTO {
+  @Field()
+  name: String;
+}
+
 @ObjectType()
 export class MentorDTO {
   @Field()
@@ -137,4 +144,7 @@ export class MentorDTO {
 
   @Field()
   updated_at: Date;
+
+  @Field(() => [IMentorFollowerDTO])
+  followers: Pick<User, 'name'>[];
 }

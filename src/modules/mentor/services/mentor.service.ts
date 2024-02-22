@@ -61,6 +61,7 @@ export class MentorService {
     });
     return user;
   }
+  
   async getMentorProfile(): Promise<any> {
     try {
       const user = this.request.req.user.user;
