@@ -158,6 +158,10 @@ type CertificationDTO {
   year: DateTime!
 }
 
+type IMentorFollowerDTO {
+  name: String!
+}
+
 type MentorDTO {
   id: String!
   user: User!
@@ -177,6 +181,7 @@ type MentorDTO {
   mentor_verified: Boolean!
   created_at: DateTime!
   updated_at: DateTime!
+  followers: [IMentorFollowerDTO!]!
 }
 
 """Experience level of mentors"""
@@ -264,6 +269,7 @@ type Mutation {
   toggleAppointmentStatus(mentorId: String!, appointmentId: String!, status: String!): AppointmentDTO!
   createReview(createReviewInput: CreateReviewInput!, mentorId: String, courseId: String): ReviewDto!
   subscribeToCourse(courseId: String!): Subscription!
+  initiatePayment(amount: Float!, email: String!): String!
 }
 
 input CreateRegisterInput {

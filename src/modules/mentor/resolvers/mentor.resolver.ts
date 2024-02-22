@@ -1,13 +1,11 @@
 import { UseGuards } from '@nestjs/common';
-import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
 import { GqlAuthGuard } from '../../auth/guards/gql-auth.guard';
 import { MentorService } from '../services/mentor.service';
 import { Mentor } from '../entities/mentor.entity';
 import { CreateMentorInput } from '../dto/create-mentor.input';
 import { UpdateMentorInput } from '../dto/update-mentor.input';
 import { MentorDTO } from '../dto/mentor.dto';
-import { User } from '../../user/entities/user.entity';
-import { CurrentUser } from 'src/lib/custom-decorators';
 
 @Resolver(() => Mentor)
 export class MentorResolver {
@@ -31,7 +29,7 @@ export class MentorResolver {
 
   @UseGuards(GqlAuthGuard)
   @Query(() => MentorDTO)
-  getMentorProfile(@CurrentUser() user: User): Promise<any> {
+  getMentorProfile(): Promise<any> {
     return this.mentorService.getMentorProfile();
   }
 
