@@ -137,4 +137,7 @@ export class MentorDTO {
 
   @Field()
   updated_at: Date;
+
+  @Field(() => User)
+  followers: Pick<User, 'name'>;
 }
