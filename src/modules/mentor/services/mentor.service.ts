@@ -27,6 +27,7 @@ export class MentorService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
   ) {}
+
   async createMentorProfile(
     createMentorInput: CreateMentorInput,
   ): Promise<CreateMentorInput> {
