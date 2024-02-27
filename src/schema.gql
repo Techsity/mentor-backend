@@ -305,8 +305,8 @@ input WorkExperienceInput {
   company: String!
   job_role: String!
   description: String!
-  from_year: DateTime!
-  to_year: DateTime!
+  from_year: String!
+  to_year: String!
 }
 
 input PastProjectsInput {
@@ -319,14 +319,14 @@ input EducationInput {
   school: String!
   credential_type: String!
   course_of_study: String!
-  from_year: DateTime!
-  to_year: DateTime!
+  from_year: String!
+  to_year: String!
 }
 
 input CertificationInput {
   organization: String!
   title: String!
-  year: DateTime!
+  year: String!
 }
 
 input UserAvailabilityInput {
