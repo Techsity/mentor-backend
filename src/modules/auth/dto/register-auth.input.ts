@@ -4,6 +4,7 @@ import { IsEmail, IsNotEmpty, IsNumberString } from 'class-validator';
 @InputType()
 export class CreateRegisterInput {
   @Field()
+  @IsNotEmpty({ message: 'Email is required' })
   @IsEmail({}, { message: 'Email is invalid' })
   email: string;
 

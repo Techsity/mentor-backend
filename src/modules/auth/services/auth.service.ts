@@ -50,21 +50,9 @@ export class AuthService {
   }
   async register(registerPayload: CreateRegisterInput) {
     try {
-      // const { email, name, country, phone } = registerPayload;
       const hashedPassword = await hashPassword(registerPayload.password);
       registerPayload.password = hashedPassword;
-      // const user = new User();
-      // user.password = hashedPassword;
-      // user.email = email;
-      // user.name = name;
-      // user.country = country;
-      // user.phone = phone;
-      // await user.save();
-      // user.id = '54160d2c-24d1-4dc7-8373-3dcf8610c418';
-      // !
       const user = await this.userRepository.save(registerPayload);
-      // !
-
       // Create OTP
       await this.createUpdateOtp(user.id);
       return {
@@ -74,9 +62,11 @@ export class AuthService {
     } catch (error) {
       const stackTrace = new Error().stack;
       this.logger.error(error, stackTrace);
-      if (error?.code === '23505') {
+      if (error?.code === '23505')
         throw new CustomResponseMessage(CustomStatusCodes.REG_DUPLICATE_USER);
-      }
+      if (error.status === HttpStatus.NOT_FOUND)
+        throw new CustomResponseMessage(CustomStatusCodes.USER_NOT_FOUND);
+
       throw new InternalServerErrorException(
         'An Error Occured. Please try again.',
       );
@@ -119,6 +109,7 @@ export class AuthService {
     await this.authRepository.delete({ user: { id: user.id } }); // Delete OTP from DB
     return { message: 'User verified successfully' };
   }
+
   async forgetPassword(email: string) {
     const user: any = await this.userRepository.findOne({ where: { email } });
     if (!user)
@@ -130,6 +121,7 @@ export class AuthService {
       message: 'To reset password, please check your email for otp!',
     };
   }
+
   async resetPassword(resetData: any) {
     const { otp, password } = resetData;
     const userOtp: any = await this.otpVerification(otp);
@@ -145,11 +137,12 @@ export class AuthService {
     await this.authRepository.delete({ id: userOtp.id }); // Delete OTP from DB
     return { message: 'User Password Reset Successful.' };
   }
+
   async createUpdateOtp(email: string) {
     // @todo: use typeorm entity transactions
     // Verify user
     const user = await this.userRepository.findOne({
-      where: { email: email },
+      where: [{ email: email }, { id: email }],
     });
     const otp = generateOTP(user.id);
 
@@ -174,12 +167,12 @@ export class AuthService {
           expiry: new Date(Date.now() + OTP_EXPIRY_DURATION_MS),
         });
       }
+
       await this.mailService.sendOtpEmail(
-        user.email || 'info@techsity.io',
-        user.name || 'Techsity Mentor',
+        user.email,
+        user.name,
         otp.toString(),
       );
-
       return { message: 'Otp sent', otp };
     } catch (error) {
       const stackTrace = new Error().stack;
