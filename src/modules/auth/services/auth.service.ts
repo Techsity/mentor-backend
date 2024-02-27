@@ -141,7 +141,7 @@ export class AuthService {
     const user = await this.userRepository.findOne({
       where: [{ email: email }, { id: email }],
     });
-    const otp = generateOTP(user.id);
+    const otp = generateOTP();
 
     // Todo:
     // const OTP_EXPIRY_DURATION_MS = parseInt(process.env.OTP_EXPIRY_DURATION_MS) *60 * 1000 ;
