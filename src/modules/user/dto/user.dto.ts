@@ -37,6 +37,9 @@ export class UserDTO {
   is_admin: boolean;
 
   @Field()
+  is_mentor: boolean;
+
+  @Field()
   created_at: Date;
 
   @Field()

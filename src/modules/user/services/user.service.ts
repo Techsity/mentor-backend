@@ -37,7 +37,7 @@ export class UserService {
       //     });
       //   });
       // });
-      return userProfile;
+      return { ...userProfile, is_mentor: userProfile.mentor ? true : false };
     } catch (error) {
       throw error;
     }
