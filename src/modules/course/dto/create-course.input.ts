@@ -6,6 +6,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
   isNumber,
 } from 'class-validator';
 
@@ -65,6 +66,7 @@ export class CreateCourseInput {
 
   @IsNotEmpty({ message: "'category' is required" })
   @IsString({ message: "'category' must be a string value" })
+  @IsUUID('all', { message: "Invalid 'category' Id - Expected a uuid" })
   @Field()
   category: string;
 

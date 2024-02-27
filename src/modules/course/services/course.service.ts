@@ -31,9 +31,6 @@ export class CourseService {
     createCourseInput: any,
     files: any[],
   ): Promise<CreateCourseInput> {
-    const { category } = createCourseInput as CreateCourseInput;
-    if (!isUUID(category))
-      throw new BadRequestException("Invalid 'category' Id - Expected a uuid");
     return await this._entityManager.transaction(
       async (transactionalEntityManager) => {
         try {
