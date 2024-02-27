@@ -80,8 +80,8 @@ export class CertificationDTO {
   organization: string;
   @Field()
   title: string;
-  @Field(() => Date)
-  year: Date;
+  @Field()
+  year: string;
 }
 
 @ObjectType()
@@ -146,6 +146,6 @@ export class MentorDTO {
   @Field()
   updated_at: Date;
 
-  @Field(() => [IMentorFollowerDTO])
+  @Field(() => [IMentorFollowerDTO], { nullable: true })
   followers: Pick<User, 'name'>[];
 }

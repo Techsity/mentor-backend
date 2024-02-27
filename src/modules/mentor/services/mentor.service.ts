@@ -1,6 +1,8 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
   Scope,
   UnauthorizedException,
@@ -13,9 +15,11 @@ import { CreateMentorInput } from '../dto/create-mentor.input';
 import { MentorDTO } from '../dto/mentor.dto';
 import { UpdateMentorInput } from '../dto/update-mentor.input';
 import { Mentor } from '../entities/mentor.entity';
+import { CustomResponseMessage, CustomStatusCodes } from 'src/common/constants';
 
 @Injectable({ scope: Scope.REQUEST })
 export class MentorService {
+  private logger = new Logger(MentorService.name);
   constructor(
     @Inject(REQUEST) private readonly request: any,
     @InjectRepository(Mentor)
@@ -34,6 +38,12 @@ export class MentorService {
       });
       return mentorProfile;
     } catch (error) {
+      const stackTrace = new Error().stack;
+      this.logger.error(error, stackTrace);
+      if (error?.code === '23505')
+        throw new BadRequestException(
+          'Mentor profile already exists for this user',
+        );
       throw error;
     }
   }
@@ -61,7 +71,7 @@ export class MentorService {
     });
     return user;
   }
-  
+
   async getMentorProfile(): Promise<any> {
     try {
       const user = this.request.req.user.user;

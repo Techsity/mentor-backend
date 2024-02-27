@@ -70,7 +70,7 @@ type PastProjectsDTO {
 type CertificationDTO {
   organization: String!
   title: String!
-  year: DateTime!
+  year: String!
 }
 
 type IMentorFollowerDTO {
@@ -96,7 +96,7 @@ type MentorDTO {
   mentor_verified: Boolean!
   created_at: DateTime!
   updated_at: DateTime!
-  followers: [IMentorFollowerDTO!]!
+  followers: [IMentorFollowerDTO!]
 }
 
 """Experience level of mentors"""
