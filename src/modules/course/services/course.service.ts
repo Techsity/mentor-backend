@@ -1,4 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MediaService } from 'src/modules/media/media.service';
@@ -9,9 +14,11 @@ import { CreateCourseInput } from '../dto/create-course.input';
 import { UpdateCourseInput } from '../dto/update-course.input';
 import { Course } from '../entities/course.entity';
 import { EntityManager } from 'typeorm';
+import { isUUID } from 'class-validator';
 
 @Injectable()
 export class CourseService {
+  private logger = new Logger(CourseService.name);
   constructor(
     @Inject(REQUEST) private readonly request: any,
     private readonly _entityManager: EntityManager,
@@ -54,6 +61,8 @@ export class CourseService {
           }
           return savedCourse;
         } catch (error) {
+          const stackTrace = new Error().stack;
+          this.logger.error(error, stackTrace);
           throw error;
         }
       },
@@ -61,6 +70,7 @@ export class CourseService {
   }
 
   async deleteCourse(courseId: string) {
+    if (!isUUID(courseId)) throw new BadRequestException('Invalid courseId');
     return this.courseRepository.delete(courseId);
   }
 
