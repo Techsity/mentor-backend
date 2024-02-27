@@ -1,9 +1,15 @@
-import { Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Course } from '../../course/entities/course.entity';
 import { Subscription } from '../entities/subscription.entity';
+import { isUUID } from 'class-validator';
 
 @Injectable()
 export class SubscriptionService {
@@ -14,12 +20,15 @@ export class SubscriptionService {
     @InjectRepository(Course)
     private courseRepository: Repository<Course>,
   ) {}
+
   async subscribeToCourse(courseId: string): Promise<any> {
+    if (!isUUID(courseId)) throw new BadRequestException('Invalid Course ID');
     try {
       const authUser = this.request.req.user.user;
       const course = await this.courseRepository.findOne({
         where: { id: courseId },
       });
+      if (!course) throw new NotFoundException('Course not found');
       const sub = await this.subscriptionRepository.save({
         user: authUser,
         course: course,
@@ -29,6 +38,7 @@ export class SubscriptionService {
       throw error;
     }
   }
+
   async viewSubscribedCourses(): Promise<any> {
     try {
       const authUser = this.request.req.user.user;
@@ -43,10 +53,13 @@ export class SubscriptionService {
   }
 
   async viewSubscribedCourse(courseId: string): Promise<any> {
+    if (!isUUID(courseId)) throw new BadRequestException('Invalid Course ID');
     try {
+      const authUser = this.request.req.user.user;
       const course = await this.subscriptionRepository.findOne({
-        where: { id: courseId },
+        where: { id: courseId, user: { id: authUser.id } },
       });
+      if (!course) throw new NotFoundException('Course not found');
       return course;
     } catch (error) {
       throw error;

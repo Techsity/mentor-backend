@@ -14,6 +14,7 @@ import {
 } from 'typeorm';
 import { Course } from '../../course/entities/course.entity';
 import { User } from '../../user/entities/user.entity';
+import { CourseDto } from 'src/modules/course/dto/course.dto';
 
 @ObjectType()
 @Entity('subscriptions')
@@ -22,6 +23,7 @@ export class Subscription extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Field(() => CourseDto)
   @OneToOne(() => Course, (course) => course.subscriptions)
   @JoinColumn({ name: 'course_id' })
   course: Course;

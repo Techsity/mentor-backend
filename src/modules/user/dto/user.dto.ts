@@ -1,8 +1,4 @@
-import { ObjectType, Field, Float, Int } from '@nestjs/graphql';
-import { CourseDto } from '../../course/dto/course.dto';
-import { Course } from '../../course/entities/course.entity';
-import { MentorDTO } from '../../mentor/dto/mentor.dto';
-import { Mentor } from '../../mentor/entities/mentor.entity';
+import { ObjectType, Field } from '@nestjs/graphql';
 import { Subscription } from '../../subscription/entities/subscription.entity';
 
 @ObjectType()
@@ -16,17 +12,17 @@ export class UserDTO {
   @Field()
   name: string;
 
-  @Field({ nullable: true })
+  @Field()
   phone: string;
 
   @Field({ nullable: true })
   avatar: string | null;
 
-  @Field({ nullable: true })
+  @Field()
   country: string;
 
-  @Field({ nullable: true })
-  subsciptions: Subscription;
+  @Field(() => [Subscription], { nullable: true })
+  subsciptions: Subscription[];
 
   @Field()
   is_online: boolean;

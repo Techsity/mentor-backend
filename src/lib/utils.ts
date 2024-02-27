@@ -54,3 +54,10 @@ export function generateOTP(userId: string) {
 
   return Math.floor(otp).toString();
 }
+
+
+export const generateOtp = (): string => {
+	return Array.from({ length: 6 })
+		.map(() => Math.floor(Math.random() * 10))
+		.join("");
+};

@@ -67,7 +67,7 @@ export class CourseDto {
   @Field(() => [CourseContent])
   course_contents: CourseContent[];
 
-  @Field()
+  @Field(() => MentorDTO)
   mentor: MentorDTO;
 
   @Field(() => [ReviewDto])
@@ -84,4 +84,3 @@ registerEnumType(CourseLevel, {
   name: 'CourseLevel',
   description: 'Different roles of mentors',
 });
-
