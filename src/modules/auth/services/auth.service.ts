@@ -101,10 +101,7 @@ export class AuthService {
       throw new CustomResponseMessage(CustomStatusCodes.OTP_ALREADY_VERIFIED);
     await this.userRepository.update(
       { id },
-      {
-        is_active: true,
-        is_verified: true,
-      },
+      { is_active: true, is_verified: true },
     );
     await this.authRepository.delete({ user: { id: user.id } }); // Delete OTP from DB
     return { message: 'User verified successfully' };
@@ -139,14 +136,17 @@ export class AuthService {
   }
 
   async createUpdateOtp(email: string) {
-    // @todo: use typeorm entity transactions
+    // Todo: use typeorm entity transactions
     // Verify user
     const user = await this.userRepository.findOne({
       where: [{ email: email }, { id: email }],
     });
     const otp = generateOTP(user.id);
 
+    // Todo:
+    // const OTP_EXPIRY_DURATION_MS = parseInt(process.env.OTP_EXPIRY_DURATION_MS) *60 * 1000 ;
     const OTP_EXPIRY_DURATION_MS = 10 * 60 * 1000; // 10 minutes in milliseconds
+
     try {
       if (!user) throw new HttpException('User not found', 404);
 
@@ -200,6 +200,7 @@ export class AuthService {
     const { user } = response;
     return user;
   }
+
   async findLoggedInUser() {
     const authUser = this.request.req.user.user;
     const user = await this.userRepository.findOne({
