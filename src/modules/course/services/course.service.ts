@@ -142,7 +142,7 @@ export class CourseService {
         where: { id: courseId },
         relations: ['category', 'mentor', 'reviews'],
       });
-      if (course) throw new NotFoundException('Course not found');
+      if (!course) throw new NotFoundException('Course not found');
       return course;
     } catch (error) {
       const stack = new Error().stack;
