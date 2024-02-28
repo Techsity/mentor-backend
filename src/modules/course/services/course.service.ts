@@ -140,7 +140,13 @@ export class CourseService {
     try {
       const course = await this.courseRepository.findOne({
         where: { id: courseId },
-        relations: ['category', 'mentor', 'reviews', 'course_type'],
+        relations: [
+          'category',
+          'mentor',
+          'reviews',
+          'course_type',
+          'mentor.user',
+        ],
       });
       if (!course) throw new NotFoundException('Course not found');
       return course;
