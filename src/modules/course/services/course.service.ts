@@ -146,7 +146,9 @@ export class CourseService {
           'reviews',
           'course_type',
           'mentor.user',
-          'mentor.courses',
+          'mentor.courses.category',
+          'mentor.courses.course_type',
+          'mentor.courses.reviews',
         ],
       });
       if (!course) throw new NotFoundException('Course not found');
@@ -199,7 +201,6 @@ export class CourseService {
 
       if (hasCategoryCondition || hasCourseTypeCondition) {
         courses = await query.skip(skip).take(take).getMany();
-
         // If both category and courseType are provided but no courses are found, return an empty array.
         if (
           hasCategoryCondition &&
@@ -212,7 +213,6 @@ export class CourseService {
         // If neither category nor courseType is provided, return all courses.
         courses = await query.skip(skip).take(take).getMany();
       }
-
       // Update the video_url for each course and section
       // courses.forEach((course) => {
       //   course.course_contents.forEach((content) => {
@@ -223,7 +223,6 @@ export class CourseService {
       //     });
       //   });
       // });
-
       return courses;
     } catch (error) {
       throw error;
