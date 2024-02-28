@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
@@ -13,6 +14,7 @@ import { isUUID } from 'class-validator';
 
 @Injectable()
 export class SubscriptionService {
+  private logger = new Logger(SubscriptionService.name);
   constructor(
     @Inject(REQUEST) private readonly request: any,
     @InjectRepository(Subscription)
@@ -35,6 +37,10 @@ export class SubscriptionService {
       });
       return sub;
     } catch (error) {
+      const stack = new Error().stack;
+      this.logger.error(error, stack);
+      if (error?.code === '23505')
+        throw new BadRequestException('Already subscribed');
       throw error;
     }
   }
