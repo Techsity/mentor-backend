@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -137,14 +138,19 @@ export class CourseService {
 
   async viewCourse(courseId: string): Promise<any> {
     try {
-      return this.courseRepository.findOne({
+      const course = await this.courseRepository.findOne({
         where: { id: courseId },
         relations: ['category', 'mentor', 'reviews'],
       });
+      if (course) throw NotFoundException('Course not found');
+      return course;
     } catch (error) {
+      const stack = new Error().stack;
+      this.logger.error(error, stack);
       throw error;
     }
   }
+
   async allCourses(
     skip: number,
     take: number,
