@@ -146,6 +146,7 @@ export class CourseService {
           'reviews',
           'course_type',
           'mentor.user',
+          'mentor.courses',
         ],
       });
       if (!course) throw new NotFoundException('Course not found');
