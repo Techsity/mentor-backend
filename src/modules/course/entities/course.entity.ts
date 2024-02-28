@@ -39,7 +39,7 @@ export class Course extends BaseEntity {
     nullable: true,
     onDelete: 'SET NULL',
   })
-  @JoinColumn({ name: 'course_type' })
+  @JoinColumn({ name: 'course_type_id' })
   course_type: CourseType;
 
   @ManyToOne(() => CourseCategory, (category) => category.courses, {

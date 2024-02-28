@@ -6,9 +6,12 @@ import { CourseType } from '../entities/course-type.entity';
 @ObjectType()
 export class CourseTypeDto {
   @Field()
-  type: string;
+  id: string;
 
   @Field()
+  type: string;
+
+  @Field({ nullable: true })
   description: string;
 
   @Field()

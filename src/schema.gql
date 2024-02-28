@@ -109,15 +109,17 @@ enum MentorExpLevel {
 }
 
 type CourseTypeDto {
+  id: String!
   type: String!
-  description: String!
+  description: String
   created_at: DateTime!
   updated_at: DateTime!
 }
 
 type CourseCategoryDto {
+  id: String!
   title: String!
-  description: String!
+  description: String
   course_type: CourseTypeDto!
   created_at: DateTime!
   updated_at: DateTime!
@@ -135,6 +137,7 @@ type CourseContent {
 }
 
 type CourseDto {
+  id: String!
   title: String!
   course_level: CourseLevel!
   description: String!

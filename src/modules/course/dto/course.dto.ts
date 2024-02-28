@@ -36,6 +36,9 @@ class CourseContent {
 @ObjectType()
 export class CourseDto {
   @Field()
+  id: string;
+
+  @Field()
   title: string;
 
   @Field(() => CourseLevel)

@@ -15,6 +15,7 @@ import { UpdateCourseInput } from '../dto/update-course.input';
 import { Course } from '../entities/course.entity';
 import { EntityManager } from 'typeorm';
 import { isUUID } from 'class-validator';
+import { CourseCategoryService } from './course-category.service';
 
 @Injectable()
 export class CourseService {
@@ -24,49 +25,69 @@ export class CourseService {
     private readonly _entityManager: EntityManager,
     @InjectRepository(Course)
     private courseRepository: Repository<Course>,
+    private categoryService: CourseCategoryService,
     private authService: AuthService,
     private mediaService: MediaService,
   ) {}
-  async createCourse(
-    createCourseInput: any,
-    files: any[],
-  ): Promise<CreateCourseInput> {
-    return await this._entityManager.transaction(
-      async (transactionalEntityManager) => {
-        try {
-          const user = this.request.req.user.user;
-          const savedCourse = await transactionalEntityManager.save(Course, {
-            ...createCourseInput,
-            user,
-          });
-          // If course saved successfully, upload videos
-          if (savedCourse) {
-            const videoPaths = await this.mediaService.uploadVideosConcurrently(
-              user,
-              files,
-            );
 
-            // Update course_contents with video URLs
-            savedCourse.course_contents.forEach((content, contentIndex) => {
-              content.course_sections.forEach((section, sectionIndex) => {
-                // Assuming each section corresponds to a file in the same order
-                const videoPath =
-                  videoPaths[
-                    contentIndex * content.course_sections.length + sectionIndex
-                  ];
-                section.video_url = videoPath;
-              });
+  async createCourse(
+    createCourseInput: CreateCourseInput,
+    files: any[],
+  ): Promise<any> {
+    try {
+      const {
+        category: category_id,
+        course_contents,
+        course_images,
+        course_level,
+        description,
+        price,
+        requirements,
+        title,
+        what_to_learn,
+      } = createCourseInput;
+      const user = this.request.req.user.user;
+      const category = await this.categoryService.findOne(category_id);
+
+      const savedCourse = this.courseRepository.create({
+        title,
+        description,
+        price,
+        mentor: user.mentor,
+        what_to_learn,
+        category,
+        course_contents: course_contents,
+        course_images: course_images,
+        course_level: course_level,
+        course_type: category.course_type,
+        requirements,
+      });
+      // If course saved successfully, upload videos
+      if (savedCourse) {
+        const videoPaths = await this.mediaService.uploadVideosConcurrently(
+          user,
+          files,
+        );
+        // Update course_contents with video URLs
+        if (savedCourse.course_contents && savedCourse.course_contents.length)
+          savedCourse.course_contents.forEach((content, contentIndex) => {
+            content.course_sections.forEach((section, sectionIndex) => {
+              // Assuming each section corresponds to a file in the same order
+              const videoPath =
+                videoPaths[
+                  contentIndex * content.course_sections.length + sectionIndex
+                ];
+              section.video_url = videoPath;
             });
-            await transactionalEntityManager.save(Course, savedCourse);
-          }
-          return savedCourse;
-        } catch (error) {
-          const stackTrace = new Error().stack;
-          this.logger.error(error, stackTrace);
-          throw error;
-        }
-      },
-    );
+          });
+      }
+      await this.courseRepository.save(savedCourse);
+      return savedCourse;
+    } catch (error) {
+      const stackTrace = new Error().stack;
+      this.logger.error(error, stackTrace);
+      throw error;
+    }
   }
 
   async deleteCourse(courseId: string) {

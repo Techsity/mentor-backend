@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -18,6 +22,14 @@ export class CourseCategoryService {
     private courseTypeRepository: Repository<CourseType>,
   ) {}
 
+  async findOne(id: string) {
+    const category = await this.categoryRepository.findOne({
+      where: { id },
+      relations: ['course_type'],
+    });
+    if (!category) throw new BadRequestException('Category not found');
+    return category;
+  }
   async createCategory(
     createCourseCatInput: CreateCourseCatInput,
   ): Promise<CourseCategoryDto> {
