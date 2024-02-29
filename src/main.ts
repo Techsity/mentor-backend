@@ -32,6 +32,7 @@ async function bootstrap() {
       },
     }),
   );
+
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
   // const PORT = process.env.NODE_PORT || 10005;
   const PORT = 3000;
