@@ -90,6 +90,7 @@ type CourseTypeDto {
 type CourseCategoryDto {
   id: String!
   title: String!
+  slug: String!
   description: String
   course_type: CourseTypeDto!
   created_at: DateTime!

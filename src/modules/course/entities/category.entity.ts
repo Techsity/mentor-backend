@@ -12,6 +12,7 @@ import {
 } from 'typeorm';
 import { CourseType } from './course-type.entity';
 import { Course } from './course.entity';
+import slugify from 'slugify';
 
 @ObjectType()
 @Entity('course-categories')
@@ -24,6 +25,9 @@ export class CourseCategory {
 
   @Column({ type: 'text', nullable: true })
   description: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  slug: string;
 
   @OneToMany(() => Course, (course) => course.category, {
     nullable: true,
@@ -43,4 +47,8 @@ export class CourseCategory {
 
   @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at: Date;
+
+  generateSlug() {
+    this.slug = slugify(this.title, { lower: true });
+  }
 }

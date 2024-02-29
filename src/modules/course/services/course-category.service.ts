@@ -50,6 +50,7 @@ export class CourseCategoryService {
       category.course_type = categoryType;
       category.description = description;
       category.title = title;
+      category.generateSlug();
       await this.categoryRepository.save(category);
       return category;
     } catch (error) {

@@ -8,7 +8,7 @@ import {
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MediaService } from 'src/modules/media/media.service';
-import { Repository } from 'typeorm';
+import { FindManyOptions, Repository } from 'typeorm';
 import { AuthService } from '../../auth/services/auth.service';
 import { CourseDto } from '../dto/course.dto';
 import { CreateCourseInput } from '../dto/create-course.input';
@@ -168,51 +168,51 @@ export class CourseService {
   ): Promise<any[]> {
     try {
       const baseURL = 'your_base_URL_here'; // from CDN for videos
-      const query = this.courseRepository
-        .createQueryBuilder('courses')
-        .leftJoinAndSelect('courses.category', 'category')
-        .leftJoinAndSelect('courses.mentor', 'mentor')
-        .leftJoinAndSelect('mentor.user', 'user')
-        .leftJoinAndSelect('courses.reviews', 'reviews')
-        .leftJoinAndSelect('reviews.reviewed_by', 'reviewed_by')
-        .leftJoinAndSelect('courses.course_type', 'course_type')
-        .orderBy('courses.id', 'ASC');
 
-      let hasCategoryCondition = false;
-      let hasCourseTypeCondition = false;
+      const hasCourseTypeCondition = Boolean(courseType && courseType !== '');
+      const hasCategoryCondition = Boolean(category && category !== '');
+      let capitalizedTitle = '';
 
-      if (category) {
-        query.where('category.title = :title', {
-          title: category.charAt(0).toUpperCase() + category.slice(1),
-        });
-        hasCategoryCondition = true;
+      const queryOptions: FindManyOptions<Course> = {
+        skip,
+        take,
+        relations: [
+          'category',
+          'mentor',
+          'reviews',
+          'course_type',
+          'mentor.user',
+          'mentor.courses.category',
+          'mentor.courses.course_type',
+          'mentor.courses.reviews',
+        ],
+      };
+
+      console.log({ hasCategoryCondition, hasCourseTypeCondition });
+
+      if (hasCategoryCondition && hasCourseTypeCondition) {
+        // Capitalize the category to match the one in the db
+        capitalizedTitle = category
+          .split(' ')
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+        queryOptions.where = [
+          { category: { title: capitalizedTitle } },
+          { course_type: { type: courseType } },
+        ];
+      } else if (hasCategoryCondition) {
+        capitalizedTitle = category
+          .split(' ')
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+        console.log({ capitalizedTitle });
+        queryOptions.where = { category: { title: capitalizedTitle } };
+      } else if (hasCourseTypeCondition) {
+        queryOptions.where = { course_type: { type: courseType } };
       }
 
-      if (courseType) {
-        if (hasCategoryCondition) {
-          query.andWhere('course_type.type = :type', { type: courseType });
-        } else {
-          query.where('course_type.type = :type', { type: courseType });
-        }
-        hasCourseTypeCondition = true;
-      }
-
-      let courses = [];
-
-      if (hasCategoryCondition || hasCourseTypeCondition) {
-        courses = await query.skip(skip).take(take).getMany();
-        // If both category and courseType are provided but no courses are found, return an empty array.
-        if (
-          hasCategoryCondition &&
-          hasCourseTypeCondition &&
-          courses.length === 0
-        ) {
-          return [];
-        }
-      } else {
-        // If neither category nor courseType is provided, return all courses.
-        courses = await query.skip(skip).take(take).getMany();
-      }
+      const courses = await this.courseRepository.find(queryOptions);
+      // If neither category nor courseType is provided, return all courses.
       // Update the video_url for each course and section
       // courses.forEach((course) => {
       //   course.course_contents.forEach((content) => {
@@ -225,6 +225,8 @@ export class CourseService {
       // });
       return courses;
     } catch (error) {
+      const stack = new Error().stack;
+      this.logger.error(error, stack);
       throw error;
     }
   }

@@ -9,6 +9,9 @@ export class CourseCategoryDto {
   @Field()
   title: string;
 
+  @Field()
+  slug: string;
+
   @Field({ nullable: true })
   description: string;
 
