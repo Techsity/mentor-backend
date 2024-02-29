@@ -23,9 +23,9 @@ export class UserService {
   async userProfile(): Promise<UserDTO> {
     try {
       const authUser = this.request.req.user.user;
-      const userProfile: any = await this.userRepository.findOne({
+      const userProfile = await this.userRepository.findOne({
         where: { id: authUser.id },
-        relations: ['mentor'],
+        relations: ['mentor', 'subscriptions'],
       });
       // Update the video_url for each course and section
       // userProfile.courses.forEach((course) => {

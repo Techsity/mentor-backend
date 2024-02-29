@@ -22,7 +22,7 @@ export class UserDTO {
   country: string;
 
   @Field(() => [Subscription], { nullable: true })
-  subsciptions: Subscription[];
+  subscriptions: Subscription[];
 
   @Field()
   is_online: boolean;

@@ -81,7 +81,7 @@ export class AuthService {
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.userRepository.findOne({
       where: { email },
-      relations: ['mentor'],
+      relations: ['mentor', 'subscriptions'],
     });
 
     if (!user) return null;
@@ -205,6 +205,7 @@ export class AuthService {
     const authUser = this.request.req.user.user;
     const user = await this.userRepository.findOne({
       where: { id: authUser.id },
+      relations: ['mentor', 'subscriptions'],
     });
     return user;
   }

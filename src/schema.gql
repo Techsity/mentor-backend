@@ -29,7 +29,7 @@ type UserDTO {
   phone: String!
   avatar: String
   country: String!
-  subsciptions: [Subscription!]
+  subscriptions: [Subscription!]
   is_online: Boolean!
   is_active: Boolean!
   is_verified: Boolean!
