@@ -66,6 +66,7 @@ export class CourseCategoryService {
       : {};
     return await this.categoryRepository.find({
       relations: ['course_type'],
+      ...options,
     });
   }
 
