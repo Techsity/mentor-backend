@@ -234,7 +234,7 @@ type Query {
   allCourses(take: Float!, skip: Float!, courseType: String, category: String): [CourseDto!]!
   searchCoursesByCategory(take: Float!, skip: Float!, courseId: String!): [CourseDto!]!
   viewCourse(courseId: String!): CourseDto!
-  getAllCategories: [CourseCategoryDto!]!
+  getAllCategories(courseType: String): [CourseCategoryDto!]!
   getAllCourseTypes: [CourseType!]!
   viewAppointment(appointmentId: String!): AppointmentDTO!
   viewAppointments(statuses: [String!]!): [AppointmentDTO!]!

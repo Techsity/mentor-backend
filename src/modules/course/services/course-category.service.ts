@@ -4,7 +4,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindManyOptions, Repository } from 'typeorm';
 import {
   CreateCourseCatInput,
   UpdateCourseCatInput,
@@ -59,7 +59,11 @@ export class CourseCategoryService {
     }
   }
 
-  async viewCourseCategories(): Promise<any> {
+  async viewCourseCategories(args?: { courseType?: string }): Promise<any> {
+    const { courseType } = args || {};
+    const options: FindManyOptions<CourseCategory> = courseType
+      ? { where: { course_type: { type: courseType } } }
+      : {};
     return await this.categoryRepository.find({
       relations: ['course_type'],
     });
