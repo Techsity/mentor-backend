@@ -175,7 +175,6 @@ export class CourseService {
       const slug = hasCategoryCondition ? slugify(category.toLowerCase()) : '';
 
       const courseRepository = this._entityManager.getRepository(Course);
-      console.log({ courseType, category, slug });
       let query = courseRepository
         .createQueryBuilder('course')
         .leftJoinAndSelect('course.category', 'category')
