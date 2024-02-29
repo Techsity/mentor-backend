@@ -17,6 +17,7 @@ import { Course } from '../entities/course.entity';
 import { EntityManager } from 'typeorm';
 import { isUUID } from 'class-validator';
 import { CourseCategoryService } from './course-category.service';
+import slugify from 'slugify';
 
 @Injectable()
 export class CourseService {
@@ -167,62 +168,55 @@ export class CourseService {
     category: string,
   ): Promise<any[]> {
     try {
-      const baseURL = 'your_base_URL_here'; // from CDN for videos
+      const baseURL = 'your_base_URL_here'; //* from CDN for videos
 
       const hasCourseTypeCondition = Boolean(courseType && courseType !== '');
       const hasCategoryCondition = Boolean(category && category !== '');
-      let capitalizedTitle = '';
+      const slug = hasCategoryCondition ? slugify(category) : '';
 
-      const queryOptions: FindManyOptions<Course> = {
-        skip,
-        take,
-        relations: [
-          'category',
-          'mentor',
-          'reviews',
-          'course_type',
-          'mentor.user',
-          'mentor.courses.category',
-          'mentor.courses.course_type',
-          'mentor.courses.reviews',
-        ],
-      };
+      const courseRepository = this._entityManager.getRepository(Course);
 
-      console.log({ hasCategoryCondition, hasCourseTypeCondition });
+      let query = courseRepository
+        .createQueryBuilder('course')
+        .leftJoinAndSelect('course.category', 'category')
+        .leftJoinAndSelect('course.mentor', 'mentor')
+        .leftJoinAndSelect('course.reviews', 'reviews')
+        .leftJoinAndSelect('course.course_type', 'course_type')
+        .leftJoinAndSelect('mentor.user', 'user')
+        .leftJoinAndSelect('mentor.courses', 'mentor_courses')
+        .leftJoinAndSelect('mentor_courses.category', 'mentor_category')
+        .leftJoinAndSelect('mentor_courses.course_type', 'mentor_course_type')
+        .leftJoinAndSelect('mentor_courses.reviews', 'mentor_reviews')
+        .skip(skip)
+        .take(take);
 
       if (hasCategoryCondition && hasCourseTypeCondition) {
-        // Capitalize the category to match the one in the db
-        capitalizedTitle = category
-          .split(' ')
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ');
-        queryOptions.where = [
-          { category: { title: capitalizedTitle } },
-          { course_type: { type: courseType } },
-        ];
+        query = query
+          .andWhere('course_type.type = :courseType', { courseType })
+          .andWhere('category.slug = :slug', { slug });
       } else if (hasCategoryCondition) {
-        capitalizedTitle = category
-          .split(' ')
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ');
-        console.log({ capitalizedTitle });
-        queryOptions.where = { category: { title: capitalizedTitle } };
+        query = query.andWhere('category.slug = :slug', { slug });
       } else if (hasCourseTypeCondition) {
-        queryOptions.where = { course_type: { type: courseType } };
+        query = query.andWhere('course_type.type = :courseType', {
+          courseType,
+        });
       }
 
-      const courses = await this.courseRepository.find(queryOptions);
-      // If neither category nor courseType is provided, return all courses.
-      // Update the video_url for each course and section
-      // courses.forEach((course) => {
-      //   course.course_contents.forEach((content) => {
-      //     content.course_sections.forEach((section) => {
-      //       if (section.video_url) {
-      //         section.video_url = `${baseURL}/${section.video_url}`;
-      //       }
-      //     });
-      //   });
-      // });
+      const courses = await query.getMany();
+
+      //* Update the video_url for each course and section
+      /*
+        courses.forEach((course) => {
+            course.course_contents.forEach((content) => {
+                content.course_sections.forEach((section) => {
+                    if (section.video_url) {
+                        section.video_url = `${baseURL}/${section.video_url}`;
+                    }
+                });
+            });
+        });
+        */
+
       return courses;
     } catch (error) {
       const stack = new Error().stack;
