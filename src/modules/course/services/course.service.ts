@@ -172,10 +172,10 @@ export class CourseService {
 
       const hasCourseTypeCondition = Boolean(courseType && courseType !== '');
       const hasCategoryCondition = Boolean(category && category !== '');
-      const slug = hasCategoryCondition ? slugify(category) : '';
+      const slug = hasCategoryCondition ? slugify(category.toLowerCase()) : '';
 
       const courseRepository = this._entityManager.getRepository(Course);
-
+      console.log({ courseType, category, slug });
       let query = courseRepository
         .createQueryBuilder('course')
         .leftJoinAndSelect('course.category', 'category')
@@ -190,17 +190,16 @@ export class CourseService {
         .skip(skip)
         .take(take);
 
-      if (hasCategoryCondition && hasCourseTypeCondition) {
+      if (hasCategoryCondition && hasCourseTypeCondition)
         query = query
           .andWhere('course_type.type = :courseType', { courseType })
           .andWhere('category.slug = :slug', { slug });
-      } else if (hasCategoryCondition) {
-        query = query.andWhere('category.slug = :slug', { slug });
-      } else if (hasCourseTypeCondition) {
-        query = query.andWhere('course_type.type = :courseType', {
+      else if (hasCategoryCondition)
+        query = query.where('category.slug = :slug', { slug });
+      else if (hasCourseTypeCondition)
+        query = query.where('course_type.type = :courseType', {
           courseType,
         });
-      }
 
       const courses = await query.getMany();
 
