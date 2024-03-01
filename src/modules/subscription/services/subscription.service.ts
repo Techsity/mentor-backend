@@ -48,8 +48,10 @@ export class SubscriptionService {
 
   async viewSubscribedCourses(): Promise<any> {
     try {
+      const baseURL = 'your_base_URL_here'; //* from CDN for videos
+
       const authUser = this.request.req.user.user;
-      const courses = await this.subscriptionRepository.find({
+      const subscriptions = await this.subscriptionRepository.find({
         where: { user: { id: authUser.id } },
         relations: [
           'course',
@@ -60,7 +62,16 @@ export class SubscriptionService {
           'course.reviews',
         ],
       });
-      return courses;
+      //Todo: Update the video_url for each course and section
+      subscriptions.forEach((sub) =>
+        sub.course.course_contents.forEach((content) => {
+          content.course_sections.forEach((section) => {
+            if (section.video_url)
+              section.video_url = `${baseURL}/${section.video_url}`;
+          });
+        }),
+      );
+      return subscriptions;
     } catch (error) {
       throw error;
     }
