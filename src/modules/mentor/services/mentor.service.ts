@@ -5,17 +5,15 @@ import {
   Logger,
   NotFoundException,
   Scope,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { CreateMentorInput } from '../dto/create-mentor.input';
-import { MentorDTO } from '../dto/mentor.dto';
 import { UpdateMentorInput } from '../dto/update-mentor.input';
 import { Mentor } from '../entities/mentor.entity';
-import { CustomResponseMessage, CustomStatusCodes } from 'src/common/constants';
+import { CustomStatusCodes } from 'src/common/constants';
 
 @Injectable({ scope: Scope.REQUEST })
 export class MentorService {
@@ -92,7 +90,14 @@ export class MentorService {
     try {
       const mentorProfile = await this.mentorRepository.findOne({
         where: { id },
-        relations: ['user', 'courses', 'reviews',"followers"],
+        relations: [
+          'user',
+          'courses',
+          'reviews',
+          'followers',
+          'courses.category',
+          'courses.category.course_type',
+        ],
       });
       return mentorProfile;
     } catch (error) {
@@ -102,13 +107,12 @@ export class MentorService {
 
   async viewAllMentors(): Promise<any[]> {
     try {
-return await this.mentorRepository.find({
-        relations: ['user', "reviews","followers"],
+      return await this.mentorRepository.find({
+        relations: ['user', 'reviews', 'followers'],
       });
-
     } catch (error) {
-      const stack= new Error().stack
-      this.logger.error(error, stack)
+      const stack = new Error().stack;
+      this.logger.error(error, stack);
       throw error;
     }
   }

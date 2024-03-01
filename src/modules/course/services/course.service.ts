@@ -151,6 +151,7 @@ export class CourseService {
           'course_type',
           'mentor.user',
           'mentor.courses.category',
+          'mentor.courses.mentor.user',
           'mentor.courses.course_type',
           'mentor.courses.reviews',
           'mentor.followers',
