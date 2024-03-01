@@ -92,7 +92,7 @@ export class MentorService {
     try {
       const mentorProfile = await this.mentorRepository.findOne({
         where: { id },
-        relations: ['user', 'courses', 'reviews'],
+        relations: ['user', 'courses', 'reviews',"followers"],
       });
       return mentorProfile;
     } catch (error) {
@@ -102,11 +102,13 @@ export class MentorService {
 
   async viewAllMentors(): Promise<any[]> {
     try {
-      const mentorProfile = await this.mentorRepository.find({
-        relations: ['user'],
+return await this.mentorRepository.find({
+        relations: ['user', "reviews","followers"],
       });
-      return mentorProfile;
+
     } catch (error) {
+      const stack= new Error().stack
+      this.logger.error(error, stack)
       throw error;
     }
   }
