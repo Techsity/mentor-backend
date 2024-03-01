@@ -30,8 +30,11 @@ export class SubscriptionService {
       const authUser = this.request.req.user.user;
       const course = await this.courseRepository.findOne({
         where: { id: courseId },
+        relations: ['mentor.user'],
       });
       if (!course) throw new NotFoundException('Course not found');
+      if (course.mentor.user.id === authUser.id)
+        throw new BadRequestException("You can't subscribe to your own course");
       const sub = await this.subscriptionRepository.save({
         user: authUser,
         course: course,
