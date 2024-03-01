@@ -96,6 +96,8 @@ export class MentorService {
           'reviews',
           'followers',
           'courses.category',
+          'courses.mentor.user',
+          'courses.mentor.courses',
           'courses.category.course_type',
         ],
       });
