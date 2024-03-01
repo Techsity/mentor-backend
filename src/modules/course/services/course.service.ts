@@ -97,7 +97,10 @@ export class CourseService {
     return this.courseRepository.delete(courseId);
   }
 
-  async viewMentorCourse() {}
+  async viewMentorCourse() {
+    // Todo
+  }
+
   async userMentorCourses(
     skip: number,
     take: number,
@@ -150,6 +153,7 @@ export class CourseService {
           'mentor.courses.category',
           'mentor.courses.course_type',
           'mentor.courses.reviews',
+          'mentor.followers',
         ],
       });
       if (!course) throw new NotFoundException('Course not found');
