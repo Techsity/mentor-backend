@@ -11,6 +11,7 @@ import { Repository } from 'typeorm';
 import { Course } from '../../course/entities/course.entity';
 import { Subscription } from '../entities/subscription.entity';
 import { isUUID } from 'class-validator';
+import { CustomStatusCodes } from 'src/common/constants';
 
 @Injectable()
 export class SubscriptionService {
@@ -39,7 +40,7 @@ export class SubscriptionService {
     } catch (error) {
       const stack = new Error().stack;
       this.logger.error(error, stack);
-      if (error?.code === '23505')
+      if (error?.code === CustomStatusCodes.DUPLICATE_RESOURCE)
         throw new BadRequestException('Already subscribed');
       throw error;
     }
@@ -50,7 +51,14 @@ export class SubscriptionService {
       const authUser = this.request.req.user.user;
       const courses = await this.subscriptionRepository.find({
         where: { user: { id: authUser.id } },
-        relations: ['course'],
+        relations: [
+          'course',
+          'course.category',
+          'course.course_type',
+          'course.mentor',
+          'course.mentor.user',
+          'course.reviews',
+        ],
       });
       return courses;
     } catch (error) {

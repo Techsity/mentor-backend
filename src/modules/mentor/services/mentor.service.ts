@@ -41,7 +41,7 @@ export class MentorService {
     } catch (error) {
       const stackTrace = new Error().stack;
       this.logger.error(error, stackTrace);
-      if (error?.code === '23505')
+      if (error?.code === CustomStatusCodes.DUPLICATE_RESOURCE)
         throw new BadRequestException(
           'Mentor profile already exists for this user',
         );

@@ -62,7 +62,7 @@ export class AuthService {
     } catch (error) {
       const stackTrace = new Error().stack;
       this.logger.error(error, stackTrace);
-      if (error?.code === '23505')
+      if (error?.code === CustomStatusCodes.DUPLICATE_RESOURCE)
         throw new CustomResponseMessage(CustomStatusCodes.REG_DUPLICATE_USER);
       if (error.status === HttpStatus.NOT_FOUND)
         throw new CustomResponseMessage(CustomStatusCodes.USER_NOT_FOUND);
@@ -113,7 +113,6 @@ export class AuthService {
       throw new CustomResponseMessage(CustomStatusCodes.USER_NOT_FOUND);
     // Create OTP
     await this.createUpdateOtp(user.id);
-    //Todo:  Send Email
     return {
       message: 'To reset password, please check your email for otp!',
     };
@@ -123,14 +122,8 @@ export class AuthService {
     const { otp, password } = resetData;
     const userOtp: any = await this.otpVerification(otp);
     const { id } = userOtp;
-
     const hashedPassword = await hashPassword(password);
-    await this.userRepository.update(
-      { id },
-      {
-        password: hashedPassword,
-      },
-    );
+    await this.userRepository.update({ id }, { password: hashedPassword });
     await this.authRepository.delete({ id: userOtp.id }); // Delete OTP from DB
     return { message: 'User Password Reset Successful.' };
   }
@@ -167,7 +160,7 @@ export class AuthService {
           expiry: new Date(Date.now() + OTP_EXPIRY_DURATION_MS),
         });
       }
-
+      // Send OTP to user email
       await this.mailService.sendOtpEmail(
         user.email,
         user.name,
@@ -190,7 +183,7 @@ export class AuthService {
     }
   }
   async otpVerification(otp: string) {
-    const response: any = await this.authRepository.findOne({
+    const response = await this.authRepository.findOne({
       where: { token: otp },
       relations: ['user'],
     });
