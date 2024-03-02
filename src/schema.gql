@@ -182,14 +182,14 @@ enum MentorExpLevel {
 }
 
 type CourseSection {
-  section_name: String!
-  video_url: String!
-  notes: String!
+  section_name: String
+  video_url: String
+  notes: String
 }
 
 type CourseContent {
-  title: String!
-  course_sections: [CourseSection!]!
+  title: String
+  course_sections: [CourseSection!]
 }
 
 type CourseDto {
@@ -203,7 +203,7 @@ type CourseDto {
   requirements: [String!]!
   price: Float!
   course_images: String!
-  course_contents: [CourseContent!]!
+  course_contents: [CourseContent!]
   mentor: MentorDTO!
   reviews: [ReviewDto!]!
   created_at: DateTime!

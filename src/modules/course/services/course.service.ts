@@ -18,6 +18,7 @@ import { EntityManager } from 'typeorm';
 import { isUUID } from 'class-validator';
 import { CourseCategoryService } from './course-category.service';
 import slugify from 'slugify';
+import * as Upload from 'graphql-upload/Upload.js';
 
 @Injectable()
 export class CourseService {
@@ -34,8 +35,18 @@ export class CourseService {
 
   async createCourse(
     createCourseInput: CreateCourseInput,
-    files: any[],
+    files: Upload[],
   ): Promise<any> {
+    const validVideoExtensions = ['.mp4', '.avi', '.mov', '.wmv'];
+    // Check if uploaded files are videos
+    const resolvedFiles = await Promise.all(files);
+    for (const file of resolvedFiles) {
+      const { filename } = await file;
+      if (!validVideoExtensions.some((ext) => filename.endsWith(ext)))
+        throw new BadRequestException(`${filename} is not a valid video file.`);
+        // Todo: 
+    }
+
     try {
       const {
         category: category_id,
@@ -49,6 +60,7 @@ export class CourseService {
         what_to_learn,
       } = createCourseInput;
       const user = this.request.req.user.user;
+      return createCourseInput;
       const category = await this.categoryService.findOne(category_id);
 
       const savedCourse = this.courseRepository.create({
@@ -64,6 +76,7 @@ export class CourseService {
         course_type: category.course_type,
         requirements,
       });
+
       // If course saved successfully, upload videos
       if (savedCourse) {
         const videoPaths = await this.mediaService.uploadVideosConcurrently(

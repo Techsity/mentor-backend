@@ -7,7 +7,6 @@ import {
   IsOptional,
   IsString,
   IsUUID,
-  isNumber,
 } from 'class-validator';
 
 @InputType()
