@@ -50,21 +50,9 @@ export class AuthService {
   }
   async register(registerPayload: CreateRegisterInput) {
     try {
-      // const { email, name, country, phone } = registerPayload;
       const hashedPassword = await hashPassword(registerPayload.password);
       registerPayload.password = hashedPassword;
-      // const user = new User();
-      // user.password = hashedPassword;
-      // user.email = email;
-      // user.name = name;
-      // user.country = country;
-      // user.phone = phone;
-      // await user.save();
-      // user.id = '54160d2c-24d1-4dc7-8373-3dcf8610c418';
-      // !
       const user = await this.userRepository.save(registerPayload);
-      // !
-
       // Create OTP
       await this.createUpdateOtp(user.id);
       return {
@@ -74,9 +62,11 @@ export class AuthService {
     } catch (error) {
       const stackTrace = new Error().stack;
       this.logger.error(error, stackTrace);
-      if (error?.code === '23505') {
+      if (error?.code === CustomStatusCodes.DUPLICATE_RESOURCE)
         throw new CustomResponseMessage(CustomStatusCodes.REG_DUPLICATE_USER);
-      }
+      if (error.status === HttpStatus.NOT_FOUND)
+        throw new CustomResponseMessage(CustomStatusCodes.USER_NOT_FOUND);
+
       throw new InternalServerErrorException(
         'An Error Occured. Please try again.',
       );
@@ -91,7 +81,7 @@ export class AuthService {
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.userRepository.findOne({
       where: { email },
-      relations: ['mentor'],
+      relations: ['mentor', 'subscriptions'],
     });
 
     if (!user) return null;
@@ -111,49 +101,45 @@ export class AuthService {
       throw new CustomResponseMessage(CustomStatusCodes.OTP_ALREADY_VERIFIED);
     await this.userRepository.update(
       { id },
-      {
-        is_active: true,
-        is_verified: true,
-      },
+      { is_active: true, is_verified: true },
     );
     await this.authRepository.delete({ user: { id: user.id } }); // Delete OTP from DB
     return { message: 'User verified successfully' };
   }
+
   async forgetPassword(email: string) {
     const user: any = await this.userRepository.findOne({ where: { email } });
     if (!user)
       throw new CustomResponseMessage(CustomStatusCodes.USER_NOT_FOUND);
     // Create OTP
     await this.createUpdateOtp(user.id);
-    //Todo:  Send Email
     return {
       message: 'To reset password, please check your email for otp!',
     };
   }
+
   async resetPassword(resetData: any) {
     const { otp, password } = resetData;
     const userOtp: any = await this.otpVerification(otp);
     const { id } = userOtp;
-
     const hashedPassword = await hashPassword(password);
-    await this.userRepository.update(
-      { id },
-      {
-        password: hashedPassword,
-      },
-    );
+    await this.userRepository.update({ id }, { password: hashedPassword });
     await this.authRepository.delete({ id: userOtp.id }); // Delete OTP from DB
     return { message: 'User Password Reset Successful.' };
   }
+
   async createUpdateOtp(email: string) {
-    // @todo: use typeorm entity transactions
+    // Todo: use typeorm entity transactions
     // Verify user
     const user = await this.userRepository.findOne({
-      where: { email: email },
+      where: [{ email: email }, { id: email }],
     });
-    const otp = generateOTP(user.id);
+    const otp = generateOTP();
 
+    // Todo:
+    // const OTP_EXPIRY_DURATION_MS = parseInt(process.env.OTP_EXPIRY_DURATION_MS) *60 * 1000 ;
     const OTP_EXPIRY_DURATION_MS = 10 * 60 * 1000; // 10 minutes in milliseconds
+
     try {
       if (!user) throw new HttpException('User not found', 404);
 
@@ -174,12 +160,12 @@ export class AuthService {
           expiry: new Date(Date.now() + OTP_EXPIRY_DURATION_MS),
         });
       }
+      // Send OTP to user email
       await this.mailService.sendOtpEmail(
-        user.email || 'info@techsity.io',
-        user.name || 'Techsity Mentor',
+        user.email,
+        user.name,
         otp.toString(),
       );
-
       return { message: 'Otp sent', otp };
     } catch (error) {
       const stackTrace = new Error().stack;
@@ -197,7 +183,7 @@ export class AuthService {
     }
   }
   async otpVerification(otp: string) {
-    const response: any = await this.authRepository.findOne({
+    const response = await this.authRepository.findOne({
       where: { token: otp },
       relations: ['user'],
     });
@@ -207,10 +193,12 @@ export class AuthService {
     const { user } = response;
     return user;
   }
+
   async findLoggedInUser() {
     const authUser = this.request.req.user.user;
     const user = await this.userRepository.findOne({
       where: { id: authUser.id },
+      relations: ['mentor', 'subscriptions'],
     });
     return user;
   }
