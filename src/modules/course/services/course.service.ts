@@ -40,69 +40,72 @@ export class CourseService {
     const validVideoExtensions = ['.mp4', '.avi', '.mov', '.wmv'];
     // Check if uploaded files are videos
     const resolvedFiles = await Promise.all(files);
+
     for (const file of resolvedFiles) {
       const { filename } = await file;
       if (!validVideoExtensions.some((ext) => filename.endsWith(ext)))
         throw new BadRequestException(`${filename} is not a valid video file.`);
-        // Todo: 
+      // Todo: set upload limit and check number of videos uploaded
     }
+    console.log({ resolvedFiles });
+    // try {
+    //   const {
+    //     category: category_id,
+    //     course_contents,
+    //     course_images,
+    //     course_level,
+    //     description,
+    //     price,
+    //     requirements,
+    //     title,
+    //     what_to_learn,
+    //   } = createCourseInput;
+    //   const user = this.request.req.user.user;
 
-    try {
-      const {
-        category: category_id,
-        course_contents,
-        course_images,
-        course_level,
-        description,
-        price,
-        requirements,
-        title,
-        what_to_learn,
-      } = createCourseInput;
-      const user = this.request.req.user.user;
-      return createCourseInput;
-      const category = await this.categoryService.findOne(category_id);
+    //   const category = await this.categoryService.findOne(category_id);
 
-      const savedCourse = this.courseRepository.create({
-        title,
-        description,
-        price,
-        mentor: user.mentor,
-        what_to_learn,
-        category,
-        course_contents: course_contents,
-        course_images: course_images,
-        course_level: course_level,
-        course_type: category.course_type,
-        requirements,
-      });
+    //   const savedCourse = this.courseRepository.create({
+    //     title,
+    //     description,
+    //     price,
+    //     mentor: user.mentor,
+    //     what_to_learn,
+    //     category,
+    //     course_contents: course_contents,
+    //     course_images: course_images,
+    //     course_level: course_level,
+    //     course_type: category.course_type,
+    //     requirements,
+    //   });
 
-      // If course saved successfully, upload videos
-      if (savedCourse) {
-        const videoPaths = await this.mediaService.uploadVideosConcurrently(
-          user,
-          files,
-        );
-        // Update course_contents with video URLs
-        if (savedCourse.course_contents && savedCourse.course_contents.length)
-          savedCourse.course_contents.forEach((content, contentIndex) => {
-            content.course_sections.forEach((section, sectionIndex) => {
-              // Assuming each section corresponds to a file in the same order
-              const videoPath =
-                videoPaths[
-                  contentIndex * content.course_sections.length + sectionIndex
-                ];
-              section.video_url = videoPath;
-            });
-          });
-      }
-      await this.courseRepository.save(savedCourse);
-      return savedCourse;
-    } catch (error) {
-      const stackTrace = new Error().stack;
-      this.logger.error(error, stackTrace);
-      throw error;
-    }
+    //   // If course saved successfully, upload videos
+    //   if (savedCourse) {
+    //     const videoPaths = await this.mediaService.uploadVideosConcurrently(
+    //       user,
+    //       files,
+    //     );
+    //     // Update course_contents with video URLs
+    //     if (savedCourse.course_contents && savedCourse.course_contents.length)
+    //       savedCourse.course_contents.forEach((content, contentIndex) => {
+    //         content.course_sections.forEach((section, sectionIndex) => {
+    //           // Assuming each section corresponds to a file in the same order
+    //           const videoPath =
+    //             videoPaths[
+    //               contentIndex * content.course_sections.length + sectionIndex
+    //             ];
+    //           section.video_url = videoPath;
+    //         });
+    //       });
+
+    // // Todo: handle course_images upload
+    //   }
+    //   await this.courseRepository.save(savedCourse);
+    //   return savedCourse;
+    // } catch (error) {
+    //   const stackTrace = new Error().stack;
+    //   this.logger.error(error, stackTrace);
+    //   throw error;
+    // }
   }
 
   async deleteCourse(courseId: string) {

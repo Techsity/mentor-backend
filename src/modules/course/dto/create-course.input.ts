@@ -18,9 +18,9 @@ export class CourseSectionInput {
   })
   section_name: string;
 
-  @IsNotEmpty({ message: "'course_sections.video_url' is required" })
+  @IsNotEmpty({ message: "'course_sections.video_url' cannot be empty" })
   @IsString({ message: "'course_sections.video_url' must be a string value" })
-  @Field()
+  @Field({ nullable: true })
   video_url: string;
 
   @IsNotEmpty({ message: "'course_sections.notes' is required" })

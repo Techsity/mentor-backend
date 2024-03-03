@@ -394,7 +394,7 @@ input CourseContentInput {
 
 input CourseSectionInput {
   section_name: String!
-  video_url: String!
+  video_url: String
   notes: String!
 }
 
