@@ -1,15 +1,18 @@
 import { ObjectType, Field } from '@nestjs/graphql';
-import { Course } from '../entities/course.entity';
-import { Column } from 'typeorm';
-import { CourseType } from '../entities/course-type.entity';
 import { CourseTypeDto } from './course-type.dto';
 
 @ObjectType()
 export class CourseCategoryDto {
   @Field()
+  id: string;
+
+  @Field()
   title: string;
 
   @Field()
+  slug: string;
+
+  @Field({ nullable: true })
   description: string;
 
   @Field(() => CourseTypeDto)

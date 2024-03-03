@@ -1,21 +1,23 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
   Scope,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { CreateMentorInput } from '../dto/create-mentor.input';
-import { MentorDTO } from '../dto/mentor.dto';
 import { UpdateMentorInput } from '../dto/update-mentor.input';
 import { Mentor } from '../entities/mentor.entity';
+import { CustomStatusCodes } from 'src/common/constants';
 
 @Injectable({ scope: Scope.REQUEST })
 export class MentorService {
+  private logger = new Logger(MentorService.name);
   constructor(
     @Inject(REQUEST) private readonly request: any,
     @InjectRepository(Mentor)
@@ -23,6 +25,7 @@ export class MentorService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
   ) {}
+
   async createMentorProfile(
     createMentorInput: CreateMentorInput,
   ): Promise<CreateMentorInput> {
@@ -34,6 +37,12 @@ export class MentorService {
       });
       return mentorProfile;
     } catch (error) {
+      const stackTrace = new Error().stack;
+      this.logger.error(error, stackTrace);
+      if (error?.code === CustomStatusCodes.DUPLICATE_RESOURCE)
+        throw new BadRequestException(
+          'Mentor profile already exists for this user',
+        );
       throw error;
     }
   }
@@ -61,7 +70,7 @@ export class MentorService {
     });
     return user;
   }
-  
+
   async getMentorProfile(): Promise<any> {
     try {
       const user = this.request.req.user.user;
@@ -81,7 +90,16 @@ export class MentorService {
     try {
       const mentorProfile = await this.mentorRepository.findOne({
         where: { id },
-        relations: ['user', 'courses', 'reviews'],
+        relations: [
+          'user',
+          'courses',
+          'reviews',
+          'followers',
+          'courses.category',
+          'courses.mentor.user',
+          'courses.mentor.courses',
+          'courses.category.course_type',
+        ],
       });
       return mentorProfile;
     } catch (error) {
@@ -91,11 +109,12 @@ export class MentorService {
 
   async viewAllMentors(): Promise<any[]> {
     try {
-      const mentorProfile = await this.mentorRepository.find({
-        relations: ['user'],
+      return await this.mentorRepository.find({
+        relations: ['user', 'reviews', 'followers'],
       });
-      return mentorProfile;
     } catch (error) {
+      const stack = new Error().stack;
+      this.logger.error(error, stack);
       throw error;
     }
   }

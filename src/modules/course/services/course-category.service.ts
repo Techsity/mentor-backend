@@ -1,6 +1,10 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindManyOptions, Repository } from 'typeorm';
 import {
   CreateCourseCatInput,
   UpdateCourseCatInput,
@@ -18,6 +22,14 @@ export class CourseCategoryService {
     private courseTypeRepository: Repository<CourseType>,
   ) {}
 
+  async findOne(id: string) {
+    const category = await this.categoryRepository.findOne({
+      where: { id },
+      relations: ['course_type'],
+    });
+    if (!category) throw new BadRequestException('Category not found');
+    return category;
+  }
   async createCategory(
     createCourseCatInput: CreateCourseCatInput,
   ): Promise<CourseCategoryDto> {
@@ -38,6 +50,7 @@ export class CourseCategoryService {
       category.course_type = categoryType;
       category.description = description;
       category.title = title;
+      category.generateSlug();
       await this.categoryRepository.save(category);
       return category;
     } catch (error) {
@@ -46,9 +59,14 @@ export class CourseCategoryService {
     }
   }
 
-  async viewCourseCategories(): Promise<any> {
+  async viewCourseCategories(args?: { courseType?: string }): Promise<any> {
+    const { courseType } = args || {};
+    const options: FindManyOptions<CourseCategory> = courseType
+      ? { where: { course_type: { type: courseType } } }
+      : {};
     return await this.categoryRepository.find({
       relations: ['course_type'],
+      ...options,
     });
   }
 

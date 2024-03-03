@@ -21,8 +21,10 @@ export class CourseCategoryResolver {
   }
 
   @Query(() => [CourseCategoryDto])
-  getAllCategories(): Promise<CourseCategoryDto[]> {
-    return this.courseCategoryService.viewCourseCategories();
+  getAllCategories(
+    @Args('courseType', { nullable: true }) courseType?: string,
+  ): Promise<CourseCategoryDto[]> {
+    return this.courseCategoryService.viewCourseCategories({courseType});
   }
 
   @Query(() => [CourseType])

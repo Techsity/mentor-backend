@@ -5,10 +5,11 @@ import { Column } from 'typeorm';
 @InputType()
 export class CreateLoginInput {
   @Field()
-  @IsEmail()
+  @IsNotEmpty({ message: 'Email is required' })
+  @IsEmail({}, { message: 'Invalid Email' })
   email: string;
 
   @Field()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Password is required' })
   password: string;
 }

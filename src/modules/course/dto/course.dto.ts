@@ -16,25 +16,28 @@ import { CourseTypeDto } from './course-type.dto';
 
 @ObjectType()
 class CourseSection {
-  @Field()
+  @Field({ nullable: true })
   section_name: string;
 
-  @Field()
+  @Field({ nullable: true })
   video_url: string;
 
-  @Field()
+  @Field({ nullable: true })
   notes: string;
 }
 @ObjectType()
 class CourseContent {
-  @Field()
+  @Field({ nullable: true })
   title: string;
-  @Field(() => [CourseSection])
+  @Field(() => [CourseSection], { nullable: true })
   course_sections: CourseSection[];
 }
 
 @ObjectType()
 export class CourseDto {
+  @Field()
+  id: string;
+
   @Field()
   title: string;
 
@@ -64,10 +67,10 @@ export class CourseDto {
   @Field()
   course_images: string;
 
-  @Field(() => [CourseContent])
+  @Field(() => [CourseContent], { nullable: true })
   course_contents: CourseContent[];
 
-  @Field()
+  @Field(() => MentorDTO)
   mentor: MentorDTO;
 
   @Field(() => [ReviewDto])
@@ -84,4 +87,3 @@ registerEnumType(CourseLevel, {
   name: 'CourseLevel',
   description: 'Different roles of mentors',
 });
-

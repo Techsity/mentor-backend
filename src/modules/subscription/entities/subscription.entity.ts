@@ -26,6 +26,10 @@ export class Subscription extends BaseEntity {
   @JoinColumn({ name: 'course_id' })
   course: Course;
 
+  @Field(() => String)
+  @Column()
+  course_id: string;
+
   @ManyToOne(() => User, (user) => user.subscriptions)
   @JoinColumn({ name: 'user_id' })
   user: User;

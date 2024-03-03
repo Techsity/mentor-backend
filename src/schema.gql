@@ -4,6 +4,7 @@
 
 type Subscription {
   id: ID!
+  course_id: String!
   is_completed: Boolean!
   created_at: DateTime!
   updated_at: DateTime!
@@ -13,22 +14,6 @@ type Subscription {
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
 scalar DateTime
-
-type User {
-  id: ID!
-  email: String!
-  name: String!
-  phone: String
-  avatar: String
-  country: String
-  is_online: Boolean!
-  is_active: Boolean!
-  isPremium: Boolean!
-  is_verified: Boolean!
-  is_admin: Boolean!
-  created_at: DateTime!
-  updated_at: DateTime!
-}
 
 type CourseType {
   type: String!
@@ -41,14 +26,15 @@ type UserDTO {
   id: String!
   email: String!
   name: String!
-  phone: String
+  phone: String!
   avatar: String
-  country: String
-  subsciptions: Subscription
+  country: String!
+  subscriptions: [Subscription!]
   is_online: Boolean!
   is_active: Boolean!
   is_verified: Boolean!
   is_admin: Boolean!
+  is_mentor: Boolean!
   created_at: DateTime!
   updated_at: DateTime!
 }
@@ -94,15 +80,18 @@ enum AppointmentStatus {
 }
 
 type CourseTypeDto {
+  id: String!
   type: String!
-  description: String!
+  description: String
   created_at: DateTime!
   updated_at: DateTime!
 }
 
 type CourseCategoryDto {
+  id: String!
   title: String!
-  description: String!
+  slug: String!
+  description: String
   course_type: CourseTypeDto!
   created_at: DateTime!
   updated_at: DateTime!
@@ -155,7 +144,7 @@ type PastProjectsDTO {
 type CertificationDTO {
   organization: String!
   title: String!
-  year: DateTime!
+  year: String!
 }
 
 type IMentorFollowerDTO {
@@ -164,7 +153,7 @@ type IMentorFollowerDTO {
 
 type MentorDTO {
   id: String!
-  user: User!
+  user: UserDTO!
   courses: [CourseDto!]
   reviews: [ReviewDto!]
   about: String!
@@ -181,7 +170,7 @@ type MentorDTO {
   mentor_verified: Boolean!
   created_at: DateTime!
   updated_at: DateTime!
-  followers: [IMentorFollowerDTO!]!
+  followers: [IMentorFollowerDTO!]
 }
 
 """Experience level of mentors"""
@@ -204,6 +193,7 @@ type CourseContent {
 }
 
 type CourseDto {
+  id: String!
   title: String!
   course_level: CourseLevel!
   description: String!
@@ -244,7 +234,7 @@ type Query {
   allCourses(take: Float!, skip: Float!, courseType: String, category: String): [CourseDto!]!
   searchCoursesByCategory(take: Float!, skip: Float!, courseId: String!): [CourseDto!]!
   viewCourse(courseId: String!): CourseDto!
-  getAllCategories: [CourseCategoryDto!]!
+  getAllCategories(courseType: String): [CourseCategoryDto!]!
   getAllCourseTypes: [CourseType!]!
   viewAppointment(appointmentId: String!): AppointmentDTO!
   viewAppointments(statuses: [String!]!): [AppointmentDTO!]!
@@ -320,8 +310,8 @@ input WorkExperienceInput {
   company: String!
   job_role: String!
   description: String!
-  from_year: DateTime!
-  to_year: DateTime!
+  from_year: String!
+  to_year: String!
 }
 
 input PastProjectsInput {
@@ -334,14 +324,14 @@ input EducationInput {
   school: String!
   credential_type: String!
   course_of_study: String!
-  from_year: DateTime!
-  to_year: DateTime!
+  from_year: String!
+  to_year: String!
 }
 
 input CertificationInput {
   organization: String!
   title: String!
-  year: DateTime!
+  year: String!
 }
 
 input UserAvailabilityInput {

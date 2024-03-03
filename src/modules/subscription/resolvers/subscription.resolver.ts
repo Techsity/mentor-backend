@@ -22,6 +22,7 @@ export class SubscriptionResolver {
   async viewSubscribedCourse(@Args('courseId') courseId: string): Promise<any> {
     return this.subscriptionService.viewSubscribedCourse(courseId);
   }
+
   @UseGuards(GqlAuthGuard)
   @Mutation((returns) => Subscription)
   async subscribeToCourse(@Args('courseId') courseId: string): Promise<any> {

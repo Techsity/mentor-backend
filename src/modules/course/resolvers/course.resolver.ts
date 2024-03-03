@@ -8,17 +8,17 @@ import { Course } from '../entities/course.entity';
 import { CreateCourseInput } from '../dto/create-course.input';
 import { User } from 'src/modules/user/entities/user.entity';
 import { CurrentUser } from 'src/lib/custom-decorators';
+import MentorRoleGuard from 'src/modules/auth/guards/mentor-role.guard';
 
 @Resolver(() => Course)
 export class CourseResolver {
   constructor(private readonly courseService: CourseService) {}
 
-  @UseGuards(GqlAuthGuard)
+  @UseGuards(GqlAuthGuard, MentorRoleGuard)
   @Mutation(() => CourseDto)
   createCourse(
     @Args('createCourseInput') createCourseInput: CreateCourseInput,
     @Args({ name: 'files', type: () => [GraphQLUpload] }) files: any[],
-    @CurrentUser() user: User,
   ) {
     return this.courseService.createCourse(createCourseInput, files);
   }
