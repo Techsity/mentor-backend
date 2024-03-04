@@ -18,6 +18,7 @@ import { EntityManager } from 'typeorm';
 import { isUUID } from 'class-validator';
 import { CourseCategoryService } from './course-category.service';
 import slugify from 'slugify';
+import * as Upload from 'graphql-upload/Upload.js';
 
 @Injectable()
 export class CourseService {
@@ -34,62 +35,77 @@ export class CourseService {
 
   async createCourse(
     createCourseInput: CreateCourseInput,
-    files: any[],
+    files: Upload[],
   ): Promise<any> {
-    try {
-      const {
-        category: category_id,
-        course_contents,
-        course_images,
-        course_level,
-        description,
-        price,
-        requirements,
-        title,
-        what_to_learn,
-      } = createCourseInput;
-      const user = this.request.req.user.user;
-      const category = await this.categoryService.findOne(category_id);
+    const validVideoExtensions = ['.mp4', '.avi', '.mov', '.wmv'];
+    // Check if uploaded files are videos
+    const resolvedFiles = await Promise.all(files);
 
-      const savedCourse = this.courseRepository.create({
-        title,
-        description,
-        price,
-        mentor: user.mentor,
-        what_to_learn,
-        category,
-        course_contents: course_contents,
-        course_images: course_images,
-        course_level: course_level,
-        course_type: category.course_type,
-        requirements,
-      });
-      // If course saved successfully, upload videos
-      if (savedCourse) {
-        const videoPaths = await this.mediaService.uploadVideosConcurrently(
-          user,
-          files,
-        );
-        // Update course_contents with video URLs
-        if (savedCourse.course_contents && savedCourse.course_contents.length)
-          savedCourse.course_contents.forEach((content, contentIndex) => {
-            content.course_sections.forEach((section, sectionIndex) => {
-              // Assuming each section corresponds to a file in the same order
-              const videoPath =
-                videoPaths[
-                  contentIndex * content.course_sections.length + sectionIndex
-                ];
-              section.video_url = videoPath;
-            });
-          });
-      }
-      await this.courseRepository.save(savedCourse);
-      return savedCourse;
-    } catch (error) {
-      const stackTrace = new Error().stack;
-      this.logger.error(error, stackTrace);
-      throw error;
+    for (const file of resolvedFiles) {
+      const { filename } = await file;
+      if (!validVideoExtensions.some((ext) => filename.endsWith(ext)))
+        throw new BadRequestException(`${filename} is not a valid video file.`);
+      // Todo: set upload limit and check number of videos uploaded
     }
+    console.log({ resolvedFiles });
+    // try {
+    //   const {
+    //     category: category_id,
+    //     course_contents,
+    //     course_images,
+    //     course_level,
+    //     description,
+    //     price,
+    //     requirements,
+    //     title,
+    //     what_to_learn,
+    //   } = createCourseInput;
+    //   const user = this.request.req.user.user;
+
+    //   const category = await this.categoryService.findOne(category_id);
+
+    //   const savedCourse = this.courseRepository.create({
+    //     title,
+    //     description,
+    //     price,
+    //     mentor: user.mentor,
+    //     what_to_learn,
+    //     category,
+    //     course_contents: course_contents,
+    //     course_images: course_images,
+    //     course_level: course_level,
+    //     course_type: category.course_type,
+    //     requirements,
+    //   });
+
+    //   // If course saved successfully, upload videos
+    //   if (savedCourse) {
+    //     const videoPaths = await this.mediaService.uploadVideosConcurrently(
+    //       user,
+    //       files,
+    //     );
+    //     // Update course_contents with video URLs
+    //     if (savedCourse.course_contents && savedCourse.course_contents.length)
+    //       savedCourse.course_contents.forEach((content, contentIndex) => {
+    //         content.course_sections.forEach((section, sectionIndex) => {
+    //           // Assuming each section corresponds to a file in the same order
+    //           const videoPath =
+    //             videoPaths[
+    //               contentIndex * content.course_sections.length + sectionIndex
+    //             ];
+    //           section.video_url = videoPath;
+    //         });
+    //       });
+
+    // // Todo: handle course_images upload
+    //   }
+    //   await this.courseRepository.save(savedCourse);
+    //   return savedCourse;
+    // } catch (error) {
+    //   const stackTrace = new Error().stack;
+    //   this.logger.error(error, stackTrace);
+    //   throw error;
+    // }
   }
 
   async deleteCourse(courseId: string) {

@@ -14,6 +14,7 @@ import { CreateMentorInput } from '../dto/create-mentor.input';
 import { UpdateMentorInput } from '../dto/update-mentor.input';
 import { Mentor } from '../entities/mentor.entity';
 import { CustomStatusCodes } from 'src/common/constants';
+import { isUUID } from 'class-validator';
 
 @Injectable({ scope: Scope.REQUEST })
 export class MentorService {
@@ -88,6 +89,7 @@ export class MentorService {
 
   async viewMentor(id: string): Promise<any> {
     try {
+      if (!isUUID(id)) throw new BadRequestException('Invalid mentor Id');
       const mentorProfile = await this.mentorRepository.findOne({
         where: { id },
         relations: [
@@ -101,6 +103,8 @@ export class MentorService {
           'courses.category.course_type',
         ],
       });
+      if (!mentorProfile)
+        throw new NotFoundException('Mentor profile not found');
       return mentorProfile;
     } catch (error) {
       throw error;
