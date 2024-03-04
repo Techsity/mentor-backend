@@ -22,6 +22,6 @@ export class CreateRegisterInput {
   phone: string;
 
   @Field()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Password is required'})
   password: string;
 }
