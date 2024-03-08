@@ -11,7 +11,7 @@ RUN yarn --version || npm install -g yarn
 COPY package.json yarn.lock ./
 
 # Install production dependencies.
-RUN yarn install --frozen-lockfile
+RUN yarn install
 
 # Copy local code to the container image.
 COPY . .
@@ -20,4 +20,4 @@ COPY . .
 RUN yarn build
 
 # Run the web service on container startup.
-CMD [ "node", "dist/main" ]
+CMD [ "yarn", "start" ]
