@@ -20,4 +20,4 @@ COPY . .
 RUN yarn build
 
 # Run the web service on container startup.
-CMD [ "yarn", "start" ]
+CMD [ "node", "dist/main" ]
