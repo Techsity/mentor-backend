@@ -26,9 +26,9 @@ export class WorkExperienceDTO {
   job_role: string;
   @Field()
   description: string;
-  @Field(() => Date)
-  from_year: Date;
-  @Field(() => Date)
+  @Field(() => String)
+  from_year: String;
+  @Field(() => String)
   to_year: Date;
 }
 
