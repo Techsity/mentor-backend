@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -37,6 +38,9 @@ export class CourseService {
     createCourseInput: CreateCourseInput,
     files: Upload[],
   ): Promise<any> {
+    const user = this.request.req.user.user;
+    if (!user) throw new UnauthorizedException('Unauthorized');
+
     const validVideoExtensions = ['.mp4', '.avi', '.mov', '.wmv'];
     // Check if uploaded files are videos
     const resolvedFiles = await Promise.all(files);
@@ -60,7 +64,6 @@ export class CourseService {
         title,
         what_to_learn,
       } = createCourseInput;
-      const user = this.request.req.user.user;
 
       const category = await this.categoryService.findOne(category_id);
 
