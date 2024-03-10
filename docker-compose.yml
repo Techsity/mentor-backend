@@ -8,13 +8,13 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - '5432:5432'
+      - 5432:${DB_PORT}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - mentor_network
   app:
-    container_name: mentor-backend-service  
+    container_name: mentor-backend-service
     build:
       context: .
       dockerfile: Dockerfile
@@ -22,9 +22,16 @@ services:
       - '${NODE_PORT}:3000'
     volumes:
       - .:/usr/src/app
+      - /usr/src/app/node_modules
     working_dir: /usr/src/app/
+    env_file: ./.env
     environment:
       - NODE_ENV=development
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - DB_PORT=${DB_PORT}
+      - DB_HOST=db
     # - DATABASE_URL=postgres://username:password@db:5432/dbname
     depends_on:
       - db
