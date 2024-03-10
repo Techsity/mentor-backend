@@ -78,7 +78,7 @@ export class CourseService {
         requirements,
       });
 
-      // If course saved successfully, upload videos
+      // If course created successfully, upload videos
       if (savedCourse) {
         const videoPaths = await this.mediaService.uploadVideosConcurrently(
           user,
@@ -96,8 +96,7 @@ export class CourseService {
               section.video_url = videoPath;
             });
           });
-
-    // Todo: handle course_images upload
+        // Todo: handle course_images upload
       }
       await this.courseRepository.save(savedCourse);
       return savedCourse;

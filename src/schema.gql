@@ -148,7 +148,7 @@ type CertificationDTO {
 }
 
 type IMentorFollowerDTO {
-  name: String!
+  id: String!
 }
 
 type MentorDTO {
