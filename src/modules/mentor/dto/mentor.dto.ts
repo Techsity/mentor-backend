@@ -26,9 +26,9 @@ export class WorkExperienceDTO {
   job_role: string;
   @Field()
   description: string;
-  @Field(() => Date)
+  @Field(() => String)
   from_year: Date;
-  @Field(() => Date)
+  @Field(() => String)
   to_year: Date;
 }
 
@@ -40,9 +40,9 @@ export class EducationDTO {
   credential_type: string;
   @Field()
   course_of_study: string;
-  @Field(() => Date)
+  @Field(() => String)
   from_year: Date;
-  @Field(() => Date)
+  @Field(() => String)
   to_year: Date;
 }
 
