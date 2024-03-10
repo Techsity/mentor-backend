@@ -27,7 +27,7 @@ export class WorkExperienceDTO {
   @Field()
   description: string;
   @Field(() => String)
-  from_year: String;
+  from_year: Date;
   @Field(() => String)
   to_year: Date;
 }
