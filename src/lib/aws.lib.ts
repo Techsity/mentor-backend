@@ -25,6 +25,7 @@ export class UploadToS3 {
       await UploadToS3.instance.upload(params).promise();
       return true;
     } catch (error) {
+      console.log(error);
       return false;
     }
   }

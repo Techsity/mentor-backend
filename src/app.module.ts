@@ -38,6 +38,8 @@ import DBConfig from './config/db.config';
 import AppConfig from './config/app.config';
 import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
 import { JwtModule } from '@nestjs/jwt';
+import { NotificationModule } from './modules/notification/notification.module';
+import { Notification } from './modules/notification/entities/notification.entity';
 
 @Module({
   imports: [
@@ -49,7 +51,8 @@ import { JwtModule } from '@nestjs/jwt';
     JwtModule.register({
       secret: 'secretKey', // Use something more secure in production
       signOptions: {
-        expiresIn: 3600, //1h
+        // expiresIn: 3600, //1h
+        expiresIn: '1d',
       },
       global: true,
     }),
@@ -71,6 +74,7 @@ import { JwtModule } from '@nestjs/jwt';
           Subscription,
           Review,
           Appointment,
+          Notification,
         ],
         synchronize: true,
         logging: !true,
@@ -114,6 +118,7 @@ import { JwtModule } from '@nestjs/jwt';
     WalletModule,
     EventEmitterModule.forRoot(),
     RabbitMQModule,
+    NotificationModule,
   ],
   controllers: [AppController],
 })

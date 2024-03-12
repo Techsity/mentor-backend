@@ -1,5 +1,6 @@
 import { ObjectType, Field } from '@nestjs/graphql';
 import { Subscription } from '../../subscription/entities/subscription.entity';
+import NotificationDto from 'src/modules/notification/dto/notification.dto';
 
 @ObjectType()
 export class UserDTO {
@@ -23,6 +24,9 @@ export class UserDTO {
 
   @Field(() => [Subscription], { nullable: true })
   subscriptions: Subscription[];
+
+  @Field(() => [NotificationDto], { nullable: true })
+  notifications: NotificationDto[];
 
   @Field()
   is_online: boolean;
