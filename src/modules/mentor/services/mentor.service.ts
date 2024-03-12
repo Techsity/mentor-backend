@@ -74,7 +74,7 @@ export class MentorService {
 
   async getMentorProfile(): Promise<any> {
     try {
-      const user = this.request.req.user.user;
+      const user = this.request.req.user;
       const mentorProfile = await this.mentorRepository.findOne({
         where: { user: { id: user.id } },
         relations: ['user', 'courses', 'reviews'],

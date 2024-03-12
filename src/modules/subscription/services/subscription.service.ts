@@ -27,7 +27,7 @@ export class SubscriptionService {
   async subscribeToCourse(courseId: string): Promise<any> {
     if (!isUUID(courseId)) throw new BadRequestException('Invalid Course ID');
     try {
-      const authUser = this.request.req.user.user;
+      const authUser = this.request.req.user;
       const course = await this.courseRepository.findOne({
         where: { id: courseId },
         relations: ['mentor.user'],
@@ -53,7 +53,7 @@ export class SubscriptionService {
     try {
       const baseURL = 'your_base_URL_here'; //* from CDN for videos
 
-      const authUser = this.request.req.user.user;
+      const authUser = this.request.req.user;
       const subscriptions = await this.subscriptionRepository.find({
         where: { user: { id: authUser.id } },
         relations: [
@@ -83,7 +83,7 @@ export class SubscriptionService {
   async viewSubscribedCourse(courseId: string): Promise<any> {
     if (!isUUID(courseId)) throw new BadRequestException('Invalid Course ID');
     try {
-      const authUser = this.request.req.user.user;
+      const authUser = this.request.req.user;
       const course = await this.subscriptionRepository.findOne({
         where: { id: courseId, user: { id: authUser.id } },
       });

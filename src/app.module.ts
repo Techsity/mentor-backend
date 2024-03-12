@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
@@ -40,6 +40,7 @@ import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
 import { JwtModule } from '@nestjs/jwt';
 import { NotificationModule } from './modules/notification/notification.module';
 import { Notification } from './modules/notification/entities/notification.entity';
+import { EventEmitterListeners } from './lib/event-listeners';
 
 @Module({
   imports: [
@@ -120,6 +121,7 @@ import { Notification } from './modules/notification/entities/notification.entit
     RabbitMQModule,
     NotificationModule,
   ],
+  providers: [EventEmitterListeners],
   controllers: [AppController],
 })
 export class AppModule {}

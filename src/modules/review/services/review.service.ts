@@ -52,7 +52,7 @@ export class ReviewService {
           throw new Error('You have already reviewed this Course!');
       }
 
-      const authUser = this.request.req.user.user;
+      const authUser = this.request.req.user;
 
       const mentorProfile = mentorId
         ? await this.mentorRepository.findOne({ where: { id: mentorId } })

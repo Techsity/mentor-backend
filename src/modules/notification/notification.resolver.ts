@@ -18,20 +18,20 @@ export class NotificationResolver {
   constructor(private readonly notificationService: NotificationService) {}
 
   // * This is temporary
-  @UseGuards(GqlAuthGuard)
-  @Mutation(() => NotificationDto)
-  async createNotification(
-    @CurrentUser() user: User,
-    @Args('input') input: CreateNotificationInput,
-  ) {
-    try {
-      return await this.notificationService.create(user, input);
-    } catch (error) {
-      const stack = new Error().stack;
-      this.logger.error(error, stack);
-      throw new InternalServerErrorException('Something went wrong');
-    }
-  }
+  // @UseGuards(GqlAuthGuard)
+  // @Mutation(() => NotificationDto)
+  // async createNotification(
+  //   @CurrentUser() user: User,
+  //   @Args('input') input: CreateNotificationInput,
+  // ) {
+  //   try {
+  //     return await this.notificationService.create(user, input);
+  //   } catch (error) {
+  //     const stack = new Error().stack;
+  //     this.logger.error(error, stack);
+  //     throw new InternalServerErrorException('Something went wrong');
+  //   }
+  // }
 
   @UseGuards(GqlAuthGuard)
   @Query(() => [NotificationDto])

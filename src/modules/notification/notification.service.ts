@@ -23,6 +23,7 @@ export class NotificationService {
   ) {}
 
   async create(
+    // the user recieving the notification
     user: User,
     input: CreateNotificationInput,
   ): Promise<NotificationDto> {
@@ -31,6 +32,9 @@ export class NotificationService {
       user,
     });
     this.notificationGateway.dispatchNotification(notification);
+    // if (user.is_active) {
+    // Send email notification
+    // }
     return notification;
   }
 

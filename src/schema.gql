@@ -281,7 +281,6 @@ type Mutation {
   createAppointment(createAppointmentInput: CreateAppointmentInput!, mentor: String!): AppointmentDTO!
   toggleAppointmentStatus(mentorId: String!, appointmentId: String!, status: String!): AppointmentDTO!
   createReview(createReviewInput: CreateReviewInput!, mentorId: String, courseId: String): ReviewDto!
-  createNotification(input: CreateNotificationInput!): NotificationDto!
   markAllNotificationsAsRead: Boolean!
   readNotification(notificationId: String!): Boolean!
   deleteNotification(notificationId: String!): Boolean!
@@ -449,11 +448,4 @@ input CreateAppointmentInput {
 input CreateReviewInput {
   content: String!
   ratings: Float!
-}
-
-input CreateNotificationInput {
-  title: String!
-  body: String!
-  resourceId: String!
-  resourceType: NotificationResourceType!
 }

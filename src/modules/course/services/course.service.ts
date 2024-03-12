@@ -23,6 +23,9 @@ import * as Upload from 'graphql-upload/Upload.js';
 import { NotificationService } from 'src/modules/notification/notification.service';
 import { User } from 'src/modules/user/entities/user.entity';
 import { NotificationResourceType } from 'src/modules/notification/enums';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import EVENTS from 'src/common/events.constants';
+import { INewCourseNotification } from 'src/modules/notification/types';
 
 @Injectable()
 export class CourseService {
@@ -36,14 +39,14 @@ export class CourseService {
     private authService: AuthService,
     private mediaService: MediaService,
     private notificationService: NotificationService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async createCourse(
     createCourseInput: CreateCourseInput,
     files: Upload[],
   ): Promise<any> {
-    const user = this.request.req.user.user as User;
-    if (!user) throw new UnauthorizedException('Unauthorized');
+    const user = this.request.req.user;
 
     // const validVideoExtensions = ['.mp4', '.avi', '.mov', '.wmv'];
     // // Check if uploaded files are videos
@@ -72,6 +75,7 @@ export class CourseService {
       const category = await this.categoryService.findOne(category_id);
 
       let savedCourse = this.courseRepository.create({
+        id: 'sdifuhs',
         title,
         description,
         price,
@@ -106,16 +110,14 @@ export class CourseService {
       //     // Todo: handle course_images upload
       //   }
       //   console.log({ savedCourse });
-      savedCourse = await this.courseRepository.save(savedCourse);
-      // emit notifications to all followers
-      for (const follower of user.mentor.followers) {
-        this.notificationService.create(user, {
-          body: 'New Test Notification',
-          resourceId: savedCourse.id,
-          resourceType: NotificationResourceType.COURSES,
-          title: 'New Course Published',
-        });
-      }
+      // savedCourse = await this.courseRepository.save(savedCourse);
+      // emit notifications event
+      const eventPayload: INewCourseNotification = {
+        course: savedCourse,
+        followers: user.mentor.followers,
+      };
+      console.log({ user });
+      // this.eventEmitter.emit(EVENTS.NEW_COURSE_NOTIFICATION, eventPayload);
       return savedCourse;
     } catch (error) {
       const stackTrace = new Error().stack;
