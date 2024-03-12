@@ -20,6 +20,9 @@ import { isUUID } from 'class-validator';
 import { CourseCategoryService } from './course-category.service';
 import slugify from 'slugify';
 import * as Upload from 'graphql-upload/Upload.js';
+import { NotificationService } from 'src/modules/notification/notification.service';
+import { User } from 'src/modules/user/entities/user.entity';
+import { NotificationResourceType } from 'src/modules/notification/enums';
 
 @Injectable()
 export class CourseService {
@@ -32,13 +35,14 @@ export class CourseService {
     private categoryService: CourseCategoryService,
     private authService: AuthService,
     private mediaService: MediaService,
+    private notificationService: NotificationService,
   ) {}
 
   async createCourse(
     createCourseInput: CreateCourseInput,
     files: Upload[],
   ): Promise<any> {
-    const user = this.request.req.user.user;
+    const user = this.request.req.user.user as User;
     if (!user) throw new UnauthorizedException('Unauthorized');
 
     // const validVideoExtensions = ['.mp4', '.avi', '.mov', '.wmv'];
@@ -67,7 +71,7 @@ export class CourseService {
 
       const category = await this.categoryService.findOne(category_id);
 
-      const savedCourse = this.courseRepository.create({
+      let savedCourse = this.courseRepository.create({
         title,
         description,
         price,
@@ -102,7 +106,16 @@ export class CourseService {
       //     // Todo: handle course_images upload
       //   }
       //   console.log({ savedCourse });
-      await this.courseRepository.save(savedCourse);
+      savedCourse = await this.courseRepository.save(savedCourse);
+      // emit notifications to all followers
+      for (const follower of user.mentor.followers) {
+        this.notificationService.create(user, {
+          body: 'New Test Notification',
+          resourceId: savedCourse.id,
+          resourceType: NotificationResourceType.COURSES,
+          title: 'New Course Published',
+        });
+      }
       return savedCourse;
     } catch (error) {
       const stackTrace = new Error().stack;

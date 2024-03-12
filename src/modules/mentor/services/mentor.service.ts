@@ -79,6 +79,7 @@ export class MentorService {
         where: { user: { id: user.id } },
         relations: ['user', 'courses', 'reviews'],
       });
+      console.log({ user, mentorProfile });
       if (!mentorProfile)
         throw new NotFoundException(`No Mentor Profile found!`);
       return mentorProfile;

@@ -1,7 +1,6 @@
 import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
 import { NotificationService } from './notification.service';
 import { CreateNotificationInput } from './dto/create-notification.input';
-import { UpdateNotificationInput } from './dto/update-notification.input';
 import NotificationDto from './dto/notification.dto';
 import {
   InternalServerErrorException,
@@ -18,18 +17,21 @@ export class NotificationResolver {
 
   constructor(private readonly notificationService: NotificationService) {}
 
-  // // This is temporary
-  // @UseGuards(GqlAuthGuard)
-  // @Mutation(() => NotificationDto)
-  // async createNotification(@Args('input') input: CreateNotificationInput) {
-  // try {
-  //   return await this.notificationService.create(input);
-  // } catch (error) {
-  //   const stack = new Error().stack;
-  //   this.logger.error(error, stack);
-  //   throw new InternalServerErrorException('Something went wrong');
-  // }
-  // }
+  // * This is temporary
+  @UseGuards(GqlAuthGuard)
+  @Mutation(() => NotificationDto)
+  async createNotification(
+    @CurrentUser() user: User,
+    @Args('input') input: CreateNotificationInput,
+  ) {
+    try {
+      return await this.notificationService.create(user, input);
+    } catch (error) {
+      const stack = new Error().stack;
+      this.logger.error(error, stack);
+      throw new InternalServerErrorException('Something went wrong');
+    }
+  }
 
   @UseGuards(GqlAuthGuard)
   @Query(() => [NotificationDto])

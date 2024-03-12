@@ -1,8 +1,6 @@
 import {
   BadRequestException,
-  Inject,
   Injectable,
-  InternalServerErrorException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
@@ -13,6 +11,7 @@ import { Repository } from 'typeorm';
 import NotificationDto from './dto/notification.dto';
 import { isUUID } from 'class-validator';
 import { User } from '../user/entities/user.entity';
+import { NotificationEventsGateway } from './gateways/notification-events.gateway';
 
 @Injectable()
 export class NotificationService {
@@ -20,6 +19,7 @@ export class NotificationService {
   constructor(
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
+    private notificationGateway: NotificationEventsGateway,
   ) {}
 
   async create(
@@ -30,6 +30,7 @@ export class NotificationService {
       ...input,
       user,
     });
+    this.notificationGateway.dispatchNotification(notification);
     return notification;
   }
 

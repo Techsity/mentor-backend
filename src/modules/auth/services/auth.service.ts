@@ -17,6 +17,7 @@ import { Auth } from '../entities/auth.entity';
 import { CustomResponseMessage, CustomStatusCodes } from 'src/common/constants';
 import { JwtService } from '@nestjs/jwt';
 import { checkPassword, generateOTP, hashPassword } from 'src/lib/utils';
+import { UserDTO } from 'src/modules/user/dto/user.dto';
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -38,14 +39,14 @@ export class AuthService {
     if (!user) throw new Error('Invalid credentials');
     if (!user.is_active) throw new Error('Your account is not active.');
     if (!user.is_verified) throw new Error('Kindly verify your email.');
-    const payload = { email: email, sub: user.id, user: user };
+    const payload = { email: email, sub: user.id, user: { id: user.id } };
     return {
       access_token: this.jwtService.sign(payload, {
         secret: `secretKey`,
         // expiresIn: 3600, //1h
         expiresIn: '1d', //1h
       }),
-      user,
+      user: user as unknown as UserDTO,
       is_mentor: user.mentor ? true : false,
     };
   }
@@ -79,7 +80,7 @@ export class AuthService {
     return user;
   }
 
-  async validateUser(email: string, password: string): Promise<any> {
+  async validateUser(email: string, password: string) {
     const user = await this.userRepository.findOne({
       where: { email },
       relations: ['mentor', 'subscriptions', 'notifications'],
