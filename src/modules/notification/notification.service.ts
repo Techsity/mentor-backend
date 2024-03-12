@@ -33,6 +33,11 @@ export class NotificationService {
     return notification;
   }
 
+  async findAll(userId: string) {
+    if (!isUUID(userId)) throw new BadRequestException('Invalid userId');
+    return await this.notificationRepository.find({ where: { userId } });
+  }
+
   async read(userId: string, notificationId: string): Promise<boolean> {
     if (!isUUID(notificationId))
       throw new BadRequestException('Invalid notificationId');
@@ -43,12 +48,32 @@ export class NotificationService {
     });
     if (!notification) throw new NotFoundException('Notification not found');
     notification.read = true;
-    await this.notificationRepository.update(notification.id, notification);
+    await this.notificationRepository.save(notification);
     return true;
   }
 
-  async findAll(userId: string) {
+  async markAllAsRead(userId: string): Promise<boolean> {
     if (!isUUID(userId)) throw new BadRequestException('Invalid userId');
-    return await this.notificationRepository.find({ where: { userId } });
+    const notifications = await this.notificationRepository.find({
+      where: { userId },
+    });
+    if (notifications.some((n) => !n.read)) {
+      for (const notification of notifications) notification.read = true;
+      await this.notificationRepository.save(notifications);
+    }
+    return true;
+  }
+
+  async delete(userId: string, notificationId: string): Promise<boolean> {
+    if (!isUUID(notificationId))
+      throw new BadRequestException('Invalid notificationId');
+    if (!isUUID(userId)) throw new BadRequestException('Invalid userId');
+    const notification = await this.notificationRepository.findOneBy({
+      id: notificationId,
+      userId,
+    });
+    if (!notification) throw new NotFoundException('Notification not found');
+    await this.notificationRepository.delete(notification.id);
+    return true;
   }
 }

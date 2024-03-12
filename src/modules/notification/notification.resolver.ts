@@ -32,6 +32,19 @@ export class NotificationResolver {
   // }
 
   @UseGuards(GqlAuthGuard)
+  @Query(() => [NotificationDto])
+  // Todo: filter args (take, skip)
+  viewAllNotifications(@CurrentUser() user: User) {
+    return this.notificationService.findAll(user.id);
+  }
+
+  @UseGuards(GqlAuthGuard)
+  @Mutation(() => Boolean)
+  markAllNotificationsAsRead(@CurrentUser() user: User) {
+    return this.notificationService.markAllAsRead(user.id);
+  }
+
+  @UseGuards(GqlAuthGuard)
   @Mutation(() => Boolean)
   async readNotification(
     @Args('notificationId') notificationId: string,
@@ -50,9 +63,20 @@ export class NotificationResolver {
   }
 
   @UseGuards(GqlAuthGuard)
-  @Query(() => [NotificationDto])
-  // Todo: filter args (take, skip)
-  viewAllNotifications(@CurrentUser() user: User) {
-    return this.notificationService.findAll(user.id);
+  @Mutation(() => Boolean)
+  async deleteNotification(
+    @Args('notificationId') notificationId: string,
+    @CurrentUser() user: User,
+  ) {
+    try {
+      return await this.notificationService.delete(user.id, notificationId);
+    } catch (error) {
+      const stack = new Error(error).stack;
+      this.logger.error(error, stack);
+      throw new InternalServerErrorException({
+        message: 'Something went wrong',
+        error: error.message,
+      });
+    }
   }
 }

@@ -271,7 +271,9 @@ type Mutation {
   createReview(createReviewInput: CreateReviewInput!, mentorId: String, courseId: String): ReviewDto!
   subscribeToCourse(courseId: String!): Subscription!
   initiatePayment(amount: Float!, email: String!): String!
+  markAllNotificationsAsRead: Boolean!
   readNotification(notificationId: String!): Boolean!
+  deleteNotification(notificationId: String!): Boolean!
 }
 
 input CreateRegisterInput {
