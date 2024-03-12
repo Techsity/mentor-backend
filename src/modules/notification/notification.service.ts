@@ -12,6 +12,7 @@ import NotificationDto from './dto/notification.dto';
 import { isUUID } from 'class-validator';
 import { User } from '../user/entities/user.entity';
 import { NotificationEventsGateway } from './gateways/notification-events.gateway';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class NotificationService {
@@ -22,12 +23,17 @@ export class NotificationService {
     private notificationGateway: NotificationEventsGateway,
   ) {}
 
+  /**
+   * @param user - The user recieving the notification
+   * @param input - The notification body
+   */
   async create(
-    // the user recieving the notification
     user: User,
     input: CreateNotificationInput,
   ): Promise<NotificationDto> {
-    const notification = await this.notificationRepository.save({
+    // Todo: change method to save
+    const notification = this.notificationRepository.create({
+      id: randomUUID(),
       ...input,
       user,
     });

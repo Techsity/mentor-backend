@@ -1,10 +1,9 @@
 import { Global } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import EVENTS from 'src/common/events.constants';
-import { Course } from 'src/modules/course/entities/course.entity';
 import { NotificationResourceType } from 'src/modules/notification/enums';
 import { NotificationService } from 'src/modules/notification/notification.service';
-import { User } from 'src/modules/user/entities/user.entity';
+import { INewCourseNotification } from 'src/modules/notification/types';
 
 @Global()
 export class EventEmitterListeners {
@@ -14,15 +13,12 @@ export class EventEmitterListeners {
   sendNewCourseNotification({
     followers,
     course,
-  }: {
-    followers: User[];
-    course: Course;
-  }) {
-    console.log({ followers });
+    mentorUser,
+  }: INewCourseNotification) {
     for (const follower of followers) {
       this.notificationService.create(follower, {
         title: 'New Course Published',
-        body: 'New Test Notification Body',
+        body: `${mentorUser.name} has published a new course. Check it out!`,
         resourceId: course.id,
         resourceType: NotificationResourceType.COURSES,
       });

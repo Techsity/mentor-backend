@@ -26,6 +26,7 @@ import { NotificationResourceType } from 'src/modules/notification/enums';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import EVENTS from 'src/common/events.constants';
 import { INewCourseNotification } from 'src/modules/notification/types';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class CourseService {
@@ -46,7 +47,7 @@ export class CourseService {
     createCourseInput: CreateCourseInput,
     files: Upload[],
   ): Promise<any> {
-    const user = this.request.req.user;
+    const user = this.request.req.user as User;
 
     // const validVideoExtensions = ['.mp4', '.avi', '.mov', '.wmv'];
     // // Check if uploaded files are videos
@@ -58,7 +59,7 @@ export class CourseService {
     //     throw new BadRequestException(`${filename} is not a valid video file.`);
     //   // Todo: set upload limit and check number of videos uploaded
     // }
-    console.log({ resolvedFiles: files, createCourseInput });
+    // console.log({ resolvedFiles: files, createCourseInput });
     try {
       const {
         category: category_id,
@@ -75,7 +76,7 @@ export class CourseService {
       const category = await this.categoryService.findOne(category_id);
 
       let savedCourse = this.courseRepository.create({
-        id: 'sdifuhs',
+        id: randomUUID(),
         title,
         description,
         price,
@@ -109,15 +110,16 @@ export class CourseService {
       //       });
       //     // Todo: handle course_images upload
       //   }
+
       //   console.log({ savedCourse });
       // savedCourse = await this.courseRepository.save(savedCourse);
-      // emit notifications event
+      //* emit notifications event
       const eventPayload: INewCourseNotification = {
+        mentorUser: { name: user.name },
         course: savedCourse,
         followers: user.mentor.followers,
       };
-      console.log({ user });
-      // this.eventEmitter.emit(EVENTS.NEW_COURSE_NOTIFICATION, eventPayload);
+      this.eventEmitter.emit(EVENTS.NEW_COURSE_NOTIFICATION, eventPayload);
       return savedCourse;
     } catch (error) {
       const stackTrace = new Error().stack;

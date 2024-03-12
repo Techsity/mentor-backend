@@ -13,14 +13,13 @@ export class UserResolver {
 
   @UseGuards(GqlAuthGuard)
   @Query((returns) => UserDTO)
-  async userProfile(@CurrentUser() user: User): Promise<any> {
+  async userProfile(): Promise<any> {
     return this.userService.userProfile();
   }
 
   @UseGuards(GqlAuthGuard)
   @Mutation((returns) => UserDTO)
   async updateUserProfile(
-    @CurrentUser() user: User,
     @Args('userUpdateInput') userUpdateInput: UpdateUserInput,
   ): Promise<any> {
     return this.userService.updateProfile(userUpdateInput);
