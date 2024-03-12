@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -37,17 +38,20 @@ export class CourseService {
     createCourseInput: CreateCourseInput,
     files: Upload[],
   ): Promise<any> {
-    const validVideoExtensions = ['.mp4', '.avi', '.mov', '.wmv'];
-    // Check if uploaded files are videos
-    const resolvedFiles = await Promise.all(files);
+    const user = this.request.req.user.user;
+    if (!user) throw new UnauthorizedException('Unauthorized');
 
-    for (const file of resolvedFiles) {
-      const { filename } = await file;
-      if (!validVideoExtensions.some((ext) => filename.endsWith(ext)))
-        throw new BadRequestException(`${filename} is not a valid video file.`);
-      // Todo: set upload limit and check number of videos uploaded
-    }
-    console.log({ resolvedFiles });
+    // const validVideoExtensions = ['.mp4', '.avi', '.mov', '.wmv'];
+    // // Check if uploaded files are videos
+    // const resolvedFiles = await Promise.all(files);
+
+    // for (const file of resolvedFiles) {
+    //   const { filename } = await file;
+    //   if (!validVideoExtensions.some((ext) => filename.endsWith(ext)))
+    //     throw new BadRequestException(`${filename} is not a valid video file.`);
+    //   // Todo: set upload limit and check number of videos uploaded
+    // }
+    console.log({ resolvedFiles: files, createCourseInput });
     try {
       const {
         category: category_id,
@@ -60,7 +64,6 @@ export class CourseService {
         title,
         what_to_learn,
       } = createCourseInput;
-      const user = this.request.req.user.user;
 
       const category = await this.categoryService.findOne(category_id);
 
@@ -78,26 +81,27 @@ export class CourseService {
         requirements,
       });
 
-      // If course created successfully, upload videos
-      if (savedCourse) {
-        const videoPaths = await this.mediaService.uploadVideosConcurrently(
-          user,
-          files,
-        );
-        // Update course_contents with video URLs
-        if (savedCourse.course_contents && savedCourse.course_contents.length)
-          savedCourse.course_contents.forEach((content, contentIndex) => {
-            content.course_sections.forEach((section, sectionIndex) => {
-              // Assuming each section corresponds to a file in the same order
-              const videoPath =
-                videoPaths[
-                  contentIndex * content.course_sections.length + sectionIndex
-                ];
-              section.video_url = videoPath;
-            });
-          });
-        // Todo: handle course_images upload
-      }
+      //   // If course created successfully, upload videos
+      //   if (savedCourse) {
+      //     const videoPaths = await this.mediaService.uploadVideosConcurrently(
+      //       user,
+      //       files,
+      //     );
+      //     // Update course_contents with video URLs
+      //     if (savedCourse.course_contents && savedCourse.course_contents.length)
+      //       savedCourse.course_contents.forEach((content, contentIndex) => {
+      //         content.course_sections.forEach((section, sectionIndex) => {
+      //           // Assuming each section corresponds to a file in the same order
+      //           const videoPath =
+      //             videoPaths[
+      //               contentIndex * content.course_sections.length + sectionIndex
+      //             ];
+      //           section.video_url = videoPath;
+      //         });
+      //       });
+      //     // Todo: handle course_images upload
+      //   }
+      //   console.log({ savedCourse });
       await this.courseRepository.save(savedCourse);
       return savedCourse;
     } catch (error) {
@@ -158,7 +162,7 @@ export class CourseService {
   async viewCourse(courseId: string): Promise<any> {
     try {
       const course = await this.courseRepository.findOne({
-        where: { id: courseId },
+        where: { id: courseId, is_draft: false, is_approved: true },
         relations: [
           'category',
           'mentor',
@@ -172,7 +176,8 @@ export class CourseService {
           'mentor.followers',
         ],
       });
-      if (!course) throw new NotFoundException('Course not found');
+      if (!course)
+        throw new NotFoundException('Course currently not available');
       return course;
     } catch (error) {
       const stack = new Error().stack;
@@ -219,6 +224,9 @@ export class CourseService {
         query = query.where('course_type.type = :courseType', {
           courseType,
         });
+      query = query
+        .andWhere('course.is_draft = :isDraft', { isDraft: false })
+        .andWhere('course.is_approved = :isApproved', { isApproved: true });
 
       const courses = await query.getMany();
 
@@ -252,6 +260,8 @@ export class CourseService {
       return this.courseRepository
         .createQueryBuilder('courses')
         .where('courses.category = :category', { category: categoryId })
+        .andWhere('course.is_draft = :isDraft', { isDraft: false })
+        .andWhere('course.is_approved = :isApproved', { isApproved: true })
         .leftJoinAndSelect('courses.user', 'user')
         .orderBy('courses.id', 'ASC')
         .skip(skip)
