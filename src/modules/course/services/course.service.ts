@@ -112,14 +112,14 @@ export class CourseService {
       //   }
 
       //   console.log({ savedCourse });
-      // savedCourse = await this.courseRepository.save(savedCourse);
+      savedCourse = await this.courseRepository.save(savedCourse);
       //* emit notifications event
       const eventPayload: INewCourseNotification = {
         mentorUser: { name: user.name },
         course: savedCourse,
         followers: user.mentor.followers,
       };
-      this.eventEmitter.emit(EVENTS.NEW_COURSE_NOTIFICATION, eventPayload);
+      this.eventEmitter.emit(EVENTS.NEW_COURSE, eventPayload);
       return savedCourse;
     } catch (error) {
       const stackTrace = new Error().stack;

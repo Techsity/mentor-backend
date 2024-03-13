@@ -31,16 +31,18 @@ export class NotificationService {
     user: User,
     input: CreateNotificationInput,
   ): Promise<NotificationDto> {
-    // Todo: change method to save
-    const notification = this.notificationRepository.create({
-      id: randomUUID(),
+    const notification = await this.notificationRepository.save({
       ...input,
       user,
     });
-    this.notificationGateway.dispatchNotification(notification);
     // if (user.is_active) {
     // Send email notification
     // }
+    this.notificationGateway.dispatchNotification(notification);
+    this.logger.log(
+      `Notification created for user ${user.id}`,
+      `Notification event fired`,
+    );
     return notification;
   }
 

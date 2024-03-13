@@ -9,7 +9,7 @@ import { INewCourseNotification } from 'src/modules/notification/types';
 export class EventEmitterListeners {
   constructor(private notificationService: NotificationService) {}
 
-  @OnEvent(EVENTS.NEW_COURSE_NOTIFICATION)
+  @OnEvent(EVENTS.NEW_COURSE)
   sendNewCourseNotification({
     followers,
     course,
