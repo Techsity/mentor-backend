@@ -36,6 +36,7 @@ export class NotificationService {
       user,
     });
     // if (user.is_active) {
+    // Todo: add to create email service queue
     // Send email notification
     // }
     this.notificationGateway.dispatchNotification(notification);
