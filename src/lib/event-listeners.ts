@@ -18,7 +18,7 @@ export class EventEmitterListeners {
     for (const follower of followers) {
       this.notificationService.create(follower, {
         title: 'New Course Published',
-        body: `${mentorUser.name} has published a new course. Check it out!`,
+        body: `A mentor you follow (${mentorUser.name}) has published a new course. Check it out!`,
         resourceId: course.id,
         resourceType: NotificationResourceType.COURSES,
       });
