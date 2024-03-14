@@ -13,7 +13,7 @@ import MentorRoleGuard from 'src/modules/auth/guards/mentor-role.guard';
 export class CourseResolver {
   constructor(private readonly courseService: CourseService) {}
 
-  // @UseGuards(GqlAuthGuard, MentorRoleGuard)
+  @UseGuards(GqlAuthGuard, MentorRoleGuard)
   @Mutation(() => CourseDto)
   createCourse(
     @Args('createCourseInput') createCourseInput: CreateCourseInput,

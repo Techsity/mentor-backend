@@ -42,7 +42,8 @@ export class AuthService {
     return {
       access_token: this.jwtService.sign(payload, {
         secret: `secretKey`,
-        expiresIn: 3600, //1h
+        // expiresIn: 3600, //1h
+        expiresIn: '1d', //1h
       }),
       user,
       is_mentor: user.mentor ? true : false,

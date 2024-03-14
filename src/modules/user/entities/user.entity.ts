@@ -14,6 +14,7 @@ import {
 import { Appointment } from '../../appointment/entities/appointment.entity';
 import { Mentor } from '../../mentor/entities/mentor.entity';
 import { Subscription } from '../../subscription/entities/subscription.entity';
+import { Notification } from 'src/modules/notification/entities/notification.entity';
 
 @ObjectType()
 @Entity('users')
@@ -73,6 +74,9 @@ export class User extends BaseEntity {
 
   @OneToMany(() => Subscription, (subscription) => subscription.user)
   subscriptions: Subscription[];
+
+  @OneToMany(() => Notification, (notification) => notification.user)
+  notifications: Notification[];
 
   @ManyToMany(() => Mentor, (mentor) => mentor.followers)
   @JoinTable()
