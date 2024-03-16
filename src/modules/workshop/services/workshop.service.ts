@@ -39,13 +39,13 @@ export class WorkshopService {
         throw new BadRequestException(
           `Invalid startTime in workshop content ${
             index + 1
-          } | Expected a timestring value (23:00:00)`,
+          } | Expected a timestring value (00:00:00)`,
         );
       if (!isTimeString(endTime))
         throw new BadRequestException(
           `Invalid endTime in workshop content ${
             index + 1
-          } | Expected a timestring value (23:00:00)`,
+          } | Expected a timestring value (00:00:00)`,
         );
       // Check if startTime is greater than endTime
       const startTimeParts = content.startTime
@@ -99,8 +99,7 @@ export class WorkshopService {
     try {
       const category = await this.categoryService.findOne(category_id);
 
-      let workshop = this.workshopRepository.create({
-        id: randomUUID(),
+      return await this.workshopRepository.save({
         category,
         contents,
         description,
@@ -112,7 +111,6 @@ export class WorkshopService {
         scheduled_date,
         title,
       });
-      return workshop;
     } catch (error: any) {
       const stackTrace = new Error().stack;
       this.logger.error(error, stackTrace);
