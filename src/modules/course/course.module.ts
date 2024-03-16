@@ -29,6 +29,6 @@ import { NotificationModule } from '../notification/notification.module';
     CourseCategoryResolver,
     CourseCategoryService,
   ],
-  exports: [TypeOrmModule.forFeature([Course])],
+  exports: [TypeOrmModule.forFeature([Course]), CourseCategoryService],
 })
 export class CourseModule {}

@@ -6,6 +6,7 @@ import { User } from '../../user/entities/user.entity';
 import { SubscriptionDto } from '../dto/subscription.dto';
 import { SubscriptionService } from '../services/subscription.service';
 import { Subscription } from '../entities/subscription.entity';
+import { SubscriptionType } from '../enums/subscription.enum';
 
 @Resolver()
 export class SubscriptionResolver {
@@ -13,19 +14,37 @@ export class SubscriptionResolver {
 
   @UseGuards(GqlAuthGuard)
   @Query((returns) => [SubscriptionDto])
-  async viewSubscribedCourses(): Promise<any> {
-    return this.subscriptionService.viewSubscribedCourses();
+  async viewSubscriptions(
+    @Args({ name: 'resourceType', type: () => SubscriptionType })
+    resourceType: SubscriptionType,
+  ): Promise<any> {
+    return this.subscriptionService.viewSubscriptions(resourceType);
   }
 
   @UseGuards(GqlAuthGuard)
   @Query((returns) => Subscription)
-  async viewSubscribedCourse(@Args('courseId') courseId: string): Promise<any> {
-    return this.subscriptionService.viewSubscribedCourse(courseId);
+  async viewSubscription(
+    @Args('resourceId') resourceId: string,
+    @Args({ name: 'resourceType', type: () => SubscriptionType })
+    subscriptionType: SubscriptionType,
+  ): Promise<any> {
+    return this.subscriptionService.viewSubscription(
+      resourceId,
+      subscriptionType,
+    );
   }
 
   @UseGuards(GqlAuthGuard)
   @Mutation((returns) => Subscription)
   async subscribeToCourse(@Args('courseId') courseId: string): Promise<any> {
     return this.subscriptionService.subscribeToCourse(courseId);
+  }
+
+  @UseGuards(GqlAuthGuard)
+  @Mutation((returns) => Subscription)
+  async subscribeToWorkshop(
+    @Args('workshopId') workshopId: string,
+  ): Promise<any> {
+    return this.subscriptionService.subscribeToWorkshop(workshopId);
   }
 }

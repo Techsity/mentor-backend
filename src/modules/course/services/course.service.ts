@@ -43,10 +43,7 @@ export class CourseService {
     private eventEmitter: EventEmitter2,
   ) {}
 
-  async createCourse(
-    createCourseInput: CreateCourseInput,
-    files: Upload[],
-  ): Promise<any> {
+  async createCourse(createCourseInput: CreateCourseInput, files: Upload[]) {
     const user = this.request.req.user as User;
 
     // const validVideoExtensions = ['.mp4', '.avi', '.mov', '.wmv'];
@@ -75,8 +72,12 @@ export class CourseService {
 
       const category = await this.categoryService.findOne(category_id);
 
+      if (!category)
+        throw new BadRequestException(
+          "category with the 'category_id' doesn't exist. provide a 'course_type'",
+        );
+
       let savedCourse = this.courseRepository.create({
-        id: randomUUID(),
         title,
         description,
         price,
@@ -113,6 +114,7 @@ export class CourseService {
 
       //   console.log({ savedCourse });
       savedCourse = await this.courseRepository.save(savedCourse);
+      // Todo: check if mentor has "notify_followers_on_new_course"
       //* emit notifications event
       const eventPayload: INewCourseNotification = {
         mentorUser: { name: user.name },

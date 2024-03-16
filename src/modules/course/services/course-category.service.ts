@@ -27,12 +27,14 @@ export class CourseCategoryService {
       where: { id },
       relations: ['course_type'],
     });
-    if (!category) throw new BadRequestException('Category not found');
+    if (!category)
+      throw new BadRequestException(
+        "Category with the 'category_id' doesn't exist. provide a 'course_type'",
+      );
     return category;
   }
-  async createCategory(
-    createCourseCatInput: CreateCourseCatInput,
-  ): Promise<CourseCategoryDto> {
+
+  async createCategory(createCourseCatInput: CreateCourseCatInput) {
     const { description, title, type } = createCourseCatInput;
     try {
       let categoryType: CourseType;
@@ -46,12 +48,12 @@ export class CourseCategoryService {
         categoryType.type = type;
         await this.courseTypeRepository.save(categoryType);
       }
-      const category = new CourseCategory();
-      category.course_type = categoryType;
-      category.description = description;
-      category.title = title;
-      category.generateSlug();
-      await this.categoryRepository.save(category);
+      let category = this.categoryRepository.create({
+        course_type: categoryType,
+        description,
+        title,
+      });
+      category = await this.categoryRepository.save(category);
       return category;
     } catch (error) {
       console.log(error);
@@ -75,7 +77,7 @@ export class CourseCategoryService {
     limit?: number,
   ): Promise<CourseType[]> {
     return await this.courseTypeRepository.find({
-      relations: ['courses', 'categories'],
+      relations: ['courses', 'categories', 'workshops'],
       skip: skip || 0,
       take: limit || 10,
     });

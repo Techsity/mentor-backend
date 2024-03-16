@@ -5,9 +5,15 @@ import { SubscriptionService } from './services/subscription.service';
 import { SubscriptionResolver } from './resolvers/subscription.resolver';
 import { UserModule } from '../user/user.module';
 import { CourseModule } from '../course/course.module';
+import { WorkshopModule } from '../workshop/workshop.module';
 
 @Module({
-  imports: [UserModule, CourseModule, TypeOrmModule.forFeature([Subscription])],
+  imports: [
+    UserModule,
+    CourseModule,
+    WorkshopModule,
+    TypeOrmModule.forFeature([Subscription]),
+  ],
   providers: [SubscriptionResolver, SubscriptionService],
   exports: [TypeOrmModule.forFeature([Subscription])],
 })

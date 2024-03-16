@@ -2,10 +2,9 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type Subscription {
-  id: ID!
-  course_id: String!
-  is_completed: Boolean!
+type CourseType {
+  type: String!
+  description: String!
   created_at: DateTime!
   updated_at: DateTime!
 }
@@ -15,11 +14,19 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
-type CourseType {
-  type: String!
-  description: String!
+type Subscription {
+  id: ID!
+  type: SubscriptionType!
+  course_id: String
+  workshop_id: String!
+  is_completed: Boolean!
   created_at: DateTime!
   updated_at: DateTime!
+}
+
+enum SubscriptionType {
+  COURSE
+  WORKSHOP
 }
 
 type NotificationDto {
@@ -262,9 +269,40 @@ enum CourseLevel {
   SENIOR
 }
 
+type WorkshopContent {
+  title: String!
+  date: String!
+  startTime: String!
+  endTime: String!
+}
+
+type workshops {
+  id: String!
+  title: String!
+  level: String!
+  description: String!
+  scheduled_date: String!
+  type: CourseTypeDto!
+  category: CourseCategoryDto!
+  mentor: MentorDTO!
+  what_to_learn: [String!]!
+  requirements: [String!]!
+  price: Float!
+  course_images: String!
+  is_concluded: Boolean!
+  is_draft: Boolean!
+  is_approved: Boolean!
+  contents: [WorkshopContent!]!
+  reviews: [ReviewDto!]
+  created_at: DateTime!
+  updated_at: DateTime!
+}
+
 type SubscriptionDto {
-  id: ID
-  course: CourseDto!
+  id: String!
+  type: String!
+  course: CourseDto
+  workshop: workshops
   is_completed: Boolean!
   created_at: DateTime!
   updated_at: DateTime!
@@ -283,8 +321,8 @@ type Query {
   viewAppointment(appointmentId: String!): AppointmentDTO!
   viewAppointments(statuses: [String!]!): [AppointmentDTO!]!
   viewAllNotifications: [NotificationDto!]!
-  viewSubscribedCourses: [SubscriptionDto!]!
-  viewSubscribedCourse(courseId: String!): Subscription!
+  viewSubscriptions(resourceType: SubscriptionType!): [SubscriptionDto!]!
+  viewSubscription(resourceId: String!, resourceType: SubscriptionType!): Subscription!
 }
 
 type Mutation {
@@ -307,7 +345,9 @@ type Mutation {
   markAllNotificationsAsRead: Boolean!
   readNotification(notificationId: String!): Boolean!
   deleteNotification(notificationId: String!): Boolean!
+  createWorkshop(input: CreateWorkshopInput!): workshops!
   subscribeToCourse(courseId: String!): Subscription!
+  subscribeToWorkshop(workshopId: String!): Subscription!
   initiatePayment(amount: Float!, email: String!): String!
 }
 
@@ -432,8 +472,7 @@ input CreateCourseInput {
   title: String!
   course_level: CourseLevel!
   description: String!
-  course_type: String
-  category: String!
+  category: String
   what_to_learn: [String!]!
   requirements: [String!]!
   price: Float!
@@ -476,4 +515,24 @@ input CreateAppointmentInput {
 input CreateReviewInput {
   content: String!
   ratings: Float!
+}
+
+input CreateWorkshopInput {
+  title: String!
+  level: CourseLevel!
+  category: String!
+  scheduled_date: String!
+  description: String!
+  what_to_learn: [String!]!
+  requirements: [String!]!
+  price: Float!
+  thumbnail: String!
+  contents: [WorkshopContentInput!]!
+}
+
+input WorkshopContentInput {
+  title: String!
+  date: String!
+  startTime: String!
+  endTime: String!
 }
