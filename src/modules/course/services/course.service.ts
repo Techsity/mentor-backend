@@ -71,7 +71,7 @@ export class CourseService {
         requirements,
         title,
         what_to_learn,
-      } = createCourseInput;
+      } = createCourseInput; //Todo: add file metadata (size, duration) to incoming files
 
       const category = await this.categoryService.findOne(category_id);
 

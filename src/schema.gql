@@ -83,6 +83,28 @@ type BasicMessageResponse {
   message: String!
 }
 
+type ReportUser {
+  id: String!
+  email: String!
+  name: String!
+  phone: String
+  avatar: String
+  country: String
+  is_online: Boolean!
+  is_active: Boolean!
+  isPremium: Boolean!
+  is_verified: Boolean!
+  is_admin: Boolean!
+  created_at: DateTime!
+  updated_at: DateTime!
+}
+
+type ReportedMentorDTO {
+  id: String!
+  content: String!
+  created_at: DateTime!
+}
+
 type AppointmentDTO {
   date: DateTime!
   time: String!
@@ -274,6 +296,7 @@ type Mutation {
   resetPassword(resetData: ResetPasswordInput!): BasicMessageResponse!
   updateUserProfile(userUpdateInput: UpdateUserInput!): UserDTO!
   toggleFollowMentor(mentorId: String!, follow: Boolean!): Boolean!
+  reportMentor(input: ReportMentorInput!): ReportedMentorDTO!
   createMentorProfile(createMentorInput: CreateMentorInput!): MentorDTO!
   updateMentorProfile(updateMentorInput: UpdateMentorInput!): MentorDTO!
   createCourse(createCourseInput: CreateCourseInput!, files: [Upload!]!): CourseDto!
@@ -311,6 +334,11 @@ input UpdateUserInput {
   phone: String
   avatar: String
   country: String
+}
+
+input ReportMentorInput {
+  content: String!
+  mentorId: String!
 }
 
 input CreateMentorInput {
