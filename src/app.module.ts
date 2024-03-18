@@ -41,6 +41,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { NotificationModule } from './modules/notification/notification.module';
 import { Notification } from './modules/notification/entities/notification.entity';
 import { EventEmitterListeners } from './lib/event-listeners';
+import { ReportedMentor } from './modules/user/entities/reported-mentor.entity';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { EventEmitterListeners } from './lib/event-listeners';
           Review,
           Appointment,
           Notification,
+          ReportedMentor
         ],
         synchronize: true,
         logging: !true,

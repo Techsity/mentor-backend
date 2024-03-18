@@ -1,19 +1,30 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { LessThanOrEqual, Repository, MoreThanOrEqual, Equal } from 'typeorm';
 import { AuthService } from '../../auth/services/auth.service';
 import { Course } from '../../course/entities/course.entity';
 import { Mentor } from '../../mentor/entities/mentor.entity';
 import { UserDTO } from '../dto/user.dto';
 import { User } from '../entities/user.entity';
+import { isUUID } from 'class-validator';
+import { ReportMentorInput } from '../dto/report-mentor.input';
+import { ReportedMentorDTO } from '../dto/reported-mentor.dto';
+import { ReportedMentor } from '../entities/reported-mentor.entity';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class UserService {
   constructor(
     @Inject(REQUEST) private readonly request: any,
-    @InjectRepository(Course)
-    private courseRepository: Repository<Course>,
+    @InjectRepository(ReportedMentor)
+    private reportRepository: Repository<ReportedMentor>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
     @InjectRepository(Mentor)
@@ -59,20 +70,18 @@ export class UserService {
     follow: boolean,
   ): Promise<boolean> {
     const authUser = this.request.req.user;
+    if (!isUUID(mentorId)) throw new BadRequestException('Invalid mentorId');
     const mentor = await this.mentorRepository.findOne({
       where: { id: mentorId },
       relations: ['followers'],
     });
-    if (!mentor) {
+    if (!mentor)
       throw new NotFoundException(`Mentor with ID ${mentorId} not found`);
-    }
 
     const user = await this.userRepository.findOne({
       where: { id: authUser.id },
     });
-    if (!user) {
-      throw new NotFoundException(`User with ID not found`);
-    }
+    if (!user) throw new NotFoundException(`User with ID not found`);
 
     const isFollowing = mentor.followers.some(
       (follower) => follower.id === user.id,
@@ -85,11 +94,49 @@ export class UserService {
         (follower) => follower.id !== user.id,
       );
     } else {
-      // No action needed (user is already following/unfollowing)
-      return true;
+      return true; // No action needed (user is already following/unfollowing)
     }
 
     await this.mentorRepository.save(mentor);
     return true;
+  }
+
+  async reportMentor(input: ReportMentorInput) {
+    const authUser = this.request.req.user;
+
+    const { content, mentorId } = input;
+    try {
+      const mentor = await this.mentorRepository.findOne({
+        where: { id: mentorId },
+        relations: ['user'],
+      });
+      if (!mentor)
+        throw new NotFoundException("Mentor with this Id doesn't exist");
+
+      // const now = new Date();
+      // const reportHistory = await this.reportRepository.find({
+      //   where: [
+      //     { reported_by: { id: authUser.id } },
+      //     { mentor: { id: mentorId } },
+      //     // { created_at: Equal(now) },
+      //   ],
+      //   order: { created_at: 'desc' },
+      // });
+
+      const report = await this.reportRepository.save({
+        content,
+        reported_by: authUser,
+        mentor,
+      });
+      return report;
+    } catch (error) {
+      console.log({ error });
+      const stackTrace = new Error().stack;
+      throw new InternalServerErrorException({
+        message: 'Something went wrong',
+        error,
+        stackTrace,
+      });
+    }
   }
 }

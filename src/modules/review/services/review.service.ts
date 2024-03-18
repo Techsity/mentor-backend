@@ -6,6 +6,7 @@ import { Course } from '../../course/entities/course.entity';
 import { Mentor } from '../../mentor/entities/mentor.entity';
 import { Review } from '../entities/review.entity';
 import { ReviewType } from '../enums/review.enum';
+import { CreateReviewArgs } from '../dto/review.args';
 
 @Injectable()
 export class ReviewService {
@@ -18,7 +19,9 @@ export class ReviewService {
     @InjectRepository(Course)
     private courseRepository: Repository<Course>,
   ) {}
-  async createReview(args): Promise<any> {
+  async createReview(args: CreateReviewArgs): Promise<any> {
+    const authUser = this.request.req.user;
+
     try {
       const { createReviewInput, mentorId, courseId } = args;
 
@@ -33,6 +36,8 @@ export class ReviewService {
       let type;
 
       if (mentorId) {
+        // // check if
+        // if
         getReview = await this.reviewRepository.findOne({
           where: { mentor: { id: mentorId } },
           relations: ['mentor'],
@@ -51,8 +56,6 @@ export class ReviewService {
         if (getReview)
           throw new Error('You have already reviewed this Course!');
       }
-
-      const authUser = this.request.req.user;
 
       const mentorProfile = mentorId
         ? await this.mentorRepository.findOne({ where: { id: mentorId } })
