@@ -20,6 +20,13 @@ import { isUUID } from 'class-validator';
 import { CourseCategoryService } from './course-category.service';
 import slugify from 'slugify';
 import * as Upload from 'graphql-upload/Upload.js';
+import { NotificationService } from 'src/modules/notification/notification.service';
+import { User } from 'src/modules/user/entities/user.entity';
+import { NotificationResourceType } from 'src/modules/notification/enums';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import EVENTS from 'src/common/events.constants';
+import { INewCourseNotification } from 'src/modules/notification/types';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class CourseService {
@@ -32,14 +39,15 @@ export class CourseService {
     private categoryService: CourseCategoryService,
     private authService: AuthService,
     private mediaService: MediaService,
+    private notificationService: NotificationService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async createCourse(
     createCourseInput: CreateCourseInput,
     files: Upload[],
   ): Promise<any> {
-    const user = this.request.req.user.user;
-    if (!user) throw new UnauthorizedException('Unauthorized');
+    const user = this.request.req.user as User;
 
     // const validVideoExtensions = ['.mp4', '.avi', '.mov', '.wmv'];
     // // Check if uploaded files are videos
@@ -51,7 +59,7 @@ export class CourseService {
     //     throw new BadRequestException(`${filename} is not a valid video file.`);
     //   // Todo: set upload limit and check number of videos uploaded
     // }
-    console.log({ resolvedFiles: files, createCourseInput });
+    // console.log({ resolvedFiles: files, createCourseInput });
     try {
       const {
         category: category_id,
@@ -67,7 +75,8 @@ export class CourseService {
 
       const category = await this.categoryService.findOne(category_id);
 
-      const savedCourse = this.courseRepository.create({
+      let savedCourse = this.courseRepository.create({
+        id: randomUUID(),
         title,
         description,
         price,
@@ -101,8 +110,16 @@ export class CourseService {
       //       });
       //     // Todo: handle course_images upload
       //   }
+
       //   console.log({ savedCourse });
-      await this.courseRepository.save(savedCourse);
+      savedCourse = await this.courseRepository.save(savedCourse);
+      //* emit notifications event
+      const eventPayload: INewCourseNotification = {
+        mentorUser: { name: user.name },
+        course: savedCourse,
+        followers: user.mentor.followers,
+      };
+      this.eventEmitter.emit(EVENTS.NEW_COURSE, eventPayload);
       return savedCourse;
     } catch (error) {
       const stackTrace = new Error().stack;

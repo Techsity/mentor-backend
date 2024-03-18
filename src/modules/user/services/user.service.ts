@@ -22,10 +22,10 @@ export class UserService {
   ) {}
   async userProfile(): Promise<UserDTO> {
     try {
-      const authUser = this.request.req.user.user;
+      const authUser = this.request.req.user;
       const userProfile = await this.userRepository.findOne({
         where: { id: authUser.id },
-        relations: ['mentor', 'subscriptions'],
+        relations: ['mentor', 'subscriptions', 'notifications'],
       });
       // Update the video_url for each course and section
       // userProfile.courses.forEach((course) => {
@@ -45,7 +45,7 @@ export class UserService {
 
   async updateProfile(userUpdateInput: any): Promise<any> {
     try {
-      const authUser = this.request.req.user.user;
+      const authUser = this.request.req.user;
       await this.userRepository.update({ id: authUser.id }, userUpdateInput);
       const user = await this.userProfile();
       return user;
@@ -58,7 +58,7 @@ export class UserService {
     mentorId: string,
     follow: boolean,
   ): Promise<boolean> {
-    const authUser = this.request.req.user.user;
+    const authUser = this.request.req.user;
     const mentor = await this.mentorRepository.findOne({
       where: { id: mentorId },
       relations: ['followers'],

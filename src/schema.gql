@@ -28,7 +28,19 @@ type NotificationDto {
   body: String!
   read: Boolean!
   userId: String!
+  resourceId: String!
+  resourceType: NotificationResourceType!
   created_at: DateTime!
+}
+
+"""
+The is the notification resource type for creating deeplinks on the client
+"""
+enum NotificationResourceType {
+  MENTORS
+  COURSES
+  APPOINTMENTS
+  WORKSHOP
 }
 
 type UserDTO {
@@ -38,8 +50,8 @@ type UserDTO {
   phone: String!
   avatar: String
   country: String!
-  subscriptions: [Subscription!]
-  notifications: [NotificationDto!]
+  subscriptions: [Subscription!]!
+  notifications: [NotificationDto!]!
   is_online: Boolean!
   is_active: Boolean!
   is_verified: Boolean!
@@ -248,9 +260,9 @@ type Query {
   getAllCourseTypes: [CourseType!]!
   viewAppointment(appointmentId: String!): AppointmentDTO!
   viewAppointments(statuses: [String!]!): [AppointmentDTO!]!
+  viewAllNotifications: [NotificationDto!]!
   viewSubscribedCourses: [SubscriptionDto!]!
   viewSubscribedCourse(courseId: String!): Subscription!
-  viewAllNotifications: [NotificationDto!]!
 }
 
 type Mutation {
@@ -269,11 +281,11 @@ type Mutation {
   createAppointment(createAppointmentInput: CreateAppointmentInput!, mentor: String!): AppointmentDTO!
   toggleAppointmentStatus(mentorId: String!, appointmentId: String!, status: String!): AppointmentDTO!
   createReview(createReviewInput: CreateReviewInput!, mentorId: String, courseId: String): ReviewDto!
-  subscribeToCourse(courseId: String!): Subscription!
-  initiatePayment(amount: Float!, email: String!): String!
   markAllNotificationsAsRead: Boolean!
   readNotification(notificationId: String!): Boolean!
   deleteNotification(notificationId: String!): Boolean!
+  subscribeToCourse(courseId: String!): Subscription!
+  initiatePayment(amount: Float!, email: String!): String!
 }
 
 input CreateRegisterInput {

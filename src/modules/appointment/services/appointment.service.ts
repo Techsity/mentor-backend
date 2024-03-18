@@ -28,7 +28,7 @@ export class AppointmentService {
    */
   async createAppointment(createAppInput: any, mentor: string): Promise<any> {
     try {
-      const authUser = this.request.req.user.user;
+      const authUser = this.request.req.user;
       const mentorProfile = await this.mentorRepository.findOne({
         where: { id: mentor },
         relations: ['user'],
@@ -63,7 +63,7 @@ export class AppointmentService {
 
   async viewAppointments(statuses?: string[]): Promise<any> {
     try {
-      const authUser = this.request.req.user.user;
+      const authUser = this.request.req.user;
       const query = this.appointmentRepository
         .createQueryBuilder('appointment')
         .where('appointment.user.id = :userId', { userId: authUser.id })
@@ -84,7 +84,7 @@ export class AppointmentService {
     status: AppointmentStatus,
   ): Promise<any> {
     try {
-      const authUser = this.request.req.user.user;
+      const authUser = this.request.req.user;
       await this.appointmentRepository.update(
         { id: appointmentId, mentor: { id: mentorId } },
         {

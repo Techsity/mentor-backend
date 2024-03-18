@@ -1,12 +1,17 @@
-import { ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
-import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
-export default class MentorRoleGuard extends AuthGuard('jwt') {
+export default class MentorRoleGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const ctx = GqlExecutionContext.create(context);
     const { user } = ctx.getContext().req;
-    return user.user.mentor;
+    if (!user.mentor) throw new ForbiddenException('Forbidden Resource');
+    return user.mentor !== null;
   }
 }

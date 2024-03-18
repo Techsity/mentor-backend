@@ -6,6 +6,8 @@ import { AppointmentDTO } from '../dto/appointment.dto';
 import { CreateAppointmentInput } from '../dto/create-appointment.input';
 import { Appointment } from '../entities/appointment.entity';
 import { AppointmentStatus } from '../enums/appointment.enum';
+import { CurrentUser } from 'src/lib/custom-decorators';
+import { User } from 'src/modules/user/entities/user.entity';
 
 @UseGuards(GqlAuthGuard)
 @Resolver()
@@ -16,12 +18,15 @@ export class AppointmentResolver {
     @Args('createAppointmentInput')
     createAppointmentInput: CreateAppointmentInput,
     @Args('mentor') mentor: string,
+    @CurrentUser() user: User,
   ): Promise<any> {
     return this.appointmentService.createAppointment(
       createAppointmentInput,
       mentor,
     );
   }
+
+  @UseGuards(GqlAuthGuard)
   @Mutation(() => AppointmentDTO)
   toggleAppointmentStatus(
     @Args('mentorId')

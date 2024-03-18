@@ -8,23 +8,31 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { NotificationResourceType } from '../enums';
+import { registerEnumType } from '@nestjs/graphql';
 
 @Entity('notifications')
 export class Notification extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column('varchar')
   title: string;
 
-  @Column()
+  @Column('varchar')
   body: string;
 
-  @Column({ default: false })
+  @Column({ default: false, type: 'boolean' })
   read: boolean;
 
-  @Column()
+  @Column('uuid')
   userId: string;
+
+  @Column({ enum: NotificationResourceType, type: 'enum' })
+  resourceType: NotificationResourceType;
+
+  @Column('uuid')
+  resourceId: string;
 
   @ManyToOne(() => User, (user) => user.notifications)
   user: User;
@@ -35,3 +43,9 @@ export class Notification extends BaseEntity {
   @UpdateDateColumn()
   updated_at: Date;
 }
+
+registerEnumType(NotificationResourceType, {
+  name: 'NotificationResourceType',
+  description:
+    'The is the notification resource type for creating deeplinks on the client',
+});
