@@ -12,7 +12,7 @@ import NotificationDto from './dto/notification.dto';
 import { isUUID } from 'class-validator';
 import { User } from '../user/entities/user.entity';
 import { NotificationEventsGateway } from './gateways/notification-events.gateway';
-import { randomUUID } from 'crypto';
+
 
 @Injectable()
 export class NotificationService {
@@ -39,7 +39,10 @@ export class NotificationService {
     // Todo: add to create email service queue
     // Send email notification
     // }
-    this.notificationGateway.dispatchNotification(notification);
+    this.notificationGateway.dispatchNotification({
+      userId: user.id,
+      payload: notification,
+    });
     this.logger.log(
       `Notification created for user ${user.id}`,
       `Notification event fired`,

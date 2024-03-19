@@ -28,13 +28,13 @@ export class SubscriptionService {
     private workshopRepository: Repository<Workshop>,
   ) {}
 
-  async viewSubscriptions(type: SubscriptionType): Promise<any> {
-    if (!type || !isEnum(type, SubscriptionType))
-      throw new BadRequestException('Invalid subscription "type"');
+  async viewSubscriptions(subscriptionType: SubscriptionType): Promise<any> {
+    if (!subscriptionType || !isEnum(subscriptionType, SubscriptionType))
+      throw new BadRequestException('Invalid "subscriptionType"');
 
     const authUser = this.request.req.user;
     const relations: string[] =
-      type === SubscriptionType.COURSE
+      subscriptionType === SubscriptionType.COURSE
         ? [
             'course',
             'course.category',
@@ -53,10 +53,10 @@ export class SubscriptionService {
           ];
     try {
       const subscriptions = await this.subscriptionRepository.find({
-        where: { user: { id: authUser.id }, type },
+        where: { user: { id: authUser.id }, type: subscriptionType },
         relations,
       });
-      if (type === SubscriptionType.COURSE) {
+      if (subscriptionType === SubscriptionType.COURSE) {
         const baseURL = 'your_base_URL_here'; //* from CDN for videos
         //Todo: Update the video_url for each course and section
         subscriptions.forEach((sub) =>
@@ -74,44 +74,52 @@ export class SubscriptionService {
     }
   }
 
-  /**
-   *
-   * @param resourceId - either courseId or workshopId
-   * @param subscriptionType - subscription type (SubscriptionType.COURSE or SubscriptionType.WORKSHOP)
-   */
-
   async viewSubscription(
-    resourceId: string,
+    subscriptionId: string,
     subscriptionType: SubscriptionType,
   ): Promise<any> {
     if (!subscriptionType || !isEnum(subscriptionType, SubscriptionType))
       throw new BadRequestException('Invalid subscription "type"');
 
     const authUser = this.request.req.user;
+    const relations: string[] =
+      subscriptionType === SubscriptionType.COURSE
+        ? [
+            'course',
+            'course.category',
+            'course.course_type',
+            'course.mentor',
+            'course.mentor.user',
+            'course.reviews',
+          ]
+        : [
+            'workshop',
+            'workshop.category',
+            'workshop.type',
+            'workshop.mentor',
+            'workshop.mentor.user',
+            'workshop.reviews',
+          ];
     const options: FindOptionsWhere<Subscription> = {
+      id: subscriptionId,
       user: { id: authUser.id },
       type: subscriptionType,
     };
+    if (!isUUID(subscriptionId))
+      throw new BadRequestException(`Invalid subscription Id`);
 
-    if (subscriptionType === SubscriptionType.COURSE) {
-      // &&
-      if (!isUUID(resourceId))
-        throw new BadRequestException('Invalid Course ID');
-      options.course_id = resourceId;
-    } else if (subscriptionType === SubscriptionType.WORKSHOP) {
-      if (!isUUID(resourceId))
-        throw new BadRequestException('Invalid Workshop ID');
-      options.workshop_id = resourceId;
-    }
+    // &&
+    // if (subscriptionType === SubscriptionType.COURSE)
+    //   options.course_id = resourceId;
+    // else if (subscriptionType === SubscriptionType.WORKSHOP)
+    //   options.workshop_id = resourceId;
+
     try {
       const sub = await this.subscriptionRepository.findOne({
         where: options,
+        relations,
       });
-      if (!sub) {
-        const resource =
-          subscriptionType === SubscriptionType.COURSE ? 'Course' : 'Workshop';
-        throw new NotFoundException(resource + ' not found');
-      }
+      if (!sub) throw new NotFoundException('Subscription not found');
       return sub;
     } catch (error) {
       throw error;

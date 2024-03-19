@@ -54,4 +54,8 @@ export class CourseCategory {
 
   @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at: Date;
+
+  generateSlug() {
+    this.slug = slugify(this.title, { lower: true });
+  }
 }

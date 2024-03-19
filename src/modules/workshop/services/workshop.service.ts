@@ -1,26 +1,45 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Workshop } from '../entities/workshop.entity';
-import { Repository } from 'typeorm';
+import {
+  EntityManager,
+  FindManyOptions,
+  FindOptions,
+  Repository,
+} from 'typeorm';
 import { CreateWorkshopInput } from '../dto/create-workshop.input';
 import { randomUUID } from 'crypto';
 import { CourseCategoryService } from 'src/modules/course/services/course-category.service';
-import { isDate, isDateString, max, length, min } from 'class-validator';
+import {
+  isDate,
+  isDateString,
+  max,
+  length,
+  min,
+  isUUID,
+} from 'class-validator';
 import { WorkshopContent, WorkshopContentInput } from '../types/workshop.type';
 import { isTimeString } from 'src/lib/utils';
+import slugify from 'slugify';
+import { REQUEST } from '@nestjs/core';
+import { User } from 'src/modules/user/entities/user.entity';
 
 @Injectable()
 export class WorkshopService {
   private logger = new Logger(WorkshopService.name);
   constructor(
+    @Inject(REQUEST) private readonly request: { req: { user: User } },
     @InjectRepository(Workshop)
     private readonly workshopRepository: Repository<Workshop>,
     private readonly categoryService: CourseCategoryService,
+    private readonly _entityManager: EntityManager,
   ) {}
 
   private validateWorkshopContents(contents: WorkshopContent[]) {
@@ -75,7 +94,8 @@ export class WorkshopService {
     }
   }
 
-  async createWorkshop(input: CreateWorkshopInput) {
+  async createWorkshop(args: CreateWorkshopInput) {
+    const authUser = this.request.req.user;
     const {
       category: category_id,
       contents,
@@ -87,7 +107,7 @@ export class WorkshopService {
       title,
       what_to_learn,
       scheduled_date,
-    } = input;
+    } = args;
     const currentDate = new Date();
 
     // check scheduled_date validity
@@ -106,10 +126,12 @@ export class WorkshopService {
         thumbnail,
         price,
         level,
+        type: category.course_type,
         requirements,
         what_to_learn,
         scheduled_date,
         title,
+        mentor: authUser.mentor,
       });
     } catch (error: any) {
       const stackTrace = new Error().stack;
@@ -117,6 +139,86 @@ export class WorkshopService {
       throw new InternalServerErrorException(
         error.message || 'Something went wrong',
       );
+    }
+  }
+
+  async viewAllWorkshops(args: {
+    skip: number;
+    take: number;
+    type?: string;
+    category?: string;
+  }) {
+    const { skip, take, category, type } = args;
+    try {
+      const hasCourseTypeCondition = Boolean(type && type !== '');
+      const hasCategoryCondition = Boolean(category && category !== '');
+
+      if (category && !isUUID(category))
+        throw new BadRequestException('"category" must be a valid uuid');
+
+      const workshopRepository = this._entityManager.getRepository(Workshop);
+      let query = workshopRepository
+        .createQueryBuilder('workshop')
+        .leftJoinAndSelect('workshop.category', 'category')
+        .leftJoinAndSelect('workshop.mentor', 'mentor')
+        .leftJoinAndSelect('workshop.reviews', 'reviews')
+        .leftJoinAndSelect('workshop.type', 'workshop_type')
+        .leftJoinAndSelect('mentor.user', 'user')
+        .leftJoinAndSelect('mentor.courses', 'mentor_courses')
+        .leftJoinAndSelect('mentor_courses.category', 'mentor_category')
+        .leftJoinAndSelect('mentor_courses.course_type', 'mentor_course_type')
+        .leftJoinAndSelect('mentor_courses.reviews', 'mentor_reviews')
+        .skip(skip)
+        .take(take);
+
+      if (hasCategoryCondition && hasCourseTypeCondition)
+        query = query
+          .andWhere('workshop_type.type = :type', { type })
+          .andWhere('category.id = :category', { category });
+      else if (hasCategoryCondition)
+        query = query.where('category.id = :category', { category });
+      else if (hasCourseTypeCondition)
+        query = query.where('workshop_type.type = :type', {
+          type,
+        });
+      query = query
+        .andWhere('workshop.is_draft = :isDraft', { isDraft: false })
+        .andWhere('workshop.is_approved = :isApproved', { isApproved: true });
+
+      return await query.getMany();
+    } catch (error) {
+      const stack = new Error().stack;
+      this.logger.error(error, stack);
+      throw error;
+    }
+  }
+
+  async findWorkshopById(workshopId: string) {
+    try {
+      if (workshopId && !isUUID(workshopId))
+        throw new BadRequestException('"workshopId" must be a valid uuid');
+
+      const workshop = await this.workshopRepository.findOne({
+        where: { id: workshopId },
+        relations: [
+          'category',
+          'mentor',
+          'reviews',
+          'type',
+          'mentor.user',
+          'mentor.courses',
+          'mentor.followers',
+          'mentor.courses.category',
+          'mentor.courses.course_type',
+          'mentor.courses.reviews',
+        ],
+      });
+      if (!workshop) throw new NotFoundException('Workshop not found');
+      return workshop;
+    } catch (error) {
+      const stack = new Error().stack;
+      this.logger.error(error, stack);
+      throw error;
     }
   }
 }

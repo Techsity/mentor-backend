@@ -32,12 +32,16 @@ export class Subscription extends BaseEntity {
   })
   type: SubscriptionType;
 
-  @OneToOne(() => Course, (course) => course.subscriptions)
+  @OneToOne(() => Course, (course) => course.subscriptions, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   @JoinColumn({ name: 'course_id' })
   course?: Course;
 
   @OneToOne(() => Workshop, (workshop) => workshop.participants, {
     nullable: true,
+    onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'workshop_id' })
   workshop?: Workshop;

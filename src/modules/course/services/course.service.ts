@@ -217,6 +217,8 @@ export class CourseService {
       const hasCourseTypeCondition = Boolean(courseType && courseType !== '');
       const hasCategoryCondition = Boolean(category && category !== '');
       const slug = hasCategoryCondition ? slugify(category.toLowerCase()) : '';
+      // if (hasCategoryCondition && !isUUID(category))
+      //   throw new BadRequestException('"category" must be a valid uuid');
 
       const courseRepository = this._entityManager.getRepository(Course);
       let query = courseRepository

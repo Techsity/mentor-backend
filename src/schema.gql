@@ -60,6 +60,7 @@ type UserDTO {
   subscriptions: [Subscription!]!
   notifications: [NotificationDto!]!
   is_online: Boolean!
+  allow_push_notifications: Boolean!
   is_active: Boolean!
   is_verified: Boolean!
   is_admin: Boolean!
@@ -99,6 +100,7 @@ type ReportUser {
   country: String
   is_online: Boolean!
   is_active: Boolean!
+  allow_push_notifications: Boolean!
   isPremium: Boolean!
   is_verified: Boolean!
   is_admin: Boolean!
@@ -276,7 +278,7 @@ type WorkshopContent {
   endTime: String!
 }
 
-type workshops {
+type WorkshopDto {
   id: String!
   title: String!
   level: String!
@@ -288,7 +290,7 @@ type workshops {
   what_to_learn: [String!]!
   requirements: [String!]!
   price: Float!
-  course_images: String!
+  thumbnail: String!
   is_concluded: Boolean!
   is_draft: Boolean!
   is_approved: Boolean!
@@ -302,7 +304,7 @@ type SubscriptionDto {
   id: String!
   type: String!
   course: CourseDto
-  workshop: workshops
+  workshop: WorkshopDto
   is_completed: Boolean!
   created_at: DateTime!
   updated_at: DateTime!
@@ -313,7 +315,14 @@ type Query {
   getMentorProfile: MentorDTO!
   viewMentor(id: String!): MentorDTO!
   viewAllMentors: [MentorDTO!]!
-  allCourses(take: Float!, skip: Float!, courseType: String, category: String): [CourseDto!]!
+  allCourses(
+    take: Float!
+    skip: Float!
+    courseType: String
+
+    """category slug"""
+    category: String
+  ): [CourseDto!]!
   searchCoursesByCategory(take: Float!, skip: Float!, courseId: String!): [CourseDto!]!
   viewCourse(courseId: String!): CourseDto!
   getAllCategories(courseType: String): [CourseCategoryDto!]!
@@ -321,8 +330,17 @@ type Query {
   viewAppointment(appointmentId: String!): AppointmentDTO!
   viewAppointments(statuses: [String!]!): [AppointmentDTO!]!
   viewAllNotifications: [NotificationDto!]!
-  viewSubscriptions(resourceType: SubscriptionType!): [SubscriptionDto!]!
-  viewSubscription(resourceId: String!, resourceType: SubscriptionType!): Subscription!
+  viewAllWorkshops(skip: Float!, take: Float!, type: CourseTypeEnum, category: String): [WorkshopDto!]!
+  viewWorkshop(workshopId: String!): WorkshopDto!
+  viewSubscriptions(subscriptionType: String!): [SubscriptionDto!]!
+  viewSubscription(resourceId: String!, resourceType: SubscriptionType!): SubscriptionDto!
+}
+
+"""Course types"""
+enum CourseTypeEnum {
+  TECHNICAL
+  EDUCATIONAL
+  VOCATIONAL
 }
 
 type Mutation {
@@ -345,7 +363,7 @@ type Mutation {
   markAllNotificationsAsRead: Boolean!
   readNotification(notificationId: String!): Boolean!
   deleteNotification(notificationId: String!): Boolean!
-  createWorkshop(input: CreateWorkshopInput!): workshops!
+  createWorkshop(input: CreateWorkshopInput!): WorkshopDto!
   subscribeToCourse(courseId: String!): Subscription!
   subscribeToWorkshop(workshopId: String!): Subscription!
   initiatePayment(amount: Float!, email: String!): String!
@@ -498,13 +516,6 @@ input CreateCourseCatInput {
   title: String!
   description: String
   type: CourseTypeEnum!
-}
-
-"""Course types"""
-enum CourseTypeEnum {
-  TECHNICAL
-  EDUCATIONAL
-  VOCATIONAL
 }
 
 input CreateAppointmentInput {

@@ -15,14 +15,13 @@ export class SubscriptionResolver {
   @UseGuards(GqlAuthGuard)
   @Query((returns) => [SubscriptionDto])
   async viewSubscriptions(
-    @Args({ name: 'resourceType', type: () => SubscriptionType })
-    resourceType: SubscriptionType,
+    @Args('subscriptionType') subscriptionType: SubscriptionType,
   ): Promise<any> {
-    return this.subscriptionService.viewSubscriptions(resourceType);
+    return this.subscriptionService.viewSubscriptions(subscriptionType);
   }
 
   @UseGuards(GqlAuthGuard)
-  @Query((returns) => Subscription)
+  @Query((returns) => SubscriptionDto)
   async viewSubscription(
     @Args('resourceId') resourceId: string,
     @Args({ name: 'resourceType', type: () => SubscriptionType })

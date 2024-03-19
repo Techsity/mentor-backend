@@ -5,7 +5,7 @@ import { MentorDTO } from 'src/modules/mentor/dto/mentor.dto';
 import { WorkshopContent } from '../types/workshop.type';
 import { ReviewDto } from 'src/modules/review/dto/review.dto';
 
-@ObjectType('workshops')
+@ObjectType()
 export default class WorkshopDto {
   @Field()
   id: string;
@@ -41,7 +41,7 @@ export default class WorkshopDto {
   price: number;
 
   @Field()
-  course_images: string;
+  thumbnail: string;
 
   @Field(() => Boolean)
   is_concluded: boolean;

@@ -54,8 +54,7 @@ export class NotificationEventsGateway
     }
   }
 
-  dispatchNotification(payload: Notification) {
-    const userId = payload.userId;
+  dispatchNotification({ payload, userId }: { userId: string; payload: any }) {
     const user = this.userSockets.get(userId);
     if (user) {
       const userRooms = user.socket.rooms;

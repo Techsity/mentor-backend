@@ -36,7 +36,7 @@ export class Workshop extends BaseEntity {
   @Column({ type: 'date' })
   scheduled_date: Date;
 
-  @ManyToOne(() => CourseType, (course_type) => course_type.workshops, {
+  @ManyToOne(() => CourseType, (type) => type.workshops, {
     nullable: true,
     onDelete: 'SET NULL',
   })
@@ -54,7 +54,7 @@ export class Workshop extends BaseEntity {
   @JoinColumn({ name: 'mentor_id' })
   mentor: Mentor;
 
-  @ManyToMany(() => Subscription, (subscription) => subscription.workshop)
+  @ManyToMany(() => Subscription, (subscription) => subscription.workshop,)
   participants?: Subscription[];
 
   @Column('text', { array: true })

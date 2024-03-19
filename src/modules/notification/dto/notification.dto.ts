@@ -15,8 +15,8 @@ export default class NotificationDto {
   userId: string;
   @Field()
   resourceId: string;
-  @Field(() => NotificationResourceType)
-  resourceType: string;
+  @Field(() =>NotificationResourceType )
+  resourceType: NotificationResourceType;
   @Field(() => Date)
   created_at: Date;
 }

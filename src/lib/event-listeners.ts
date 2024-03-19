@@ -15,13 +15,16 @@ export class EventEmitterListeners {
     course,
     mentorUser,
   }: INewCourseNotification) {
-    for (const follower of followers) {
-      this.notificationService.create(follower, {
-        title: 'New Course Published',
-        body: `A mentor you follow (${mentorUser.name}) has published a new course. Check it out!`,
-        resourceId: course.id,
-        resourceType: NotificationResourceType.COURSES,
-      });
+    for (const user of followers) {
+      // check if user.allow_push_notifications
+      if (user.allow_push_notifications) {
+        this.notificationService.create(user, {
+          title: 'New Course Published',
+          body: `A mentor you follow (${mentorUser.name}) has published a new course. Check it out!`,
+          resourceId: course.id,
+          resourceType: NotificationResourceType.COURSES,
+        });
+      }
     }
   }
 }
