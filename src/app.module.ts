@@ -42,6 +42,7 @@ import { NotificationModule } from './modules/notification/notification.module';
 import { Notification } from './modules/notification/entities/notification.entity';
 import { EventEmitterListeners } from './lib/event-listeners';
 import { ReportedMentor } from './modules/user/entities/reported-mentor.entity';
+import { Workshop } from './modules/workshop/entities/workshop.entity';
 
 @Module({
   imports: [
@@ -77,7 +78,8 @@ import { ReportedMentor } from './modules/user/entities/reported-mentor.entity';
           Review,
           Appointment,
           Notification,
-          ReportedMentor
+          ReportedMentor,
+          Workshop
         ],
         synchronize: true,
         logging: !true,

@@ -24,6 +24,7 @@ import {
   UserAvailability,
   WorkExperience,
 } from '../types/mentor.type';
+import { Workshop } from 'src/modules/workshop/entities/workshop.entity';
 
 @Entity('mentors')
 export class Mentor extends BaseEntity {
@@ -37,6 +38,10 @@ export class Mentor extends BaseEntity {
   @OneToMany(() => Course, (courses) => courses.mentor)
   @JoinColumn({ name: 'course_id' })
   courses: Course[];
+
+  @OneToMany(() => Workshop, (workshops) => workshops.mentor)
+  @JoinColumn({ name: 'workshop_id' })
+  workshops: Workshop[];
 
   @ManyToMany(() => User, (user) => user.following)
   followers: User[];

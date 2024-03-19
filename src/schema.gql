@@ -2,10 +2,9 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type Subscription {
-  id: ID!
-  course_id: String!
-  is_completed: Boolean!
+type CourseType {
+  type: String!
+  description: String!
   created_at: DateTime!
   updated_at: DateTime!
 }
@@ -15,11 +14,19 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
-type CourseType {
-  type: String!
-  description: String!
+type Subscription {
+  id: ID!
+  type: SubscriptionType!
+  course_id: String
+  workshop_id: String!
+  is_completed: Boolean!
   created_at: DateTime!
   updated_at: DateTime!
+}
+
+enum SubscriptionType {
+  COURSE
+  WORKSHOP
 }
 
 type NotificationDto {
@@ -53,6 +60,7 @@ type UserDTO {
   subscriptions: [Subscription!]!
   notifications: [NotificationDto!]!
   is_online: Boolean!
+  allow_push_notifications: Boolean!
   is_active: Boolean!
   is_verified: Boolean!
   is_admin: Boolean!
@@ -92,6 +100,7 @@ type ReportUser {
   country: String
   is_online: Boolean!
   is_active: Boolean!
+  allow_push_notifications: Boolean!
   isPremium: Boolean!
   is_verified: Boolean!
   is_admin: Boolean!
@@ -262,9 +271,40 @@ enum CourseLevel {
   SENIOR
 }
 
+type WorkshopContent {
+  title: String!
+  date: String!
+  startTime: String!
+  endTime: String!
+}
+
+type WorkshopDto {
+  id: String!
+  title: String!
+  level: String!
+  description: String!
+  scheduled_date: String!
+  type: CourseTypeDto!
+  category: CourseCategoryDto!
+  mentor: MentorDTO!
+  what_to_learn: [String!]!
+  requirements: [String!]!
+  price: Float!
+  thumbnail: String!
+  is_concluded: Boolean!
+  is_draft: Boolean!
+  is_approved: Boolean!
+  contents: [WorkshopContent!]!
+  reviews: [ReviewDto!]
+  created_at: DateTime!
+  updated_at: DateTime!
+}
+
 type SubscriptionDto {
-  id: ID
-  course: CourseDto!
+  id: String!
+  type: String!
+  course: CourseDto
+  workshop: WorkshopDto
   is_completed: Boolean!
   created_at: DateTime!
   updated_at: DateTime!
@@ -275,7 +315,14 @@ type Query {
   getMentorProfile: MentorDTO!
   viewMentor(id: String!): MentorDTO!
   viewAllMentors: [MentorDTO!]!
-  allCourses(take: Float!, skip: Float!, courseType: String, category: String): [CourseDto!]!
+  allCourses(
+    take: Float!
+    skip: Float!
+    courseType: String
+
+    """category slug"""
+    category: String
+  ): [CourseDto!]!
   searchCoursesByCategory(take: Float!, skip: Float!, courseId: String!): [CourseDto!]!
   viewCourse(courseId: String!): CourseDto!
   getAllCategories(courseType: String): [CourseCategoryDto!]!
@@ -283,8 +330,17 @@ type Query {
   viewAppointment(appointmentId: String!): AppointmentDTO!
   viewAppointments(statuses: [String!]!): [AppointmentDTO!]!
   viewAllNotifications: [NotificationDto!]!
-  viewSubscribedCourses: [SubscriptionDto!]!
-  viewSubscribedCourse(courseId: String!): Subscription!
+  viewAllWorkshops(skip: Float!, take: Float!, type: CourseTypeEnum, category: String): [WorkshopDto!]!
+  viewWorkshop(workshopId: String!): WorkshopDto!
+  viewSubscriptions(subscriptionType: String!): [SubscriptionDto!]!
+  viewSubscription(resourceId: String!, resourceType: SubscriptionType!): SubscriptionDto!
+}
+
+"""Course types"""
+enum CourseTypeEnum {
+  TECHNICAL
+  EDUCATIONAL
+  VOCATIONAL
 }
 
 type Mutation {
@@ -307,7 +363,9 @@ type Mutation {
   markAllNotificationsAsRead: Boolean!
   readNotification(notificationId: String!): Boolean!
   deleteNotification(notificationId: String!): Boolean!
+  createWorkshop(input: CreateWorkshopInput!): WorkshopDto!
   subscribeToCourse(courseId: String!): Subscription!
+  subscribeToWorkshop(workshopId: String!): Subscription!
   initiatePayment(amount: Float!, email: String!): String!
 }
 
@@ -432,8 +490,7 @@ input CreateCourseInput {
   title: String!
   course_level: CourseLevel!
   description: String!
-  course_type: String
-  category: String!
+  category: String
   what_to_learn: [String!]!
   requirements: [String!]!
   price: Float!
@@ -461,13 +518,6 @@ input CreateCourseCatInput {
   type: CourseTypeEnum!
 }
 
-"""Course types"""
-enum CourseTypeEnum {
-  TECHNICAL
-  EDUCATIONAL
-  VOCATIONAL
-}
-
 input CreateAppointmentInput {
   date: DateTime!
   time: String!
@@ -476,4 +526,24 @@ input CreateAppointmentInput {
 input CreateReviewInput {
   content: String!
   ratings: Float!
+}
+
+input CreateWorkshopInput {
+  title: String!
+  level: CourseLevel!
+  category: String!
+  scheduled_date: String!
+  description: String!
+  what_to_learn: [String!]!
+  requirements: [String!]!
+  price: Float!
+  thumbnail: String!
+  contents: [WorkshopContentInput!]!
+}
+
+input WorkshopContentInput {
+  title: String!
+  date: String!
+  startTime: String!
+  endTime: String!
 }

@@ -8,6 +8,7 @@ import { CourseService } from '../services/course.service';
 import { Course } from '../entities/course.entity';
 import { CreateCourseInput } from '../dto/create-course.input';
 import MentorRoleGuard from 'src/modules/auth/guards/mentor-role.guard';
+import { CourseTypeEnum } from '../enums/course.enums';
 
 @Resolver(() => Course)
 export class CourseResolver {
@@ -27,7 +28,8 @@ export class CourseResolver {
     @Args('take') take: number,
     @Args('skip') skip: number,
     @Args('courseType', { nullable: true }) courseType?: string,
-    @Args('category', { nullable: true }) category?: string,
+    @Args('category', { nullable: true, description: 'category slug' })
+    category?: string,
   ): Promise<CourseDto[]> {
     return this.courseService.allCourses(skip, take, courseType, category);
   }

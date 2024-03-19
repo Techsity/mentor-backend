@@ -12,7 +12,7 @@ import { CourseType } from '../entities/course-type.entity';
 export class CourseCategoryResolver {
   constructor(private readonly courseCategoryService: CourseCategoryService) {}
 
-  // Todo: implement role guard - only admins access
+  // Todo: implement role guard - only admins can access
   @Mutation(() => CourseCategoryDto)
   createCategory(
     @Args('createCourseCatInput') createCourseCatInput: CreateCourseCatInput,
@@ -24,7 +24,7 @@ export class CourseCategoryResolver {
   getAllCategories(
     @Args('courseType', { nullable: true }) courseType?: string,
   ): Promise<CourseCategoryDto[]> {
-    return this.courseCategoryService.viewCourseCategories({courseType});
+    return this.courseCategoryService.viewCourseCategories({ courseType });
   }
 
   @Query(() => [CourseType])

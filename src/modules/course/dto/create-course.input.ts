@@ -1,7 +1,8 @@
 import { InputType, Field, Float } from '@nestjs/graphql';
-import { CourseLevel } from '../enums/course.enums';
+import { CourseLevel, CourseTypeEnum } from '../enums/course.enums';
 import {
   IsArray,
+  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -51,6 +52,9 @@ export class CreateCourseInput {
 
   @IsNotEmpty({ message: "'course_level' is required" })
   @Field(() => CourseLevel)
+  @IsEnum(CourseLevel, {
+    message: "'course_level' must be a valid value of CourseLevel enum",
+  })
   course_level: CourseLevel;
 
   @IsNotEmpty({ message: "'description' is required" })
@@ -58,16 +62,17 @@ export class CreateCourseInput {
   @Field()
   description: string;
 
-  @IsOptional({ message: "'course_type' cannot be empty" })
-  @IsString({ message: "'course_type' must be a string value" })
-  @Field({ nullable: true })
-  course_type?: string;
+  // @IsOptional({ message: "'course_type' cannot be empty" })
+  // @IsEnum(CourseTypeEnum, {
+  //   message: "'course_type' must be a valid value of CourseTypeEnum enum",
+  // })
+  // @Field(() => CourseTypeEnum, { nullable: true })
+  // course_type?: CourseTypeEnum;
 
-  @IsNotEmpty({ message: "'category' is required" })
-  @IsString({ message: "'category' must be a string value" })
-  @IsUUID('all', { message: "Invalid 'category' - Expected a uuid" })
-  @Field()
-  category: string;
+  @IsOptional({ message: "'category' cannot be empty" })
+  @IsUUID('all', { message: "'category' must be a valid uuid" })
+  @Field({ nullable: true })
+  category?: string;
 
   @IsNotEmpty({ message: "'what_to_learn' is required" })
   @IsArray({ message: "'what_to_learn' must be an array" })

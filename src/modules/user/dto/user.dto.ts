@@ -32,6 +32,9 @@ export class UserDTO {
   is_online: boolean;
 
   @Field()
+  allow_push_notifications: boolean;
+
+  @Field()
   is_active: boolean;
 
   @Field()
