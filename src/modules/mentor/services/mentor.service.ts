@@ -74,11 +74,12 @@ export class MentorService {
 
   async getMentorProfile(): Promise<any> {
     try {
-      const user = this.request.req.user.user;
+      const user = this.request.req.user;
       const mentorProfile = await this.mentorRepository.findOne({
         where: { user: { id: user.id } },
         relations: ['user', 'courses', 'reviews'],
       });
+      // console.log({ user, mentorProfile });
       if (!mentorProfile)
         throw new NotFoundException(`No Mentor Profile found!`);
       return mentorProfile;

@@ -20,6 +20,13 @@ import { isUUID } from 'class-validator';
 import { CourseCategoryService } from './course-category.service';
 import slugify from 'slugify';
 import * as Upload from 'graphql-upload/Upload.js';
+import { NotificationService } from 'src/modules/notification/notification.service';
+import { User } from 'src/modules/user/entities/user.entity';
+import { NotificationResourceType } from 'src/modules/notification/enums';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import EVENTS from 'src/common/events.constants';
+import { INewCourseNotification } from 'src/modules/notification/types';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class CourseService {
@@ -32,14 +39,12 @@ export class CourseService {
     private categoryService: CourseCategoryService,
     private authService: AuthService,
     private mediaService: MediaService,
+    private notificationService: NotificationService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
-  async createCourse(
-    createCourseInput: CreateCourseInput,
-    files: Upload[],
-  ): Promise<any> {
-    const user = this.request.req.user.user;
-    if (!user) throw new UnauthorizedException('Unauthorized');
+  async createCourse(createCourseInput: CreateCourseInput, files: Upload[]) {
+    const user = this.request.req.user as User;
 
     // const validVideoExtensions = ['.mp4', '.avi', '.mov', '.wmv'];
     // // Check if uploaded files are videos
@@ -51,7 +56,7 @@ export class CourseService {
     //     throw new BadRequestException(`${filename} is not a valid video file.`);
     //   // Todo: set upload limit and check number of videos uploaded
     // }
-    console.log({ resolvedFiles: files, createCourseInput });
+    // console.log({ resolvedFiles: files, createCourseInput });
     try {
       const {
         category: category_id,
@@ -63,11 +68,16 @@ export class CourseService {
         requirements,
         title,
         what_to_learn,
-      } = createCourseInput;
+      } = createCourseInput; //Todo: add file metadata (size, duration) to incoming files
 
       const category = await this.categoryService.findOne(category_id);
 
-      const savedCourse = this.courseRepository.create({
+      if (!category)
+        throw new BadRequestException(
+          "category with the 'category_id' doesn't exist. provide a 'course_type'",
+        );
+
+      let savedCourse = this.courseRepository.create({
         title,
         description,
         price,
@@ -101,8 +111,17 @@ export class CourseService {
       //       });
       //     // Todo: handle course_images upload
       //   }
+
       //   console.log({ savedCourse });
-      await this.courseRepository.save(savedCourse);
+      savedCourse = await this.courseRepository.save(savedCourse);
+      // Todo: check if mentor has "notify_followers_on_new_course"
+      //* emit notifications event
+      const eventPayload: INewCourseNotification = {
+        mentorUser: { name: user.name },
+        course: savedCourse,
+        followers: user.mentor.followers,
+      };
+      this.eventEmitter.emit(EVENTS.NEW_COURSE, eventPayload);
       return savedCourse;
     } catch (error) {
       const stackTrace = new Error().stack;
@@ -198,6 +217,8 @@ export class CourseService {
       const hasCourseTypeCondition = Boolean(courseType && courseType !== '');
       const hasCategoryCondition = Boolean(category && category !== '');
       const slug = hasCategoryCondition ? slugify(category.toLowerCase()) : '';
+      // if (hasCategoryCondition && !isUUID(category))
+      //   throw new BadRequestException('"category" must be a valid uuid');
 
       const courseRepository = this._entityManager.getRepository(Course);
       let query = courseRepository

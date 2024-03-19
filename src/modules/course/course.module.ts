@@ -11,11 +11,15 @@ import { CourseResolver } from './resolvers/course.resolver';
 import { CourseCategory } from './entities/category.entity';
 import { Course } from './entities/course.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { NotificationService } from '../notification/notification.service';
+import { Notification } from '../notification/entities/notification.entity';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [
     forwardRef(() => UserModule),
     forwardRef(() => AuthModule),
+    NotificationModule,
     MediaModule,
     TypeOrmModule.forFeature([Course, CourseCategory, CourseType]),
   ],
@@ -25,6 +29,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     CourseCategoryResolver,
     CourseCategoryService,
   ],
-  exports: [TypeOrmModule.forFeature([Course])],
+  exports: [TypeOrmModule.forFeature([Course]), CourseCategoryService],
 })
 export class CourseModule {}

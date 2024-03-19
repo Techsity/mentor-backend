@@ -22,14 +22,17 @@ export class UserDTO {
   @Field()
   country: string;
 
-  @Field(() => [Subscription], { nullable: true })
+  @Field(() => [Subscription])
   subscriptions: Subscription[];
 
-  @Field(() => [NotificationDto], { nullable: true })
+  @Field(() => [NotificationDto])
   notifications: NotificationDto[];
 
   @Field()
   is_online: boolean;
+
+  @Field()
+  allow_push_notifications: boolean;
 
   @Field()
   is_active: boolean;

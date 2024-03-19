@@ -10,6 +10,7 @@ import {
 import { CourseCategory } from './category.entity';
 import { Course } from './course.entity';
 import { CourseTypeEnum } from '../enums/course.enums';
+import { Workshop } from 'src/modules/workshop/entities/workshop.entity';
 
 @ObjectType()
 @Entity('course-types')
@@ -32,6 +33,12 @@ export class CourseType {
     onDelete: 'SET NULL',
   })
   courses: Course[];
+
+  @OneToMany(() => Workshop, (workshop) => workshop.type, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  workshops: Workshop[];
 
   @Field()
   @Column({ type: 'text', nullable: true })

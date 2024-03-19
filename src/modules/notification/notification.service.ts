@@ -1,8 +1,6 @@
 import {
   BadRequestException,
-  Inject,
   Injectable,
-  InternalServerErrorException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
@@ -13,6 +11,8 @@ import { Repository } from 'typeorm';
 import NotificationDto from './dto/notification.dto';
 import { isUUID } from 'class-validator';
 import { User } from '../user/entities/user.entity';
+import { NotificationEventsGateway } from './gateways/notification-events.gateway';
+
 
 @Injectable()
 export class NotificationService {
@@ -20,8 +20,13 @@ export class NotificationService {
   constructor(
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
+    private notificationGateway: NotificationEventsGateway,
   ) {}
 
+  /**
+   * @param user - The user recieving the notification
+   * @param input - The notification body
+   */
   async create(
     user: User,
     input: CreateNotificationInput,
@@ -30,6 +35,18 @@ export class NotificationService {
       ...input,
       user,
     });
+    // if (user.is_active) {
+    // Todo: add to create email service queue
+    // Send email notification
+    // }
+    this.notificationGateway.dispatchNotification({
+      userId: user.id,
+      payload: notification,
+    });
+    this.logger.log(
+      `Notification created for user ${user.id}`,
+      `Notification event fired`,
+    );
     return notification;
   }
 

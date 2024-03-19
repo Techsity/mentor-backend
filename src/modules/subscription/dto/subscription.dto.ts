@@ -1,15 +1,20 @@
-import { ObjectType, Field, ID } from '@nestjs/graphql';
+import { ObjectType, Field } from '@nestjs/graphql';
 import { CourseDto } from '../../course/dto/course.dto';
-import { Course } from '../../course/entities/course.entity';
-import { User } from '../../user/entities/user.entity';
+import WorkshopDto from 'src/modules/workshop/dto/workshop.dto';
 
 @ObjectType()
 export class SubscriptionDto {
-  @Field(() => ID, { nullable: true })
+  @Field()
   id: string;
 
   @Field()
+  type: string;
+
+  @Field({ nullable: true })
   course: CourseDto;
+
+  @Field({ nullable: true })
+  workshop: WorkshopDto;
 
   @Field()
   is_completed: boolean;

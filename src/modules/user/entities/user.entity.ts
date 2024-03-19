@@ -52,6 +52,10 @@ export class User extends BaseEntity {
   is_active: boolean;
 
   @Field()
+  @Column({ type: 'boolean', default: true })
+  allow_push_notifications: boolean;
+
+  @Field()
   @Column({ type: 'boolean', default: false })
   isPremium: boolean;
 

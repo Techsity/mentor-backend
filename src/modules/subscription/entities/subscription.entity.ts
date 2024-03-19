@@ -1,4 +1,4 @@
-import { ObjectType, Field, ID } from '@nestjs/graphql';
+import { ObjectType, Field, ID, registerEnumType } from '@nestjs/graphql';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -14,6 +14,8 @@ import {
 } from 'typeorm';
 import { Course } from '../../course/entities/course.entity';
 import { User } from '../../user/entities/user.entity';
+import { Workshop } from 'src/modules/workshop/entities/workshop.entity';
+import { SubscriptionType } from '../enums/subscription.enum';
 
 @ObjectType()
 @Entity('subscriptions')
@@ -22,13 +24,35 @@ export class Subscription extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @OneToOne(() => Course, (course) => course.subscriptions)
+  @Field(() => SubscriptionType)
+  @Column({
+    default: SubscriptionType.COURSE,
+    type: 'enum',
+    enum: SubscriptionType,
+  })
+  type: SubscriptionType;
+
+  @OneToOne(() => Course, (course) => course.subscriptions, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   @JoinColumn({ name: 'course_id' })
-  course: Course;
+  course?: Course;
+
+  @OneToOne(() => Workshop, (workshop) => workshop.participants, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'workshop_id' })
+  workshop?: Workshop;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  course_id?: string;
 
   @Field(() => String)
-  @Column()
-  course_id: string;
+  @Column({ nullable: true })
+  workshop_id?: string;
 
   @ManyToOne(() => User, (user) => user.subscriptions)
   @JoinColumn({ name: 'user_id' })
@@ -46,3 +70,5 @@ export class Subscription extends BaseEntity {
   @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at: Date;
 }
+
+registerEnumType(SubscriptionType, { name: 'SubscriptionType' });

@@ -6,6 +6,7 @@ import { Mentor } from '../entities/mentor.entity';
 import { CreateMentorInput } from '../dto/create-mentor.input';
 import { UpdateMentorInput } from '../dto/update-mentor.input';
 import { MentorDTO } from '../dto/mentor.dto';
+import { CurrentUser } from 'src/lib/custom-decorators';
 
 @Resolver(() => Mentor)
 export class MentorResolver {

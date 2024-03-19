@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOneOptions, Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MailerService } from '../../../common/mailer/mailer.service';
 import { CreateRegisterInput } from '../dto/register-auth.input';
@@ -17,12 +17,15 @@ import { Auth } from '../entities/auth.entity';
 import { CustomResponseMessage, CustomStatusCodes } from 'src/common/constants';
 import { JwtService } from '@nestjs/jwt';
 import { checkPassword, generateOTP, hashPassword } from 'src/lib/utils';
+import { UserDTO } from 'src/modules/user/dto/user.dto';
+import EVENTS from 'src/common/events.constants';
+import { isUUID } from 'class-validator';
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
-    @Inject(REQUEST) private readonly request: any,
+    // @Inject(REQUEST) private readonly request: any,
     private eventEmitter: EventEmitter2,
     @InjectRepository(User)
     private userRepository: Repository<User>,
@@ -38,17 +41,18 @@ export class AuthService {
     if (!user) throw new Error('Invalid credentials');
     if (!user.is_active) throw new Error('Your account is not active.');
     if (!user.is_verified) throw new Error('Kindly verify your email.');
-    const payload = { email: email, sub: user.id, user: user };
+    const payload = { email: email, sub: user.id };
     return {
       access_token: this.jwtService.sign(payload, {
         secret: `secretKey`,
         // expiresIn: 3600, //1h
         expiresIn: '1d', //1h
       }),
-      user,
+      user: user as unknown as UserDTO,
       is_mentor: user.mentor ? true : false,
     };
   }
+
   async register(registerPayload: CreateRegisterInput) {
     try {
       const hashedPassword = await hashPassword(registerPayload.password);
@@ -79,32 +83,32 @@ export class AuthService {
     return user;
   }
 
-  async validateUser(email: string, password: string): Promise<any> {
+  async validateUser(email: string, password: string) {
     const user = await this.userRepository.findOne({
       where: { email },
-      relations: ['mentor', 'subscriptions'],
+      relations: [
+        'mentor',
+        'subscriptions',
+        'notifications',
+        'mentor.followers',
+      ],
     });
-
     if (!user) return null;
-
     const isPasswordCorrect = await checkPassword(password, user.password);
     if (!isPasswordCorrect) return null;
-
     return user;
   }
 
   async verifyUser(otp: string) {
     const user: any = await this.otpVerification(otp);
-
     const { id, is_verified, is_active } = user;
-
     if (is_verified && is_active)
       throw new CustomResponseMessage(CustomStatusCodes.OTP_ALREADY_VERIFIED);
     await this.userRepository.update(
       { id },
       { is_active: true, is_verified: true },
     );
-    await this.authRepository.delete({ user: { id: user.id } }); // Delete OTP from DB
+    await this.authRepository.delete({ user: { id: user.id } });
     return { message: 'User verified successfully' };
   }
 
@@ -125,7 +129,7 @@ export class AuthService {
     const { id } = userOtp;
     const hashedPassword = await hashPassword(password);
     await this.userRepository.update({ id }, { password: hashedPassword });
-    await this.authRepository.delete({ id: userOtp.id }); // Delete OTP from DB
+    await this.authRepository.delete({ id: userOtp.id });
     return { message: 'User Password Reset Successful.' };
   }
 
@@ -183,6 +187,7 @@ export class AuthService {
       );
     }
   }
+
   async otpVerification(otp: string) {
     const response = await this.authRepository.findOne({
       where: { token: otp },
@@ -195,12 +200,19 @@ export class AuthService {
     return user;
   }
 
-  async findLoggedInUser() {
-    const authUser = this.request.req.user.user;
-    const user = await this.userRepository.findOne({
-      where: { id: authUser.id },
-      relations: ['mentor', 'subscriptions'],
-    });
+  async findLoggedInUser(identifier: string) {
+    const options: FindOneOptions<User> = {
+      where: [{ id: identifier }, { email: identifier }],
+      relations: [
+        'mentor',
+        'subscriptions',
+        'notifications',
+        'mentor.followers',
+      ],
+    };
+    if (!isUUID(identifier)) options.where = { email: identifier };
+    else options.where = { id: identifier };
+    const user = await this.userRepository.findOne(options);
     return user;
   }
 }
