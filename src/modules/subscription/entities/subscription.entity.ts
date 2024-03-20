@@ -11,6 +11,7 @@ import {
   JoinTable,
   JoinColumn,
   ManyToOne,
+  ManyToMany,
 } from 'typeorm';
 import { Course } from '../../course/entities/course.entity';
 import { User } from '../../user/entities/user.entity';
@@ -32,14 +33,14 @@ export class Subscription extends BaseEntity {
   })
   type: SubscriptionType;
 
-  @OneToOne(() => Course, (course) => course.subscriptions, {
+  @ManyToOne(() => Course, (course) => course.subscriptions, {
     nullable: true,
     onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'course_id' })
   course?: Course;
 
-  @OneToOne(() => Workshop, (workshop) => workshop.participants, {
+  @ManyToOne(() => Workshop, (workshop) => workshop.participants, {
     nullable: true,
     onDelete: 'SET NULL',
   })
@@ -50,11 +51,11 @@ export class Subscription extends BaseEntity {
   @Column({ nullable: true })
   course_id?: string;
 
-  @Field(() => String)
+  @Field({ nullable: true })
   @Column({ nullable: true })
   workshop_id?: string;
 
-  @ManyToOne(() => User, (user) => user.subscriptions)
+  @ManyToOne(() => User, (user) => user.subscriptions,{})
   @JoinColumn({ name: 'user_id' })
   user: User;
 

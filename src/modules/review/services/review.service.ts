@@ -24,7 +24,6 @@ export class ReviewService {
 
     try {
       const { createReviewInput, mentorId, courseId } = args;
-
       // Check for exclusive mentorId or courseId
       if ((!mentorId && !courseId) || (mentorId && courseId)) {
         throw new Error(

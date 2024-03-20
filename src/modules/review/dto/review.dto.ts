@@ -29,5 +29,5 @@ export class ReviewDto {
 
   @IsInt()
   @Field()
-  ratings: number;
+  rating: number;
 }
