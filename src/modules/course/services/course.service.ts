@@ -123,7 +123,6 @@ export class CourseService {
         followers: user.mentor.followers,
       };
       this.eventEmitter.emit(EVENTS.NEW_COURSE, eventPayload);
-      savedCourse.mentor.courses = savedCourse.mentor.courses.slice(0, 5);
       return savedCourse;
     } catch (error) {
       const stackTrace = new Error().stack;

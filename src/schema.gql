@@ -388,7 +388,7 @@ input ResetPasswordInput {
 }
 
 input UpdateUserInput {
-  name: String!
+  name: String
   phone: String
   avatar: String
   country: String
