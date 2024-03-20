@@ -18,7 +18,7 @@ type Subscription {
   id: ID!
   type: SubscriptionType!
   course_id: String
-  workshop_id: String!
+  workshop_id: String
   is_completed: Boolean!
   created_at: DateTime!
   updated_at: DateTime!
@@ -154,7 +154,7 @@ type ReviewDto {
   type: String!
   content: String!
   reviewed_by: UserDTO
-  ratings: Float!
+  rating: Float!
 }
 
 type SkillDTO {
@@ -333,7 +333,7 @@ type Query {
   viewAllWorkshops(skip: Float!, take: Float!, type: CourseTypeEnum, category: String): [WorkshopDto!]!
   viewWorkshop(workshopId: String!): WorkshopDto!
   viewSubscriptions(subscriptionType: String!): [SubscriptionDto!]!
-  viewSubscription(resourceId: String!, resourceType: SubscriptionType!): SubscriptionDto!
+  viewSubscription(resourceId: String!, subscriptionType: SubscriptionType!): SubscriptionDto!
 }
 
 """Course types"""
@@ -359,7 +359,7 @@ type Mutation {
   createCategory(createCourseCatInput: CreateCourseCatInput!): CourseCategoryDto!
   createAppointment(createAppointmentInput: CreateAppointmentInput!, mentor: String!): AppointmentDTO!
   toggleAppointmentStatus(mentorId: String!, appointmentId: String!, status: String!): AppointmentDTO!
-  createReview(createReviewInput: CreateReviewInput!, mentorId: String, courseId: String): ReviewDto!
+  createReview(args: CreateReviewArgs!): ReviewDto!
   markAllNotificationsAsRead: Boolean!
   readNotification(notificationId: String!): Boolean!
   deleteNotification(notificationId: String!): Boolean!
@@ -388,7 +388,7 @@ input ResetPasswordInput {
 }
 
 input UpdateUserInput {
-  name: String!
+  name: String
   phone: String
   avatar: String
   country: String
@@ -523,9 +523,15 @@ input CreateAppointmentInput {
   time: String!
 }
 
+input CreateReviewArgs {
+  createReviewInput: CreateReviewInput!
+  mentorId: String
+  courseId: String
+}
+
 input CreateReviewInput {
   content: String!
-  ratings: Float!
+  rating: Float!
 }
 
 input CreateWorkshopInput {

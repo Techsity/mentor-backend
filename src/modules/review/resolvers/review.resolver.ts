@@ -11,7 +11,8 @@ export class ReviewResolver {
   constructor(private readonly reviewService: ReviewService) {}
 
   @Mutation(() => ReviewDto)
-  createReview(@Args() args: CreateReviewArgs): Promise<any> {
+  createReview(@Args("args") args: CreateReviewArgs): Promise<any> {
+    console.log({ args });
     return this.reviewService.createReview(args);
   }
 }

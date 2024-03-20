@@ -164,10 +164,10 @@ export class WorkshopService {
         .leftJoinAndSelect('workshop.reviews', 'reviews')
         .leftJoinAndSelect('workshop.type', 'workshop_type')
         .leftJoinAndSelect('mentor.user', 'user')
-        .leftJoinAndSelect('mentor.courses', 'mentor_courses')
-        .leftJoinAndSelect('mentor_courses.category', 'mentor_category')
-        .leftJoinAndSelect('mentor_courses.course_type', 'mentor_course_type')
-        .leftJoinAndSelect('mentor_courses.reviews', 'mentor_reviews')
+        // .leftJoinAndSelect('mentor.courses', 'mentor_courses')
+        // .leftJoinAndSelect('mentor_courses.category', 'mentor_category')
+        // .leftJoinAndSelect('mentor_courses.course_type', 'mentor_course_type')
+        // .leftJoinAndSelect('mentor_courses.reviews', 'mentor_reviews')
         .skip(skip)
         .take(take);
 
@@ -206,7 +206,8 @@ export class WorkshopService {
           'reviews',
           'type',
           'mentor.user',
-          'mentor.courses',
+          'mentor.courses.mentor',
+          'mentor.courses.mentor.user',
           'mentor.followers',
           'mentor.courses.category',
           'mentor.courses.course_type',
@@ -214,6 +215,7 @@ export class WorkshopService {
         ],
       });
       if (!workshop) throw new NotFoundException('Workshop not found');
+      workshop.mentor.courses = workshop.mentor.courses.slice(0, 5);
       return workshop;
     } catch (error) {
       const stack = new Error().stack;

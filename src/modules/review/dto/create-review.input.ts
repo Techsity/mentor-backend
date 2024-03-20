@@ -7,7 +7,7 @@ import {
 } from 'class-validator';
 
 @InputType()
-export class CreateReviewInput {
+export class  CreateReviewInput {
   @IsNotEmpty()
   @IsString()
   @Field()
@@ -16,5 +16,5 @@ export class CreateReviewInput {
   @IsOptional()
   @IsInt()
   @Field()
-  ratings: number;
+  rating: number;
 }

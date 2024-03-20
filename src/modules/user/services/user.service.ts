@@ -7,17 +7,14 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LessThanOrEqual, Repository, MoreThanOrEqual, Equal } from 'typeorm';
+import { Repository } from 'typeorm';
 import { AuthService } from '../../auth/services/auth.service';
-import { Course } from '../../course/entities/course.entity';
 import { Mentor } from '../../mentor/entities/mentor.entity';
 import { UserDTO } from '../dto/user.dto';
 import { User } from '../entities/user.entity';
 import { isUUID } from 'class-validator';
 import { ReportMentorInput } from '../dto/report-mentor.input';
-import { ReportedMentorDTO } from '../dto/reported-mentor.dto';
 import { ReportedMentor } from '../entities/reported-mentor.entity';
-import { randomUUID } from 'crypto';
 
 @Injectable()
 export class UserService {
