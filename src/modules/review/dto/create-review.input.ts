@@ -7,7 +7,7 @@ import {
 } from 'class-validator';
 
 @InputType()
-export class CreateReviewInput {
+export class  CreateReviewInput {
   @IsNotEmpty()
   @IsString()
   @Field()

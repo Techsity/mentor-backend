@@ -359,7 +359,7 @@ type Mutation {
   createCategory(createCourseCatInput: CreateCourseCatInput!): CourseCategoryDto!
   createAppointment(createAppointmentInput: CreateAppointmentInput!, mentor: String!): AppointmentDTO!
   toggleAppointmentStatus(mentorId: String!, appointmentId: String!, status: String!): AppointmentDTO!
-  createReview(createReviewInput: CreateReviewInput!, mentorId: String, courseId: String): ReviewDto!
+  createReview(args: CreateReviewArgs!): ReviewDto!
   markAllNotificationsAsRead: Boolean!
   readNotification(notificationId: String!): Boolean!
   deleteNotification(notificationId: String!): Boolean!
@@ -521,6 +521,12 @@ input CreateCourseCatInput {
 input CreateAppointmentInput {
   date: DateTime!
   time: String!
+}
+
+input CreateReviewArgs {
+  createReviewInput: CreateReviewInput!
+  mentorId: String
+  courseId: String
 }
 
 input CreateReviewInput {
