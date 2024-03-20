@@ -188,6 +188,7 @@ export class CourseService {
           'category',
           'mentor',
           'reviews',
+          'reviews.reviewed_by',
           'course_type',
           'mentor.user',
           'mentor.courses.category',
