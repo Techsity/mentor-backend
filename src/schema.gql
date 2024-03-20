@@ -18,7 +18,7 @@ type Subscription {
   id: ID!
   type: SubscriptionType!
   course_id: String
-  workshop_id: String!
+  workshop_id: String
   is_completed: Boolean!
   created_at: DateTime!
   updated_at: DateTime!
@@ -154,7 +154,7 @@ type ReviewDto {
   type: String!
   content: String!
   reviewed_by: UserDTO
-  ratings: Float!
+  rating: Float!
 }
 
 type SkillDTO {
@@ -333,7 +333,7 @@ type Query {
   viewAllWorkshops(skip: Float!, take: Float!, type: CourseTypeEnum, category: String): [WorkshopDto!]!
   viewWorkshop(workshopId: String!): WorkshopDto!
   viewSubscriptions(subscriptionType: String!): [SubscriptionDto!]!
-  viewSubscription(resourceId: String!, resourceType: SubscriptionType!): SubscriptionDto!
+  viewSubscription(resourceId: String!, subscriptionType: SubscriptionType!): SubscriptionDto!
 }
 
 """Course types"""
@@ -525,7 +525,7 @@ input CreateAppointmentInput {
 
 input CreateReviewInput {
   content: String!
-  ratings: Float!
+  rating: Float!
 }
 
 input CreateWorkshopInput {

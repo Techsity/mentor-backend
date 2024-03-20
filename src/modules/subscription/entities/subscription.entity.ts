@@ -50,7 +50,7 @@ export class Subscription extends BaseEntity {
   @Column({ nullable: true })
   course_id?: string;
 
-  @Field(() => String)
+  @Field({ nullable: true })
   @Column({ nullable: true })
   workshop_id?: string;
 

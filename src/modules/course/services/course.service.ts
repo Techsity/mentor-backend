@@ -115,6 +115,7 @@ export class CourseService {
       //   console.log({ savedCourse });
       savedCourse = await this.courseRepository.save(savedCourse);
       // Todo: check if mentor has "notify_followers_on_new_course"
+      // Todo: move notification event to where the admin approves the course
       //* emit notifications event
       const eventPayload: INewCourseNotification = {
         mentorUser: { name: user.name },
@@ -122,6 +123,7 @@ export class CourseService {
         followers: user.mentor.followers,
       };
       this.eventEmitter.emit(EVENTS.NEW_COURSE, eventPayload);
+      savedCourse.mentor.courses = savedCourse.mentor.courses.slice(0, 5);
       return savedCourse;
     } catch (error) {
       const stackTrace = new Error().stack;
@@ -197,6 +199,7 @@ export class CourseService {
       });
       if (!course)
         throw new NotFoundException('Course currently not available');
+      course.mentor.courses = course.mentor.courses.slice(0, 5);
       return course;
     } catch (error) {
       const stack = new Error().stack;
@@ -217,8 +220,6 @@ export class CourseService {
       const hasCourseTypeCondition = Boolean(courseType && courseType !== '');
       const hasCategoryCondition = Boolean(category && category !== '');
       const slug = hasCategoryCondition ? slugify(category.toLowerCase()) : '';
-      // if (hasCategoryCondition && !isUUID(category))
-      //   throw new BadRequestException('"category" must be a valid uuid');
 
       const courseRepository = this._entityManager.getRepository(Course);
       let query = courseRepository
@@ -228,10 +229,10 @@ export class CourseService {
         .leftJoinAndSelect('course.reviews', 'reviews')
         .leftJoinAndSelect('course.course_type', 'course_type')
         .leftJoinAndSelect('mentor.user', 'user')
-        .leftJoinAndSelect('mentor.courses', 'mentor_courses')
-        .leftJoinAndSelect('mentor_courses.category', 'mentor_category')
-        .leftJoinAndSelect('mentor_courses.course_type', 'mentor_course_type')
-        .leftJoinAndSelect('mentor_courses.reviews', 'mentor_reviews')
+        // .leftJoinAndSelect('mentor.courses', 'mentor_courses')
+        // .leftJoinAndSelect('mentor_courses.category', 'mentor_category')
+        // .leftJoinAndSelect('mentor_courses.course_type', 'mentor_course_type')
+        // .leftJoinAndSelect('mentor_courses.reviews', 'mentor_reviews')
         .skip(skip)
         .take(take);
 

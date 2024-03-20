@@ -89,6 +89,8 @@ export class SubscriptionService {
             'course.category',
             'course.course_type',
             'course.mentor',
+            'course.mentor.courses',
+            'course.mentor.followers',
             'course.mentor.user',
             'course.reviews',
           ]
@@ -97,13 +99,29 @@ export class SubscriptionService {
             'workshop.category',
             'workshop.type',
             'workshop.mentor',
+            'workshop.mentor.courses',
+            'workshop.mentor.followers',
             'workshop.mentor.user',
             'workshop.reviews',
           ];
-    const options: FindOptionsWhere<Subscription> = {
-      id: subscriptionId,
-      user: { id: authUser.id },
-      type: subscriptionType,
+    const options: FindOneOptions<Subscription> = {
+      where: [
+        {
+          id: subscriptionId,
+          user: { id: authUser.id },
+          type: subscriptionType,
+        },
+        {
+          course_id: subscriptionId,
+          user: { id: authUser.id },
+          type: subscriptionType,
+        },
+        {
+          workshop_id: subscriptionId,
+          user: { id: authUser.id },
+          type: subscriptionType,
+        },
+      ],
     };
     if (!isUUID(subscriptionId))
       throw new BadRequestException(`Invalid subscription Id`);
@@ -116,7 +134,7 @@ export class SubscriptionService {
 
     try {
       const sub = await this.subscriptionRepository.findOne({
-        where: options,
+        ...options,
         relations,
       });
       if (!sub) throw new NotFoundException('Subscription not found');

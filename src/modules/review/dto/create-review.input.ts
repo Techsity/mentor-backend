@@ -16,5 +16,5 @@ export class CreateReviewInput {
   @IsOptional()
   @IsInt()
   @Field()
-  ratings: number;
+  rating: number;
 }

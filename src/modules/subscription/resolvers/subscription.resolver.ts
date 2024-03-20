@@ -24,7 +24,7 @@ export class SubscriptionResolver {
   @Query((returns) => SubscriptionDto)
   async viewSubscription(
     @Args('resourceId') resourceId: string,
-    @Args({ name: 'resourceType', type: () => SubscriptionType })
+    @Args({ name: 'subscriptionType', type: () => SubscriptionType })
     subscriptionType: SubscriptionType,
   ): Promise<any> {
     return this.subscriptionService.viewSubscription(

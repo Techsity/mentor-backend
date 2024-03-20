@@ -43,7 +43,7 @@ export class Review {
   content: string;
 
   @Column()
-  ratings: number;
+  rating: number;
 }
 
 registerEnumType(ReviewType, {
