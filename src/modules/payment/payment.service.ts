@@ -14,9 +14,6 @@ export class PaymentService {
     private configService: ConfigService,
   ) {}
 
-  /**
-   * TODO: Connect payment gateway
-   */
   async makePayment(amount: number): Promise<any> {
     const secretKey = this.configService.get('PAYSTACK_SECRET_KEY');
     const url = `${this.paystackBaseUrl}/transaction/initialize`;
