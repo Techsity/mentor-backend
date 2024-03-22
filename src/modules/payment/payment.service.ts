@@ -116,7 +116,6 @@ export class PaymentService {
     let paymentRecord = await this.paymentsRepository.findOne({
       where: { metadata },
     });
-    console.log({ paymentRecord });
     if (paymentRecord && paymentRecord.status !== PaymentStatus.SUCCESS) {
       return {
         authorization_url: `https://checkout.paystack.com/${paymentRecord.access_code}`,
