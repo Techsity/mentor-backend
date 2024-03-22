@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Inject,
   Injectable,
+  InternalServerErrorException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
@@ -35,6 +36,14 @@ export class PaymentService {
     private readonly courseRepository: Repository<Course>,
   ) {}
 
+  private async getExchangeRate(): Promise<number> {
+    // Fetch exchange rate from an external API
+    const response = await axios.get(
+      'https://api.exchangerate-api.com/v4/latest/USD',
+    );
+    return response.data.rates.NGN;
+  }
+
   private async verifyResource(resourceId: string, resourceType: string) {
     // Validate input
     if (!isEnum(resourceType, SubscriptionType))
@@ -59,6 +68,9 @@ export class PaymentService {
     resourceType: string,
   ): Promise<InitializePaymentResponse> {
     await this.verifyResource(resourceId, resourceType);
+    // Get the current usd to ngn exchange rate
+    const exchangeRate = await this.getExchangeRate();
+    amount = parseInt(amount.toFixed(0)) * exchangeRate;
 
     const secretKey = this.configService.get('PAYSTACK_SECRET_KEY');
     const callbackUrl = this.configService.get('PAYMENT_CALLBACK_URL');
@@ -66,7 +78,6 @@ export class PaymentService {
     const user = this.request.req.user;
     const reference = 'ref_' + Date.now();
     const payload = {
-      // Todo: calculate to dollar rate
       amount: amount * 100,
       email: user.email,
       currency: 'NGN',
@@ -98,8 +109,11 @@ export class PaymentService {
       };
     } catch (error) {
       // payment record won't be saved
-      console.error('Payment error:', error);
-      const err = new Error('Payment initiation failed');
+      console.error(
+        'Payment error:',
+        error.response.data || error.response || error,
+      );
+      const err = new InternalServerErrorException('Payment initiation failed');
       this.logger.error(error, err.stack);
       throw err;
     }
