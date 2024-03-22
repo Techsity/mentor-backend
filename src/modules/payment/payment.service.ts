@@ -25,6 +25,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import EVENTS from 'src/common/events.constants';
 import { SubscriptionService } from '../subscription/services/subscription.service';
 import { CustomResponseMessage, CustomStatusCodes } from 'src/common/constants';
+import { Subscription } from '../subscription/entities/subscription.entity';
 
 @Injectable()
 export class PaymentService {
@@ -42,6 +43,8 @@ export class PaymentService {
     private readonly workshopRepository: Repository<Workshop>,
     @InjectRepository(Course)
     private readonly courseRepository: Repository<Course>,
+    @InjectRepository(Subscription)
+    private readonly subscriptionRepository: Repository<Subscription>,
     private readonly eventEmitter: EventEmitter2,
     private readonly subscriptionService: SubscriptionService,
   ) {
@@ -79,21 +82,41 @@ export class PaymentService {
     resourceType: string,
   ): Promise<InitializePaymentResponse> {
     await this.verifyResource(resourceId, resourceType);
+    const user = this.request.req.user;
+    const sub = await this.subscriptionRepository.findOne({
+      where: [
+        {
+          course_id: resourceId,
+          type: resourceType as SubscriptionType,
+          user: { id: user.id },
+        },
+        {
+          workshop_id: resourceId,
+          type: resourceType as SubscriptionType,
+          user: { id: user.id },
+        },
+      ],
+    });
+
+    if (sub) throw new BadRequestException('Already subscribed');
+
     // Get the current usd to ngn exchange rate
     const exchangeRate = await this.getExchangeRate();
     amount = parseInt(amount.toFixed(0)) * exchangeRate;
 
     const callbackUrl = this.configService.get('PAYMENT_CALLBACK_URL');
     const url = `${this.paystackBaseUrl}/transaction/initialize`;
-    const user = this.request.req.user;
     const reference = 'ref_' + Date.now();
-    const metadata = { resourceId, resourceType };
+    const metadata = {
+      resourceId,
+      resourceType: resourceType as SubscriptionType,
+    };
 
     // create payement record
     let paymentRecord = await this.paymentsRepository.findOne({
       where: { metadata },
     });
-
+    console.log({ paymentRecord });
     if (paymentRecord && paymentRecord.status !== PaymentStatus.SUCCESS) {
       return {
         authorization_url: `https://checkout.paystack.com/${paymentRecord.access_code}`,
@@ -128,10 +151,11 @@ export class PaymentService {
         Boolean(response.data.status === true) &&
         response.data.data.authorization_url
       )
+        //save payment record
         await this.paymentsRepository.save({
           ...paymentRecord,
           access_code: response.data.data.access_code,
-        }); //save payment record
+        });
       // Todo: send notification to user email including the payment reference
       return {
         reference,
@@ -167,12 +191,12 @@ export class PaymentService {
       throw new BadRequestException('Transaction is already completed');
     else if (paymentRecord.status === PaymentStatus.FAILED)
       throw new BadRequestException('Transaction failed. Contact support');
-    else if (paymentRecord.status === PaymentStatus.ABANDONED)
-      throw new UnprocessableEntityException(
-        CustomResponseMessage.getErrorMessage(
-          CustomStatusCodes.ABANDONED_PAYMENT,
-        ).concat(` | ${paymentRecord.access_code}`),
-      );
+    // else if (paymentRecord.status === PaymentStatus.ABANDONED)
+    //   throw new UnprocessableEntityException(
+    //     CustomResponseMessage.getErrorMessage(
+    //       CustomStatusCodes.ABANDONED_PAYMENT,
+    //     ).concat(` | ${paymentRecord.access_code}`),
+    //   );
 
     try {
       const response = await axios.get(
@@ -185,8 +209,6 @@ export class PaymentService {
       );
 
       if (response.data.data.status === 'abandoned') {
-        paymentRecord.status = PaymentStatus.ABANDONED;
-        await paymentRecord.save();
         throw new UnprocessableEntityException(
           CustomResponseMessage.getErrorMessage(
             CustomStatusCodes.ABANDONED_PAYMENT,
@@ -200,15 +222,18 @@ export class PaymentService {
 
       // subscribe to course or workshop
       let subscription;
-      if (paymentRecord.metadata.resourceType === SubscriptionType.COURSE)
-        subscription = await this.subscriptionService.subscribeToCourse(
-          paymentRecord.metadata.resourceId,
-        );
-      else if (paymentRecord.metadata.resourceType === SubscriptionType.COURSE)
-        subscription = await this.subscriptionService.subscribeToWorkshop(
-          paymentRecord.metadata.resourceId,
-        );
-
+      if (!subscription) {
+        if (paymentRecord.metadata.resourceType === SubscriptionType.COURSE)
+          subscription = await this.subscriptionService.subscribeToCourse(
+            paymentRecord.metadata.resourceId,
+          );
+        else if (
+          paymentRecord.metadata.resourceType === SubscriptionType.WORKSHOP
+        )
+          subscription = await this.subscriptionService.subscribeToWorkshop(
+            paymentRecord.metadata.resourceId,
+          );
+      }
       this.eventEmitter.emit(EVENTS.PAID_COURSE_SUB_SUCCESSFUL, {
         paymentRecord,
         subscription,
@@ -217,11 +242,12 @@ export class PaymentService {
       // return 'Payment Verified';
       return subscription;
     } catch (error) {
+      console.log({ error });
       // payment record won't be saved
       const errMsg = new Error('Payment verification error');
-      this.logger.error(errMsg, errMsg.stack);
+      this.logger.error(error, errMsg.stack);
       if (error.status === HttpStatus.UNPROCESSABLE_ENTITY) throw error;
-      throw new InternalServerErrorException(errMsg);
+      throw new InternalServerErrorException(errMsg.message);
     }
   }
 

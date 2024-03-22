@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import { PAYMENT_CHANNELS, PaymentStatus } from '../enum';
 import { User } from 'src/modules/user/entities/user.entity';
+import { SubscriptionType } from 'src/modules/subscription/enums/subscription.enum';
 
 @Entity('payments')
 export class Payment extends BaseEntity {
@@ -51,4 +52,4 @@ export class Payment extends BaseEntity {
   updated_at: Date;
 }
 
-type PaymentMetaData = { resourceId: string; resourceType: string };
+type PaymentMetaData = { resourceId: string; resourceType: SubscriptionType };

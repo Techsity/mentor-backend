@@ -54,8 +54,7 @@ export class EventEmitterListeners {
       payment.status = PaymentStatus.SUCCESS;
       await Payment.update(payment.id, payment);
       console.log({
-        subscription: subscription.id,
-        subType: subscription.type,
+        subscriptionEvent: { id: subscription.id, type: subscription.type },
       });
       // notify user of the updates,
       // notify mentor, update mentor wallet
