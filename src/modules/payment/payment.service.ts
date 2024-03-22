@@ -22,6 +22,7 @@ export class PaymentService {
     const user = this.request.req.user;
     const reference = 'ref' + Date.now();
     const payload = {
+      // Todo: calculate to dollar rate
       amount: amount * 100,
       email: user.email,
       currency: 'NGN',
