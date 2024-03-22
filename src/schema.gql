@@ -310,6 +310,12 @@ type SubscriptionDto {
   updated_at: DateTime!
 }
 
+type InitializePaymentResponse {
+  authorization_url: String!
+  reference: String!
+  status: String!
+}
+
 type Query {
   userProfile: UserDTO!
   getMentorProfile: MentorDTO!
@@ -366,7 +372,7 @@ type Mutation {
   createWorkshop(input: CreateWorkshopInput!): WorkshopDto!
   subscribeToCourse(courseId: String!): Subscription!
   subscribeToWorkshop(workshopId: String!): Subscription!
-  initiatePayment(amount: Float!): String!
+  initiatePayment(amount: Float!): InitializePaymentResponse!
 }
 
 input CreateRegisterInput {
