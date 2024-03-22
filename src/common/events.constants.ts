@@ -1,6 +1,7 @@
 const EVENTS = {
   NEW_CLIENT_NOTIFICATION: 'new_notification',
   NEW_COURSE: 'new_course',
+  PAID_COURSE_SUB_SUCCESSFUL: 'PAID_COURSE_SUB_SUCCESSFUL',
 };
 
 export default EVENTS;

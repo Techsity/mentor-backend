@@ -7,12 +7,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Payment } from './entities/payment.entity';
 import { Course } from '../course/entities/course.entity';
 import { Workshop } from '../workshop/entities/workshop.entity';
+import { SubscriptionModule } from '../subscription/subscription.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
     HttpModule,
     TypeOrmModule.forFeature([Payment, Workshop, Course]),
+    SubscriptionModule
   ],
   providers: [PaymentResolver, PaymentService],
   exports: [TypeOrmModule.forFeature([Payment]), PaymentService],
