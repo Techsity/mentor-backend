@@ -16,6 +16,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Payment } from './entities/payment.entity';
 import { Repository } from 'typeorm';
 import { PaymentStatus } from './enum';
+import { Workshop } from '../workshop/entities/workshop.entity';
+import { Course } from '../course/entities/course.entity';
 
 @Injectable()
 export class PaymentService {
@@ -27,24 +29,42 @@ export class PaymentService {
     private configService: ConfigService,
     @InjectRepository(Payment)
     private readonly paymentsRepository: Repository<Payment>,
+    @InjectRepository(Workshop)
+    private readonly workshopRepository: Repository<Workshop>,
+    @InjectRepository(Course)
+    private readonly courseRepository: Repository<Course>,
   ) {}
+
+  private async verifyResource(resourceId: string, resourceType: string) {
+    // Validate input
+    if (!isEnum(resourceType, SubscriptionType))
+      throw new BadRequestException(
+        `Invalid resourceType | Expected 'course' or 'workshop'`,
+      );
+    if (!isUUID(resourceId))
+      throw new BadRequestException(`Invalid ${resourceType} Id`);
+    // confirm if course or workshop exist
+    let resource;
+    resourceType = resourceType as SubscriptionType;
+    if (resourceType === SubscriptionType.COURSE)
+      resource = await this.courseRepository.findOneBy({ id: resourceId });
+    else if (resourceType === SubscriptionType.WORKSHOP)
+      resource = await this.workshopRepository.findOneBy({ id: resourceId });
+    if (!resource) throw new BadRequestException(`Invalid ${resourceType} Id`);
+  }
 
   async makePayment(
     amount: number,
     resourceId: string,
     resourceType: string,
   ): Promise<InitializePaymentResponse> {
-    // Validate input
-    if (!isEnum(resourceType, SubscriptionType))
-      throw new BadRequestException(`Invalid resourceType`);
-    if (!isUUID(resourceId))
-      throw new BadRequestException(`Invalid ${resourceType} Id`);
+    await this.verifyResource(resourceId, resourceType);
 
     const secretKey = this.configService.get('PAYSTACK_SECRET_KEY');
     const callbackUrl = this.configService.get('PAYMENT_CALLBACK_URL');
     const url = `${this.paystackBaseUrl}/transaction/initialize`;
     const user = this.request.req.user;
-    const reference = 'ref' + Date.now();
+    const reference = 'ref_' + Date.now();
     const payload = {
       // Todo: calculate to dollar rate
       amount: amount * 100,
@@ -68,7 +88,7 @@ export class PaymentService {
           'Content-Type': 'application/json',
         },
       });
-      if (response.data.status == 'true')
+      if (Boolean(response.data.status === true))
         await this.paymentsRepository.save(paymentRecord); //save payment record
       // Todo: send notification to user email including the payment reference
       return {
@@ -92,7 +112,7 @@ export class PaymentService {
     });
     if (!paymentRecord)
       throw new NotFoundException(
-        'We could not find the transaction. The reference might be incorrect',
+        'We could not find the transaction. The reference you provided might be incorrect',
       );
     // check if payment has been processed
     if (paymentRecord.status === PaymentStatus.SUCCESS)

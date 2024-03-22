@@ -12,7 +12,7 @@ import {
 import { PAYMENT_CHANNELS, PaymentStatus } from '../enum';
 import { User } from 'src/modules/user/entities/user.entity';
 
-@Entity()
+@Entity('payments')
 export class Payment extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
