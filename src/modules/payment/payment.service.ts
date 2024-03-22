@@ -108,9 +108,11 @@ export class PaymentService {
         },
       },
       // Todo: if successful,
-      // Todo: payment event - update payment status, subscribe user to course, notify user of the updates
+      //* payment event - update payment status, subscribe user to course or workshop, notify user of the updates,
+      //* notify mentor, update mentor wallet
     );
-    return response.data;
+    console.log({ res: response.data });
+    return 'Verified';
   }
 
   // async addNewCard() {}

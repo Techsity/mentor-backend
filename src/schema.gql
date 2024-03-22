@@ -381,7 +381,7 @@ type Mutation {
     """Either course or workshop Id """
     resourceId: String!
   ): InitializePaymentResponse!
-  verifyPayment(reference: String!): SubscriptionDto!
+  verifyPayment(reference: String!): String!
 }
 
 input CreateRegisterInput {

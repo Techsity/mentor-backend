@@ -29,7 +29,8 @@ export class PaymentResolver {
   }
 
   @UseGuards(GqlAuthGuard)
-  @Mutation(() => SubscriptionDto)
+  // @Mutation(() => SubscriptionDto)
+  @Mutation(() => String)
   async verifyPayment(@Args('reference') reference: string) {
     return await this.paymentService.verifyPayment(reference);
   }
