@@ -3,9 +3,16 @@ import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
 import { PaymentService } from './payment.service';
 import { PaymentResolver } from './payment.resolver';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Payment } from './entities/payment.entity';
 
 @Module({
-  imports: [ConfigModule.forRoot(), HttpModule],
+  imports: [
+    ConfigModule.forRoot(),
+    HttpModule,
+    TypeOrmModule.forFeature([Payment]),
+  ],
   providers: [PaymentResolver, PaymentService],
+  exports: [TypeOrmModule.forFeature([Payment]), PaymentService],
 })
 export class PaymentModule {}
