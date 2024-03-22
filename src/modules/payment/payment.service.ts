@@ -1,9 +1,16 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { REQUEST } from '@nestjs/core';
 import axios from 'axios';
 import { User } from '../user/entities/user.entity';
 import { InitializePaymentResponse } from './dto/initialize-payment-response.dto';
+import { isEnum, isUUID } from 'class-validator';
+import { SubscriptionType } from '../subscription/enums/subscription.enum';
 
 @Injectable()
 export class PaymentService {
@@ -15,7 +22,17 @@ export class PaymentService {
     private configService: ConfigService,
   ) {}
 
-  async makePayment(amount: number): Promise<InitializePaymentResponse> {
+  async makePayment(
+    amount: number,
+    resourceId: string,
+    resourceType: string,
+  ): Promise<InitializePaymentResponse> {
+    // Validate input
+    if (!isEnum(resourceType, SubscriptionType))
+      throw new BadRequestException(`Invalid resourceType`);
+    if (!isUUID(resourceId))
+      throw new BadRequestException(`Invalid ${resourceType} Id`);
+
     const secretKey = this.configService.get('PAYSTACK_SECRET_KEY');
     const callbackUrl = this.configService.get('PAYMENT_CALLBACK_URL');
     const url = `${this.paystackBaseUrl}/transaction/initialize`;
@@ -29,6 +46,7 @@ export class PaymentService {
       callback_url: callbackUrl + `/${reference}`,
       reference,
     };
+
     try {
       const response = await axios.post(url, payload, {
         headers: {
