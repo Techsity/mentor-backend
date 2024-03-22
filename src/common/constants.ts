@@ -22,8 +22,9 @@ export enum CustomStatusCodes {
   WALLET_NOT_FOUND = 39022,
   WALLET_INSUFFICIENT_FUNDS = 40400,
   INVALID_TRANSACTION_PIN = 40000,
-  TRANSACTION_NOT_SUCCESSFUL = 50000,
+  TRANSACTION_NOT_SUCCESSFUL = 50300,
   TRANSACTION_SUCCESSFUL = 20000,
+  ABANDONED_PAYMENT = 23212,
 }
 Object.assign(HttpStatus, CustomStatusCodes);
 export class CustomResponseMessage extends HttpException {
@@ -64,6 +65,8 @@ export class CustomResponseMessage extends HttpException {
         return 'Insufficient funds in wallet';
       case CustomStatusCodes.INVALID_TRANSACTION_PIN:
         return 'Invalid transaction pin';
+      case CustomStatusCodes.ABANDONED_PAYMENT:
+        return 'Payment was abandoned. Re-initialize payment with the access_code';
       case CustomStatusCodes.TRANSACTION_NOT_SUCCESSFUL:
         return 'Transaction not successful';
       case CustomStatusCodes.TRANSACTION_SUCCESSFUL:

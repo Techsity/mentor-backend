@@ -32,6 +32,9 @@ export class Payment extends BaseEntity {
   @Column()
   currency: string;
 
+  @Column()
+  access_code: string;
+
   @Column({ type: 'character varying', nullable: true })
   channel: keyof typeof PAYMENT_CHANNELS | null;
 

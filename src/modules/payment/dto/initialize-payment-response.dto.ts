@@ -2,10 +2,10 @@ import { ObjectType, Field } from '@nestjs/graphql';
 
 @ObjectType()
 export class InitializePaymentResponse {
-  @Field()
+  @Field({ nullable: true })
   authorization_url: string;
-  @Field()
+  @Field({ nullable: true })
   reference: string;
-  @Field()
+  @Field({ nullable: true })
   status: string;
 }

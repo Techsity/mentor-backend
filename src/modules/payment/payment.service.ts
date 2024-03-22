@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpStatus,
   Inject,
   Injectable,
   InternalServerErrorException,
@@ -23,6 +24,7 @@ import { Course } from '../course/entities/course.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import EVENTS from 'src/common/events.constants';
 import { SubscriptionService } from '../subscription/services/subscription.service';
+import { CustomResponseMessage, CustomStatusCodes } from 'src/common/constants';
 
 @Injectable()
 export class PaymentService {
@@ -80,30 +82,41 @@ export class PaymentService {
     // Get the current usd to ngn exchange rate
     const exchangeRate = await this.getExchangeRate();
     amount = parseInt(amount.toFixed(0)) * exchangeRate;
-    console.log({ secretKey: this.secretKey });
+
     const callbackUrl = this.configService.get('PAYMENT_CALLBACK_URL');
     const url = `${this.paystackBaseUrl}/transaction/initialize`;
     const user = this.request.req.user;
     const reference = 'ref_' + Date.now();
     const metadata = { resourceId, resourceType };
 
+    // create payement record
+    let paymentRecord = await this.paymentsRepository.findOne({
+      where: { metadata },
+    });
+
+    if (paymentRecord && paymentRecord.status !== PaymentStatus.SUCCESS) {
+      return {
+        authorization_url: `https://checkout.paystack.com/${paymentRecord.access_code}`,
+        reference: paymentRecord.reference,
+        status: 'true',
+      };
+    } else
+      paymentRecord = this.paymentsRepository.create({
+        amount,
+        currency: 'NGN',
+        user_id: user.id,
+        reference,
+        metadata,
+      });
+
     const payload = {
       amount: amount * 100,
       email: user.email,
-      currency: 'NGN',
+      currency: paymentRecord.currency,
       callback_url: callbackUrl + `/${reference}`,
-      reference,
+      reference: paymentRecord.reference,
       metadata: JSON.stringify(metadata),
     };
-    // create payement record
-    const paymentRecord = this.paymentsRepository.create({
-      amount,
-      currency: payload.currency,
-      user_id: user.id,
-      reference,
-      metadata,
-    });
-
     try {
       const response = await axios.post(url, payload, {
         headers: {
@@ -111,8 +124,14 @@ export class PaymentService {
           'Content-Type': 'application/json',
         },
       });
-      if (Boolean(response.data.status === true))
-        await this.paymentsRepository.save(paymentRecord); //save payment record
+      if (
+        Boolean(response.data.status === true) &&
+        response.data.data.authorization_url
+      )
+        await this.paymentsRepository.save({
+          ...paymentRecord,
+          access_code: response.data.data.access_code,
+        }); //save payment record
       // Todo: send notification to user email including the payment reference
       return {
         reference,
@@ -142,10 +161,18 @@ export class PaymentService {
         'We could not find the transaction. The reference you provided might be incorrect',
       );
     // check if payment has been processed
+
+    // redirect if payment was abandoned
     if (paymentRecord.status === PaymentStatus.SUCCESS)
       throw new BadRequestException('Transaction is already completed');
-    if (paymentRecord.status === PaymentStatus.FAILED)
+    else if (paymentRecord.status === PaymentStatus.FAILED)
       throw new BadRequestException('Transaction failed. Contact support');
+    else if (paymentRecord.status === PaymentStatus.ABANDONED)
+      throw new UnprocessableEntityException(
+        CustomResponseMessage.getErrorMessage(
+          CustomStatusCodes.ABANDONED_PAYMENT,
+        ).concat(` | ${paymentRecord.access_code}`),
+      );
 
     try {
       const response = await axios.get(
@@ -156,10 +183,21 @@ export class PaymentService {
           },
         },
       );
+
+      if (response.data.data.status === 'abandoned') {
+        paymentRecord.status = PaymentStatus.ABANDONED;
+        await paymentRecord.save();
+        throw new UnprocessableEntityException(
+          CustomResponseMessage.getErrorMessage(
+            CustomStatusCodes.ABANDONED_PAYMENT,
+          ).concat(` | ${paymentRecord.access_code}`),
+        );
+      }
       if (response.data.status !== true)
         throw new UnprocessableEntityException(
           'This request cannot be processed. The reference you provided might be incorrect',
         );
+
       // subscribe to course or workshop
       let subscription;
       if (paymentRecord.metadata.resourceType === SubscriptionType.COURSE)
@@ -176,18 +214,14 @@ export class PaymentService {
         subscription,
       });
       // console.log({ res: response.data });
-      return 'Payment Verified';
+      // return 'Payment Verified';
+      return subscription;
     } catch (error) {
       // payment record won't be saved
-      console.error(
-        'Payment verification error:',
-        error.response.data || error.response || error,
-      );
-      const err = new InternalServerErrorException(
-        'Payment verification failed',
-      );
-      this.logger.error(error, err.stack);
-      throw err;
+      const errMsg = new Error('Payment verification error');
+      this.logger.error(errMsg, errMsg.stack);
+      if (error.status === HttpStatus.UNPROCESSABLE_ENTITY) throw error;
+      throw new InternalServerErrorException(errMsg);
     }
   }
 

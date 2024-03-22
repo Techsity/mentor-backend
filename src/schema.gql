@@ -311,9 +311,9 @@ type SubscriptionDto {
 }
 
 type InitializePaymentResponse {
-  authorization_url: String!
-  reference: String!
-  status: String!
+  authorization_url: String
+  reference: String
+  status: String
 }
 
 type Query {
@@ -381,7 +381,7 @@ type Mutation {
     """Either course or workshop Id """
     resourceId: String!
   ): InitializePaymentResponse!
-  verifyPayment(reference: String!): String!
+  verifyPayment(reference: String!): Subscription!
 }
 
 input CreateRegisterInput {

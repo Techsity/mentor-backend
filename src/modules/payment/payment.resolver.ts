@@ -4,6 +4,7 @@ import { UseGuards } from '@nestjs/common';
 import { GqlAuthGuard } from '../auth/guards/gql-auth.guard';
 import { InitializePaymentResponse } from './dto/initialize-payment-response.dto';
 import { SubscriptionDto } from '../subscription/dto/subscription.dto';
+import { Subscription } from '../subscription/entities/subscription.entity';
 
 @Resolver()
 export class PaymentResolver {
@@ -29,8 +30,8 @@ export class PaymentResolver {
   }
 
   @UseGuards(GqlAuthGuard)
-  // @Mutation(() => SubscriptionDto)
-  @Mutation(() => String)
+  @Mutation(() => Subscription)
+  // @Mutation(() => String)
   async verifyPayment(@Args('reference') reference: string) {
     return await this.paymentService.verifyPayment(reference);
   }
