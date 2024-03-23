@@ -27,6 +27,10 @@ export class AppointmentService {
     private mentorRepository: Repository<Mentor>,
   ) {}
 
+  private validateAppointmentInput() {
+    // isTimeString
+  }
+
   /**
    *
    * @param createAppInput

@@ -36,8 +36,12 @@ export class Payment extends BaseEntity {
   @Column()
   access_code: string;
 
-  @Column({ type: 'character varying', nullable: true })
-  channel: keyof typeof PAYMENT_CHANNELS | null;
+  @Column({
+    type: 'enum',
+    enum: PAYMENT_CHANNELS,
+    default: PAYMENT_CHANNELS.CARD,
+  })
+  channel: PAYMENT_CHANNELS;
 
   @Column({ type: 'enum', enum: PaymentStatus, default: PaymentStatus.PENDING })
   status: PaymentStatus;

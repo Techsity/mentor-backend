@@ -15,6 +15,7 @@ import { UpdateMentorInput } from '../dto/update-mentor.input';
 import { Mentor } from '../entities/mentor.entity';
 import { CustomStatusCodes } from 'src/common/constants';
 import { isUUID } from 'class-validator';
+import { MentorDTO } from '../dto/mentor.dto';
 
 @Injectable({ scope: Scope.REQUEST })
 export class MentorService {
@@ -27,15 +28,17 @@ export class MentorService {
     private userRepository: Repository<User>,
   ) {}
 
-  async createMentorProfile(
-    createMentorInput: CreateMentorInput,
-  ): Promise<CreateMentorInput> {
+  async createMentorProfile(createMentorInput: CreateMentorInput) {
     try {
       const user = await this.findLoggedInUser();
-      const mentorProfile = await this.mentorRepository.save({
+      const mentorProfile = this.mentorRepository.create({
         ...createMentorInput,
         user,
       });
+      mentorProfile.availability.forEach((day) => {
+        day.isOpen = false;
+      });
+      await this.mentorRepository.save(mentorProfile);
       return mentorProfile;
     } catch (error) {
       const stackTrace = new Error().stack;
@@ -88,7 +91,7 @@ export class MentorService {
     }
   }
 
-  async viewMentor(id: string): Promise<any> {
+  async viewMentor(id: string) {
     try {
       if (!isUUID(id)) throw new BadRequestException('Invalid mentor Id');
       const mentorProfile = await this.mentorRepository.findOne({

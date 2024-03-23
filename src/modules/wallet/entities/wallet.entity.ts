@@ -25,6 +25,8 @@ export default class Wallet extends BaseEntity {
   @JoinColumn()
   mentor_id: string;
 
+  //* add more fields...
+
   @Field(() => String)
   @CreateDateColumn({ type: 'timestamp with time zone' })
   created_at: Date;
