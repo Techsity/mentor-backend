@@ -25,6 +25,7 @@ import {
   WorkExperience,
 } from '../types/mentor.type';
 import { Workshop } from 'src/modules/workshop/entities/workshop.entity';
+import Wallet from 'src/modules/wallet/entities/wallet.entity';
 
 @Entity('mentors')
 export class Mentor extends BaseEntity {
@@ -87,6 +88,9 @@ export class Mentor extends BaseEntity {
 
   @Column({ default: false })
   mentor_verified: boolean;
+
+  @OneToOne(() => Wallet, (wallet) => wallet.mentor)
+  wallet: Wallet;
 
   @CreateDateColumn()
   created_at: Date;

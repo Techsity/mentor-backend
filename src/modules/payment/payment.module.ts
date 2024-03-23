@@ -9,6 +9,7 @@ import { Course } from '../course/entities/course.entity';
 import { Workshop } from '../workshop/entities/workshop.entity';
 import { SubscriptionModule } from '../subscription/subscription.module';
 import { Subscription } from '../subscription/entities/subscription.entity';
+import PaystackProvider from 'src/providers/paystack/paystack.provider';
 
 @Module({
   imports: [
@@ -17,7 +18,7 @@ import { Subscription } from '../subscription/entities/subscription.entity';
     TypeOrmModule.forFeature([Payment, Workshop, Course, Subscription]),
     SubscriptionModule,
   ],
-  providers: [PaymentResolver, PaymentService],
+  providers: [PaymentResolver, PaymentService, PaystackProvider],
   exports: [TypeOrmModule.forFeature([Payment]), PaymentService],
 })
 export class PaymentModule {}

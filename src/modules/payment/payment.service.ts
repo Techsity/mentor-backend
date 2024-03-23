@@ -26,12 +26,11 @@ import EVENTS from 'src/common/events.constants';
 import { SubscriptionService } from '../subscription/services/subscription.service';
 import { CustomResponseMessage, CustomStatusCodes } from 'src/common/constants';
 import { Subscription } from '../subscription/entities/subscription.entity';
+import PaystackProvider from 'src/providers/paystack/paystack.provider';
 
 @Injectable()
 export class PaymentService {
-  private readonly logger = new Logger(PaymentService.name);
-  private paystackBaseUrl = 'https://api.paystack.co';
-  private secretKey;
+  private readonly logger: Logger = new Logger(PaymentService.name);
 
   constructor(
     @Inject(REQUEST)
@@ -47,17 +46,8 @@ export class PaymentService {
     private readonly subscriptionRepository: Repository<Subscription>,
     private readonly eventEmitter: EventEmitter2,
     private readonly subscriptionService: SubscriptionService,
-  ) {
-    this.secretKey = this.configService.get('PAYSTACK_SECRET_KEY');
-  }
-
-  private async getExchangeRate(): Promise<number> {
-    // Fetch exchange rate from an external API
-    const response = await axios.get(
-      'https://api.exchangerate-api.com/v4/latest/USD',
-    );
-    return response.data.rates.NGN;
-  }
+    private paystackService: PaystackProvider,
+  ) {}
 
   private async verifyResource(resourceId: string, resourceType: string) {
     // Validate input
@@ -101,11 +91,11 @@ export class PaymentService {
     if (sub) throw new BadRequestException('Already subscribed');
 
     // Get the current usd to ngn exchange rate
-    const exchangeRate = await this.getExchangeRate();
+    const exchangeRate = await this.paystackService.getExchangeRate();
     amount = parseInt(amount.toFixed(0)) * exchangeRate;
 
     const callbackUrl = this.configService.get('PAYMENT_CALLBACK_URL');
-    const url = `${this.paystackBaseUrl}/transaction/initialize`;
+
     const reference = 'ref_' + Date.now();
     const metadata = {
       resourceId,
@@ -137,29 +127,23 @@ export class PaymentService {
       currency: paymentRecord.currency,
       callback_url: callbackUrl + `/${reference}`,
       reference: paymentRecord.reference,
-      metadata: JSON.stringify(metadata),
+      metadata,
     };
     try {
-      const response = await axios.post(url, payload, {
-        headers: {
-          Authorization: `Bearer ${this.secretKey}`,
-          'Content-Type': 'application/json',
-        },
+      const response = await this.paystackService.initializePayment({
+        payload,
       });
-      if (
-        Boolean(response.data.status === true) &&
-        response.data.data.authorization_url
-      )
+      if (Boolean(response.status) && response.authorization_url)
         //save payment record
         await this.paymentsRepository.save({
           ...paymentRecord,
-          access_code: response.data.data.access_code,
+          access_code: response.access_code,
         });
       // Todo: send notification to user email including the payment reference
       return {
         reference,
-        status: response.data.status,
-        authorization_url: response.data.data.authorization_url,
+        status: String(response.status),
+        authorization_url: response.authorization_url,
       };
     } catch (error) {
       // payment record won't be saved
@@ -198,23 +182,18 @@ export class PaymentService {
     //   );
 
     try {
-      const response = await axios.get(
-        `${this.paystackBaseUrl}/transaction/verify/${reference}`,
-        {
-          headers: {
-            Authorization: `Bearer ${this.secretKey}`,
-          },
-        },
+      const { status } = await this.paystackService.verifyTransaction(
+        reference,
       );
 
-      if (response.data.data.status === 'abandoned') {
+      if (status === 'abandoned') {
         throw new UnprocessableEntityException(
           CustomResponseMessage.getErrorMessage(
             CustomStatusCodes.ABANDONED_PAYMENT,
           ).concat(` | ${paymentRecord.access_code}`),
         );
       }
-      if (response.data.status !== true)
+      if (status !== true)
         throw new UnprocessableEntityException(
           'This request cannot be processed. The reference you provided might be incorrect',
         );
@@ -249,12 +228,4 @@ export class PaymentService {
       throw new InternalServerErrorException(errMsg.message);
     }
   }
-
-  // async addNewCard() {}
-  // async getCard() {}
-  // async getCards() {}
-  // async updateCard() {}
-  // async deleteCard() {}
-
-  // async withdrawFunds() {}
 }

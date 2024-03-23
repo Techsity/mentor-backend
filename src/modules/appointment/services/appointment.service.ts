@@ -1,4 +1,10 @@
-import { Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -7,6 +13,7 @@ import { User } from '../../user/entities/user.entity';
 import { AppointmentDTO } from '../dto/appointment.dto';
 import { Appointment } from '../entities/appointment.entity';
 import { AppointmentStatus } from '../enums/appointment.enum';
+import { CreateAppointmentInput } from '../dto/create-appointment.input';
 
 @Injectable()
 export class AppointmentService {
@@ -26,13 +33,25 @@ export class AppointmentService {
    * @param mentor
    * TODO: Send email to both users, integrate payment
    */
-  async createAppointment(createAppInput: any, mentor: string): Promise<any> {
+  async createAppointment(
+    createAppInput: CreateAppointmentInput,
+    mentor: string,
+  ) {
     try {
       const authUser = this.request.req.user;
+
       const mentorProfile = await this.mentorRepository.findOne({
         where: { id: mentor },
         relations: ['user'],
       });
+
+      if (!mentorProfile) throw new NotFoundException('Mentor not found');
+
+      if (!authUser.isPremium && mentorProfile.user.isPremium) {
+        throw new ForbiddenException(
+          'You are not allowed to schedule appointments with a premium mentor',
+        );
+      }
       const currentAppointment = await this.appointmentRepository.findOne({
         where: {
           user: { id: authUser.id },
@@ -42,15 +61,13 @@ export class AppointmentService {
       });
       // Check if user has a pending appointment
       if (currentAppointment)
-        throw Error('You already have an appointment with this mentor');
-
-      // Check if user is a premium user
-      if (!authUser.isPremium && mentorProfile.user.isPremium) {
-        throw Error(
-          'You are not allowed to schedule appointments with a premium mentor',
+        throw new BadRequestException(
+          'You already have an appointment with this mentor',
         );
-      }
 
+      // Todo: Check if user is a premium user
+
+      // check if any
       return this.appointmentRepository.save({
         ...createAppInput,
         mentor: mentorProfile,

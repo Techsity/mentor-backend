@@ -44,6 +44,9 @@ import { EventEmitterListeners } from './lib/event-listeners';
 import { ReportedMentor } from './modules/user/entities/reported-mentor.entity';
 import { Workshop } from './modules/workshop/entities/workshop.entity';
 import { Payment } from './modules/payment/entities/payment.entity';
+import { CardModule } from './modules/card/card.module';
+import Wallet from './modules/wallet/entities/wallet.entity';
+import { Card } from './modules/card/entities/card.entity';
 
 @Module({
   imports: [
@@ -82,6 +85,8 @@ import { Payment } from './modules/payment/entities/payment.entity';
           ReportedMentor,
           Workshop,
           Payment,
+          Wallet,
+          Card,
         ],
         synchronize: true,
         logging: !true,
@@ -126,6 +131,7 @@ import { Payment } from './modules/payment/entities/payment.entity';
     EventEmitterModule.forRoot(),
     RabbitMQModule,
     NotificationModule,
+    CardModule,
   ],
   providers: [EventEmitterListeners],
   controllers: [AppController],
