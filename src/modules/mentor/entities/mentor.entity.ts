@@ -77,7 +77,7 @@ export class Mentor extends BaseEntity {
   @Column('jsonb', { nullable: true })
   certifications: Certification[];
 
-  @Column({ type: 'int' })
+  @Column({ type: 'float', default: 0.0 })
   hourly_rate: number;
 
   @Column('jsonb', { nullable: true })

@@ -55,6 +55,9 @@ class TimeSlot {
   @Field()
   @Column({ type: 'time' })
   endTime: string;
+
+  @Field(() => Boolean)
+  isOpen: boolean;
 }
 @ObjectType()
 export class UserAvailabilityDTO {

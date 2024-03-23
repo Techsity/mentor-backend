@@ -181,6 +181,7 @@ type EducationDTO {
 type TimeSlot {
   startTime: String!
   endTime: String!
+  isOpen: Boolean!
 }
 
 type UserAvailabilityDTO {

@@ -30,20 +30,23 @@ export class MentorService {
 
   async createMentorProfile(createMentorInput: CreateMentorInput) {
     try {
-      const user = await this.findLoggedInUser();
+      const user = this.request.req.user;
       const mentorProfile = this.mentorRepository.create({
         ...createMentorInput,
         user,
       });
       mentorProfile.availability.forEach((day) => {
-        day.isOpen = false;
+        day.timeSlots.forEach((time) => {
+          time.isOpen = false;
+        });
       });
       await this.mentorRepository.save(mentorProfile);
       return mentorProfile;
     } catch (error) {
+      // console.log({ error: JSON.stringify(error) });
       const stackTrace = new Error().stack;
       this.logger.error(error, stackTrace);
-      if (error?.code === CustomStatusCodes.DUPLICATE_RESOURCE)
+      if (error?.code == String(CustomStatusCodes.DUPLICATE_RESOURCE))
         throw new BadRequestException(
           'Mentor profile already exists for this user',
         );
