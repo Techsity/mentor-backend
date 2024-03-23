@@ -37,7 +37,7 @@ export class MentorService {
       });
       mentorProfile.availability.forEach((day) => {
         day.timeSlots.forEach((time) => {
-          time.isOpen = false;
+          time.isOpen = true;
         });
       });
       await this.mentorRepository.save(mentorProfile);

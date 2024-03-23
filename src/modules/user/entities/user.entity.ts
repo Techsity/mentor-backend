@@ -82,7 +82,9 @@ export class User extends BaseEntity {
   @OneToMany(() => Notification, (notification) => notification.user)
   notifications: Notification[];
 
-  @ManyToMany(() => Mentor, (mentor) => mentor.followers)
+  @ManyToMany(() => Mentor, (mentor) => mentor.followers, {
+    onDelete: 'SET NULL',
+  })
   @JoinTable()
   following: Mentor[];
 
