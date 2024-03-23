@@ -27,6 +27,7 @@ import { SubscriptionService } from '../subscription/services/subscription.servi
 import { CustomResponseMessage, CustomStatusCodes } from 'src/common/constants';
 import { Subscription } from '../subscription/entities/subscription.entity';
 import PaystackProvider from 'src/providers/paystack/paystack.provider';
+import Decimal from 'decimal.js';
 
 @Injectable()
 export class PaymentService {
@@ -92,7 +93,7 @@ export class PaymentService {
 
     // Get the current usd to ngn exchange rate
     const exchangeRate = await this.paystackService.getExchangeRate();
-    amount = parseInt(amount.toFixed(0)) * exchangeRate;
+    const amountDesc = new Decimal(amount * exchangeRate);
 
     const callbackUrl = this.configService.get('PAYMENT_CALLBACK_URL');
 
@@ -114,7 +115,7 @@ export class PaymentService {
       };
     } else
       paymentRecord = this.paymentsRepository.create({
-        amount,
+        amount: Number(amountDesc.toFixed(2)),
         currency: 'NGN',
         user_id: user.id,
         reference,
@@ -122,7 +123,7 @@ export class PaymentService {
       });
 
     const payload = {
-      amount: amount * 100,
+      amount: Number(new Decimal(Number(amountDesc) * 100).toFixed(2)),
       email: user.email,
       currency: paymentRecord.currency,
       callback_url: callbackUrl + `/${reference}`,
