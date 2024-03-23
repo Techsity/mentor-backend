@@ -22,11 +22,11 @@ export default class PaystackProvider {
   ): Promise<PaystackInitializePaymentResponse> {
     const url = `${this.paystackBaseUrl}/transaction/initialize`;
     const { payload } = input;
-    const { callback_url } = payload;
-    const callbackUrl =
-      callback_url || this.configService.get('PAYMENT_CALLBACK_URL');
+    payload.callback_url =
+      payload.callback_url || this.configService.get('PAYMENT_CALLBACK_URL');
     const reference = 'ref_' + Date.now();
     payload.metadata = JSON.stringify(payload.metadata) as any;
+    payload.amount = parseInt(String(payload.amount));
     try {
       const response = await axios.post(url, payload, {
         headers: {

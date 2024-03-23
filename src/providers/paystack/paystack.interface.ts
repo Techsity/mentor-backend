@@ -19,5 +19,5 @@ export interface PaystackInitializePaymentResponse {
 }
 
 export interface PaystackVerifyTransactionResponse {
-  status: string | boolean;
+  status: string;
 }

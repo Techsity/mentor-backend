@@ -193,7 +193,7 @@ export class PaymentService {
           ).concat(` | ${paymentRecord.access_code}`),
         );
       }
-      if (status !== true)
+      if (status !== 'success')
         throw new UnprocessableEntityException(
           'This request cannot be processed. The reference you provided might be incorrect',
         );
