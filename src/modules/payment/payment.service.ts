@@ -105,15 +105,11 @@ export class PaymentService {
       resourceType: resourceType as SubscriptionType,
     };
 
+    // Cancel exisiting pending payments for the resource
+    this.eventEmitter.emit(EVENTS.CANCEL_EXISTING_PAYMENT, { metadata, user });
+
     // create payement record
-    let paymentRecord = await this.paymentsRepository.findOne({
-      where: { metadata, user_id: user.id },
-    });
-    if (paymentRecord && paymentRecord.status !== PaymentStatus.SUCCESS) {
-      paymentRecord.status = PaymentStatus.CANCELLED;
-      await paymentRecord.save();
-    }
-    paymentRecord = this.paymentsRepository.create({
+    const paymentRecord = this.paymentsRepository.create({
       amount: Number(amountDesc.toFixed(2)),
       currency,
       user_id: user.id,

@@ -7,6 +7,7 @@ import { INewCourseNotification } from 'src/modules/notification/types';
 import { Payment } from 'src/modules/payment/entities/payment.entity';
 import { PaymentStatus } from 'src/modules/payment/enum';
 import { Subscription } from 'src/modules/subscription/entities/subscription.entity';
+import { User } from 'src/modules/user/entities/user.entity';
 
 @Global()
 export class EventEmitterListeners {
@@ -64,6 +65,31 @@ export class EventEmitterListeners {
         'Error processing paid course subscription: ' + err.message,
         err.stack,
       );
+    }
+  }
+
+  @OnEvent(EVENTS.CANCEL_EXISTING_PAYMENT)
+  async cancelPendingPayment({
+    metadata,
+    user,
+  }: {
+    metadata: Payment['metadata'];
+    user: User;
+  }) {
+    try {
+      const payments = await Payment.find({
+        where: { metadata, user_id: user.id },
+      });
+      for (const paymentRecord of payments) {
+        if (paymentRecord && paymentRecord.status !== PaymentStatus.SUCCESS) {
+          paymentRecord.status = PaymentStatus.CANCELLED;
+          await paymentRecord.save();
+        }
+      }
+    } catch (error) {
+      console.log({ error });
+      const stack = new Error();
+      this.logger.error('Error procssing payment cancellation', stack);
     }
   }
 }
