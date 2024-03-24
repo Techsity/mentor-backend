@@ -179,18 +179,10 @@ export class PaymentService {
         'We could not find the transaction. The reference you provided might be incorrect',
       );
     // check if payment has been processed
-
-    // redirect if payment was abandoned
     if (paymentRecord.status === PaymentStatus.SUCCESS)
       throw new BadRequestException('Transaction is already completed');
     else if (paymentRecord.status === PaymentStatus.FAILED)
       throw new BadRequestException('Transaction failed. Contact support');
-    // else if (paymentRecord.status === PaymentStatus.ABANDONED)
-    //   throw new UnprocessableEntityException(
-    //     CustomResponseMessage.getErrorMessage(
-    //       CustomStatusCodes.ABANDONED_PAYMENT,
-    //     ).concat(` | ${paymentRecord.access_code}`),
-    //   );
 
     try {
       const { status } = await this.paystackService.verifyTransaction(
