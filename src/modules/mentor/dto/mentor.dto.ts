@@ -9,6 +9,7 @@ import {
   AvailailabilityDays,
 } from '../enums/mentor.enum';
 import { UserDTO } from 'src/modules/user/dto/user.dto';
+import Wallet from 'src/modules/wallet/entities/wallet.entity';
 
 @ObjectType()
 export class SkillDTO {
@@ -139,6 +140,9 @@ export class MentorDTO {
 
   @Field(() => [String], { nullable: true })
   language: string[];
+
+  @Field(() => Wallet, { nullable: true })
+  wallet: Wallet;
 
   @Field()
   mentor_verified: boolean;

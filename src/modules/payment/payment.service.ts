@@ -109,20 +109,6 @@ export class PaymentService {
     this.eventEmitter.emit(EVENTS.CANCEL_EXISTING_PAYMENT, { metadata, user });
 
     //* create payement record
-    // let paymentRecord = await this.paymentsRepository.findOne({
-    //   where: {
-    //     metadata,
-    //     user_id: user.id,
-    //     status: PaymentStatus.SUCCESS,
-    //   },
-    // });
-    // if (paymentRecord) {
-    //   return {
-    //     reference: paymentRecord.reference,
-    //     authorization_url: '',
-    //     status: 'true',
-    //   };
-    // }
     const paymentRecord = this.paymentsRepository.create({
       amount: Number(amountDesc.toFixed(2)),
       currency,

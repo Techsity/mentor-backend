@@ -8,11 +8,15 @@ import { Payment } from 'src/modules/payment/entities/payment.entity';
 import { PaymentStatus } from 'src/modules/payment/enum';
 import { Subscription } from 'src/modules/subscription/entities/subscription.entity';
 import { User } from 'src/modules/user/entities/user.entity';
+import { WalletService } from 'src/modules/wallet/wallet.service';
 
 @Global()
 export class EventEmitterListeners {
   private readonly logger = new Logger(EventEmitterListeners.name);
-  constructor(private readonly notificationService: NotificationService) {}
+  constructor(
+    private readonly notificationService: NotificationService,
+    private readonly walletService: WalletService,
+  ) {}
 
   @OnEvent(EVENTS.NEW_COURSE)
   sendNewCourseNotification({
@@ -54,11 +58,13 @@ export class EventEmitterListeners {
       // update payment status
       payment.status = PaymentStatus.SUCCESS;
       await Payment.update(payment.id, payment);
-      console.log({
-        subscriptionEvent: { id: subscription.id, type: subscription.type },
-      });
-      // notify user of the updates,
-      // notify mentor, update mentor wallet
+      const mentorId =
+        subscription.course.mentor.id || subscription.workshop.mentor.id;
+
+      // Todo: notify mentor of the subscription
+      //
+      // fund mentor wallet
+      await this.walletService.creditWallet(mentorId, payment.amount);
     } catch (error) {
       const err = new Error(error);
       this.logger.error(

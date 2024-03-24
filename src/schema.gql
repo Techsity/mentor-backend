@@ -29,6 +29,12 @@ enum SubscriptionType {
   WORKSHOP
 }
 
+type Wallet {
+  id: ID!
+  balance: Float!
+  created_at: String!
+}
+
 type NotificationDto {
   id: String!
   title: String!
@@ -221,6 +227,7 @@ type MentorDTO {
   hourly_rate: Float!
   availability: [UserAvailabilityDTO!]
   language: [String!]
+  wallet: Wallet
   mentor_verified: Boolean!
   created_at: DateTime!
   updated_at: DateTime!

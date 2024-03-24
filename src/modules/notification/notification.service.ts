@@ -13,7 +13,6 @@ import { isUUID } from 'class-validator';
 import { User } from '../user/entities/user.entity';
 import { NotificationEventsGateway } from './gateways/notification-events.gateway';
 
-
 @Injectable()
 export class NotificationService {
   private logger = new Logger(NotificationService.name);
@@ -27,6 +26,7 @@ export class NotificationService {
    * @param user - The user recieving the notification
    * @param input - The notification body
    */
+
   async create(
     user: User,
     input: CreateNotificationInput,

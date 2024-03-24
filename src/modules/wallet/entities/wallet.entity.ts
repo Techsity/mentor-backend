@@ -1,4 +1,4 @@
-import { Field, Float, ID } from '@nestjs/graphql';
+import { Field, Float, ID, ObjectType } from '@nestjs/graphql';
 import { Mentor } from 'src/modules/mentor/entities/mentor.entity';
 import {
   BaseEntity,
@@ -10,6 +10,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
+@ObjectType()
 @Entity('wallets')
 export default class Wallet extends BaseEntity {
   @Field(() => ID)
@@ -21,8 +22,10 @@ export default class Wallet extends BaseEntity {
   balance: number;
 
   @OneToOne(() => Mentor, (mentor) => mentor.wallet, { onDelete: 'RESTRICT' })
+  @JoinColumn({ name: 'mentor_id' })
   mentor: Mentor;
-  @JoinColumn()
+
+  @Column() 
   mentor_id: string;
 
   //* add more fields...
@@ -31,7 +34,7 @@ export default class Wallet extends BaseEntity {
   @CreateDateColumn({ type: 'timestamp with time zone' })
   created_at: Date;
 
-  @Field(() => String)
+  // @Field(() => String)
   @CreateDateColumn({ type: 'timestamp with time zone' })
   updated_at: Date;
 }

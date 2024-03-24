@@ -36,6 +36,9 @@ export class Mentor extends BaseEntity {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
+  @OneToOne(() => Wallet, (wallet) => wallet.mentor, { eager: true })
+  wallet: Wallet;
+
   @OneToMany(() => Course, (courses) => courses.mentor)
   @JoinColumn({ name: 'course_id' })
   courses: Course[];
@@ -90,9 +93,6 @@ export class Mentor extends BaseEntity {
 
   @Column({ default: false })
   mentor_verified: boolean;
-
-  @OneToOne(() => Wallet, (wallet) => wallet.mentor)
-  wallet: Wallet;
 
   @CreateDateColumn()
   created_at: Date;
