@@ -12,6 +12,7 @@ import {
 import { PAYMENT_CHANNELS, PaymentStatus } from '../enum';
 import { User } from 'src/modules/user/entities/user.entity';
 import { SubscriptionType } from 'src/modules/subscription/enums/subscription.enum';
+import { ISOCurrency } from '../types/payment.type';
 
 @Entity('payments')
 export class Payment extends BaseEntity {
@@ -30,8 +31,14 @@ export class Payment extends BaseEntity {
   @Column()
   user_id: string;
 
-  @Column()
-  currency: string;
+  @Column({ type: 'enum', enum: ISOCurrency })
+  currency: ISOCurrency;
+
+  @Column({ type: 'float' })
+  exchange_rate: number;
+
+  @Column({ type: 'enum', enum: ISOCurrency, default: ISOCurrency.NGN })
+  base_currency: ISOCurrency;
 
   @Column()
   access_code: string;

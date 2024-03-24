@@ -87,3 +87,5 @@ export const videoUploadValidation = {
   EXTENSIONS: ['.mp4', '.mpeg', '.webm'],
   MAX_FILE_SIZE: 200 * 1024 * 1024, // 200 MB
 };
+
+export const daysOfTheWeek = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];

@@ -381,6 +381,7 @@ type Mutation {
 
     """Either course or workshop Id """
     resourceId: String!
+    currency: ISOCurrency!
   ): InitializePaymentResponse!
   verifyPayment(reference: String!): SubscriptionDto!
 }
@@ -568,4 +569,13 @@ input WorkshopContentInput {
   date: String!
   startTime: String!
   endTime: String!
+}
+
+"""The enum of supported currencies for transactions"""
+enum ISOCurrency {
+  NGN
+  USD
+  GHS
+  ZAR
+  KES
 }

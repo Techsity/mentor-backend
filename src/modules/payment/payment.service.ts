@@ -28,6 +28,7 @@ import { CustomResponseMessage, CustomStatusCodes } from 'src/common/constants';
 import { Subscription } from '../subscription/entities/subscription.entity';
 import PaystackProvider from 'src/providers/paystack/paystack.provider';
 import Decimal from 'decimal.js';
+import { ISOCurrency } from './types/payment.type';
 
 @Injectable()
 export class PaymentService {
@@ -50,7 +51,7 @@ export class PaymentService {
     private paystackService: PaystackProvider,
   ) {}
 
-  private async verifyResource(resourceId: string, resourceType: string) {
+  private async validatePaymentInput(resourceId: string, resourceType: string) {
     // Validate input
     if (!isEnum(resourceType, SubscriptionType))
       throw new BadRequestException(
@@ -71,8 +72,9 @@ export class PaymentService {
     amount: number,
     resourceId: string,
     resourceType: string,
+    currency: ISOCurrency,
   ): Promise<InitializePaymentResponse> {
-    await this.verifyResource(resourceId, resourceType);
+    await this.validatePaymentInput(resourceId, resourceType);
     const user = this.request.req.user;
     const sub = await this.subscriptionRepository.findOne({
       where: [
@@ -91,8 +93,8 @@ export class PaymentService {
 
     if (sub) throw new BadRequestException('Already subscribed');
 
-    // Get the current usd to ngn exchange rate
-    const exchangeRate = await this.paystackService.getExchangeRate();
+    // Get the currency's exchange rate to NGN
+    const exchangeRate = await this.paystackService.getExchangeRate(currency);
     const amountDesc = new Decimal(amount * exchangeRate);
 
     const callbackUrl = this.configService.get('PAYMENT_CALLBACK_URL');
@@ -105,27 +107,25 @@ export class PaymentService {
 
     // create payement record
     let paymentRecord = await this.paymentsRepository.findOne({
-      where: { metadata },
+      where: { metadata, user_id: user.id },
     });
     if (paymentRecord && paymentRecord.status !== PaymentStatus.SUCCESS) {
-      return {
-        authorization_url: `https://checkout.paystack.com/${paymentRecord.access_code}`,
-        reference: paymentRecord.reference,
-        status: 'true',
-      };
-    } else
-      paymentRecord = this.paymentsRepository.create({
-        amount: Number(amountDesc.toFixed(2)),
-        currency: 'NGN',
-        user_id: user.id,
-        reference,
-        metadata,
-      });
+      paymentRecord.status = PaymentStatus.CANCELLED;
+      await paymentRecord.save();
+    }
+    paymentRecord = this.paymentsRepository.create({
+      amount: Number(amountDesc.toFixed(2)),
+      currency,
+      user_id: user.id,
+      exchange_rate: exchangeRate,
+      reference,
+      metadata,
+    });
 
     const payload = {
       amount: Number(new Decimal(Number(amountDesc) * 100).toFixed(2)),
       email: user.email,
-      currency: paymentRecord.currency,
+      currency: ISOCurrency.NGN,
       callback_url: callbackUrl + `/${reference}`,
       reference: paymentRecord.reference,
       metadata,

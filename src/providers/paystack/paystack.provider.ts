@@ -6,6 +6,7 @@ import {
   PaystackVerifyTransactionResponse,
 } from './paystack.interface';
 import axios from 'axios';
+import { ISOCurrency } from 'src/modules/payment/types/payment.type';
 
 @Injectable()
 export default class PaystackProvider {
@@ -68,11 +69,11 @@ export default class PaystackProvider {
     }
   }
 
-  async getExchangeRate(): Promise<number> {
+  async getExchangeRate(currency: ISOCurrency): Promise<number> {
     try {
       // Fetch exchange rate from an external API
       const response = await axios.get(
-        'https://api.exchangerate-api.com/v4/latest/USD',
+        `https://api.exchangerate-api.com/v4/latest/${currency}`,
       );
       return response.data.rates.NGN;
     } catch (error) {

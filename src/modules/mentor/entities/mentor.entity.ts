@@ -44,7 +44,9 @@ export class Mentor extends BaseEntity {
   @JoinColumn({ name: 'workshop_id' })
   workshops: Workshop[];
 
-  @ManyToMany(() => User, (user) => user.following)
+  @ManyToMany(() => User, (user) => user.following, {
+    onDelete: 'SET NULL',
+  })
   followers: User[];
 
   @OneToMany(() => Review, (review) => review.mentor)

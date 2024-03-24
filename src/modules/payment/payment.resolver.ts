@@ -5,6 +5,7 @@ import { GqlAuthGuard } from '../auth/guards/gql-auth.guard';
 import { InitializePaymentResponse } from './dto/initialize-payment-response.dto';
 import { SubscriptionDto } from '../subscription/dto/subscription.dto';
 import { Subscription } from '../subscription/entities/subscription.entity';
+import { ISOCurrency } from './types/payment.type';
 
 @Resolver()
 export class PaymentResolver {
@@ -21,11 +22,13 @@ export class PaymentResolver {
     resourceType: string,
     @Args({ name: 'resourceId', description: 'Either course or workshop Id ' })
     resourceId: string,
+    @Args({ name: 'currency', type: () => ISOCurrency }) currency: ISOCurrency,
   ): Promise<InitializePaymentResponse> {
     return await this.paymentService.makePayment(
       amount,
       resourceId,
       resourceType,
+      currency,
     );
   }
 

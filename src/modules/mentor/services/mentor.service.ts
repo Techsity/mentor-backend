@@ -13,7 +13,7 @@ import { User } from '../../user/entities/user.entity';
 import { CreateMentorInput } from '../dto/create-mentor.input';
 import { UpdateMentorInput } from '../dto/update-mentor.input';
 import { Mentor } from '../entities/mentor.entity';
-import { CustomStatusCodes } from 'src/common/constants';
+import { CustomStatusCodes, daysOfTheWeek } from 'src/common/constants';
 import { isUUID } from 'class-validator';
 import { MentorDTO } from '../dto/mentor.dto';
 
@@ -28,7 +28,24 @@ export class MentorService {
     private userRepository: Repository<User>,
   ) {}
 
+  private validateCreateMentorInput(createMentorInput: CreateMentorInput) {
+    const { availability } = createMentorInput;
+
+    availability.forEach((date) => {
+      if (
+        !daysOfTheWeek.some(
+          (day) => day.toLowerCase() == date.day.toLowerCase(),
+        )
+      )
+        throw new BadRequestException(
+          'Invalid availability day | Expected a value of day of the week (sunday - saturday)',
+        );
+      // todo: validate time format
+    });
+  }
+
   async createMentorProfile(createMentorInput: CreateMentorInput) {
+    this.validateCreateMentorInput(createMentorInput);
     try {
       const user = this.request.req.user;
       const mentorProfile = this.mentorRepository.create({
