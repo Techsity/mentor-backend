@@ -52,32 +52,26 @@ export class NotificationService {
 
   async findAll(userId: string) {
     if (!isUUID(userId)) throw new BadRequestException('Invalid userId');
-    return await this.notificationRepository.find({ where: { userId } });
+    return await Notification.find({ where: { userId } });
   }
 
   async read(userId: string, notificationId: string): Promise<boolean> {
     if (!isUUID(notificationId))
       throw new BadRequestException('Invalid notificationId');
     if (!isUUID(userId)) throw new BadRequestException('Invalid userId');
-    const notification = await this.notificationRepository.findOneBy({
-      id: notificationId,
-      userId,
-    });
-    if (!notification) throw new NotFoundException('Notification not found');
-    notification.read = true;
-    await this.notificationRepository.save(notification);
+    const updateResult = await Notification.update(
+      { userId, id: notificationId, read: false },
+      { read: true },
+    );
+    if (updateResult.affected === 0)
+      throw new NotFoundException('Notification not found');
+
     return true;
   }
 
   async markAllAsRead(userId: string): Promise<boolean> {
     if (!isUUID(userId)) throw new BadRequestException('Invalid userId');
-    const notifications = await this.notificationRepository.find({
-      where: { userId },
-    });
-    if (notifications.some((n) => !n.read)) {
-      for (const notification of notifications) notification.read = true;
-      await this.notificationRepository.save(notifications);
-    }
+    await Notification.update({ userId, read: false }, { read: true });
     return true;
   }
 
@@ -85,12 +79,13 @@ export class NotificationService {
     if (!isUUID(notificationId))
       throw new BadRequestException('Invalid notificationId');
     if (!isUUID(userId)) throw new BadRequestException('Invalid userId');
-    const notification = await this.notificationRepository.findOneBy({
+    const notification = await Notification.delete({
       id: notificationId,
       userId,
     });
-    if (!notification) throw new NotFoundException('Notification not found');
-    await this.notificationRepository.delete(notification.id);
+    if (!notification.affected)
+      throw new NotFoundException('Notification not found');
+
     return true;
   }
 }
