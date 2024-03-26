@@ -343,7 +343,7 @@ type Query {
   getAllCategories(courseType: String): [CourseCategoryDto!]!
   getAllCourseTypes: [CourseType!]!
   viewAppointment(appointmentId: String!): AppointmentDTO!
-  viewAllAppointments(statuses: [String!]!): [AppointmentDTO!]!
+  viewAllAppointments(statuses: [AppointmentStatus!]!): [AppointmentDTO!]!
   viewAllNotifications: [NotificationDto!]!
   viewAllWorkshops(skip: Float!, take: Float!, type: CourseTypeEnum, category: String): [WorkshopDto!]!
   viewWorkshop(workshopId: String!): WorkshopDto!

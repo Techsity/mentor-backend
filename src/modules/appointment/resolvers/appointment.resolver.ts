@@ -48,8 +48,8 @@ export class AppointmentResolver {
 
   @Query(() => [AppointmentDTO])
   viewAllAppointments(
-    @Args('statuses', { type: () => [String] })
-    statuses: string[],
+    @Args('statuses', { type: () => [AppointmentStatus] })
+    statuses: AppointmentStatus[],
   ): Promise<any> {
     return this.appointmentService.viewAllAppointments(statuses);
   }
