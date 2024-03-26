@@ -8,6 +8,9 @@ import { User } from '../../user/entities/user.entity';
 @ObjectType()
 export class AppointmentDTO {
   @Field()
+  id: string;
+
+  @Field()
   date: Date;
 
   @Field(() => AppointmentStatus)

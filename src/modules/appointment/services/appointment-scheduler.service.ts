@@ -11,7 +11,7 @@ export class AppointmentSchedulerService {
   //   @InjectRepository(Appointment)
   //   private appointmentRepository: Repository<Appointment>,
   // ) {}
-
+  // Todo: implement a cron that runs every 20mins to check if an appointment date would be due in 20mins or less, then fire notifications to participants (user and mentor)
   // // run every hour
   // @Cron(CronExpression.EVERY_HOUR)
   // async handleCron() {
@@ -30,7 +30,6 @@ export class AppointmentSchedulerService {
   // }
   // //   async handleCron() {
   // //     // Get pending appointments
-
   // // await Appointment.update({status:AppointmentStatus.PENDING},{})
   // //     const pendingAppointments = await this.appointmentRepository.find({
   // //       where: {
@@ -39,7 +38,6 @@ export class AppointmentSchedulerService {
   // //       //  get the users to send notifications to
   // //       relations: ['user', 'mentor.user'],
   // //     });
-
   // //     // Loop through pending appointments and update as needed
   // //     for (const appointment of pendingAppointments) {
   // //       const now = new Date();

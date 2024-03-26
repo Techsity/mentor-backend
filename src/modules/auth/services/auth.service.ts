@@ -90,6 +90,8 @@ export class AuthService {
         'subscriptions',
         'notifications',
         'appointments',
+        'appointments.mentor',
+        'appointments.mentor.user',
         'mentor.followers',
       ],
     });

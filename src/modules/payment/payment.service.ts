@@ -29,6 +29,9 @@ import { Subscription } from '../subscription/entities/subscription.entity';
 import PaystackProvider from 'src/providers/paystack/paystack.provider';
 import Decimal from 'decimal.js';
 import { ISOCurrency } from './types/payment.type';
+import { Appointment } from '../appointment/entities/appointment.entity';
+import VerifyPaymentDTO from './dto/verify-payment.response';
+import { AppointmentStatus } from '../appointment/enums/appointment.enum';
 
 @Injectable()
 export class PaymentService {
@@ -55,20 +58,23 @@ export class PaymentService {
     // Validate input
     if (!isEnum(resourceType, SubscriptionType))
       throw new BadRequestException(
-        `Invalid resourceType | Expected 'course' or 'workshop'`,
+        `Invalid resourceType | Expected either 'course' or 'workshop' o 'mentorship_appointment'`,
       );
     if (!isUUID(resourceId))
       throw new BadRequestException(`Invalid ${resourceType} Id`);
     // confirm if course or workshop exist
-    let resource;
-    if (resourceType === SubscriptionType.COURSE)
-      resource = await this.courseRepository.findOneBy({ id: resourceId });
-    else if (resourceType === SubscriptionType.WORKSHOP)
-      resource = await this.workshopRepository.findOneBy({ id: resourceId });
-    if (!resource) throw new BadRequestException(`Invalid ${resourceType} Id`);
+    if (resourceType !== SubscriptionType.MENTORSHIP_APPOINTMENT) {
+      let resource;
+      if (resourceType === SubscriptionType.COURSE)
+        resource = await this.courseRepository.findOneBy({ id: resourceId });
+      else if (resourceType === SubscriptionType.WORKSHOP)
+        resource = await this.workshopRepository.findOneBy({ id: resourceId });
+      if (!resource)
+        throw new BadRequestException(`Invalid ${resourceType} Id`);
+    }
   }
 
-  async makePayment(
+  async initiatePayment(
     amount: number,
     resourceId: string,
     resourceType: string,
@@ -76,34 +82,34 @@ export class PaymentService {
   ): Promise<InitializePaymentResponse> {
     await this.validatePaymentInput(resourceId, resourceType);
     const user = this.request.req.user;
-    const sub = await this.subscriptionRepository.findOne({
-      where: [
-        {
-          course_id: resourceId,
-          type: resourceType as SubscriptionType,
-          user: { id: user.id },
-        },
-        {
-          workshop_id: resourceId,
-          type: resourceType as SubscriptionType,
-          user: { id: user.id },
-        },
-      ],
-    });
 
-    if (sub) throw new BadRequestException('Already subscribed');
-
+    if (resourceType !== SubscriptionType.MENTORSHIP_APPOINTMENT) {
+      const sub = await this.subscriptionRepository.findOne({
+        where: [
+          {
+            course_id: resourceId,
+            type: resourceType as SubscriptionType,
+            user: { id: user.id },
+          },
+          {
+            workshop_id: resourceId,
+            type: resourceType as SubscriptionType,
+            user: { id: user.id },
+          },
+        ],
+      });
+      if (sub) throw new BadRequestException('Already subscribed');
+    }
     // Get the currency's exchange rate to NGN
-    const exchangeRate = await this.paystackService.getExchangeRate(currency);
-    const amountDesc = new Decimal(amount * exchangeRate);
+    const exchangeRate = await this.paystackService.getExchangeRate(currency),
+      amountDesc = new Decimal(amount * exchangeRate);
 
-    const callbackUrl = this.configService.get('PAYMENT_CALLBACK_URL');
-
-    const reference = 'ref_' + Date.now();
-    const metadata = {
-      resourceId,
-      resourceType: resourceType as SubscriptionType,
-    };
+    const reference = 'ref_' + Date.now(),
+      metadata = {
+        resourceId,
+        resourceType: resourceType as SubscriptionType,
+      };
+    let callbackUrl = this.configService.get('PAYMENT_CALLBACK_URL');
 
     // Cancel exisiting pending payments for the resource
     this.eventEmitter.emit(EVENTS.CANCEL_EXISTING_PAYMENT, { metadata, user });
@@ -136,7 +142,7 @@ export class PaymentService {
           ...paymentRecord,
           access_code: response.access_code,
         });
-      // Todo: send notification to user email including the payment reference
+      // Todo: send notification to user email with a link to verify their payment
       return {
         reference,
         status: String(response.status),
@@ -154,7 +160,7 @@ export class PaymentService {
     }
   }
 
-  async verifyPayment(reference: string) {
+  async verifyPayment(reference: string): Promise<VerifyPaymentDTO> {
     const user = this.request.req.user;
     const paymentRecord = await this.paymentsRepository.findOne({
       where: { user_id: user.id, reference },
@@ -175,21 +181,27 @@ export class PaymentService {
         reference,
       );
 
-      if (status === 'abandoned') {
+      if (status === 'abandoned')
         throw new UnprocessableEntityException(
           CustomResponseMessage.getErrorMessage(
             CustomStatusCodes.ABANDONED_PAYMENT,
           ).concat(` | ${paymentRecord.access_code}`),
         );
-      }
+
       if (status !== 'success')
         throw new UnprocessableEntityException(
           'This request cannot be processed. The reference you provided might be incorrect',
         );
 
-      // subscribe to course or workshop
-      let subscription;
-      if (!subscription) {
+      if (
+        paymentRecord.metadata.resourceType ===
+        SubscriptionType.MENTORSHIP_APPOINTMENT
+      ) {
+        return await this.processAppointmentPayment(paymentRecord);
+      } else {
+        // subscribe to course or workshop
+        let subscription;
+
         if (paymentRecord.metadata.resourceType === SubscriptionType.COURSE)
           subscription = await this.subscriptionService.subscribeToCourse(
             paymentRecord.metadata.resourceId,
@@ -200,14 +212,15 @@ export class PaymentService {
           subscription = await this.subscriptionService.subscribeToWorkshop(
             paymentRecord.metadata.resourceId,
           );
+
+        this.eventEmitter.emit(EVENTS.PAID_COURSE_SUB_SUCCESSFUL, {
+          paymentRecord,
+          subscription,
+        });
+        // console.log({ res: response.data });
+        // return 'Payment Verified';
+        return { subscription };
       }
-      this.eventEmitter.emit(EVENTS.PAID_COURSE_SUB_SUCCESSFUL, {
-        paymentRecord,
-        subscription,
-      });
-      // console.log({ res: response.data });
-      // return 'Payment Verified';
-      return subscription;
     } catch (error) {
       console.log({ error });
       // payment record won't be saved
@@ -216,5 +229,23 @@ export class PaymentService {
       if (error.status === HttpStatus.UNPROCESSABLE_ENTITY) throw error;
       throw new InternalServerErrorException(errMsg.message);
     }
+  }
+
+  private async processAppointmentPayment(paymentRecord: Payment) {
+    const user = this.request.req.user;
+    const appointment = await Appointment.findOne({
+      where: { id: paymentRecord.metadata.resourceId, user_id: user.id },
+      relations: ['mentor', 'mentor.user'],
+    });
+    if (!appointment)
+      throw new UnprocessableEntityException(
+        'Payment confirmed. Appointment schedule not found',
+      );
+    appointment.status = AppointmentStatus.PENDING;
+    await appointment.save();
+    this.eventEmitter.emit(EVENTS.APPOINTMENT_PAYMENT_CONFIRMED, {
+      appointment,
+    });
+    return { appointment };
   }
 }

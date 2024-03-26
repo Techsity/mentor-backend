@@ -22,7 +22,7 @@ export class NotificationEventsGateway
 
   handleConnection(client: Socket) {
     const userId = client.handshake.query.userId as string;
-    if (userId) {
+    if (userId && userId !== undefined && userId !== 'undefined') {
       const userRoom = `${userId}`;
       this.userSockets.set(userId, { socket: client, room: userRoom });
       console.log(`User ${userId} connected`);

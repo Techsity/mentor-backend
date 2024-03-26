@@ -15,4 +15,9 @@ export class CreateAppointmentInput {
   @IsNotEmpty({ message: 'time is required' })
   @IsString({ message: 'time value should be a string' })
   time: string;
+
+  // @Field()
+  // @IsNotEmpty({ message: 'paymentReference is required' })
+  // @IsString({ message: 'paymentReference value should be a string' })
+  // paymentReference: string;
 }

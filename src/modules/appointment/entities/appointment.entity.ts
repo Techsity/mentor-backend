@@ -37,7 +37,7 @@ export class Appointment extends BaseEntity {
   @Column({
     type: 'enum',
     enum: AppointmentStatus,
-    default: AppointmentStatus.PENDING,
+    default: AppointmentStatus.AWAITING_PAYMENT,
   })
   status: AppointmentStatus;
 

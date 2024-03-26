@@ -5,24 +5,25 @@ import { AppointmentService } from '../services/appointment.service';
 import { AppointmentDTO } from '../dto/appointment.dto';
 import { CreateAppointmentInput } from '../dto/create-appointment.input';
 import { AppointmentStatus } from '../enums/appointment.enum';
+import MentorRoleGuard from 'src/modules/auth/guards/mentor-role.guard';
 
 @UseGuards(GqlAuthGuard)
 @Resolver()
 export class AppointmentResolver {
   constructor(private readonly appointmentService: AppointmentService) {}
+
   @Mutation(() => AppointmentDTO)
-  createAppointment(
+  async createAppointment(
     @Args('createAppointmentInput')
     createAppointmentInput: CreateAppointmentInput,
     @Args('mentor') mentor: string,
   ): Promise<any> {
-    return this.appointmentService.createAppointment(
+    return await this.appointmentService.createAppointment(
       createAppointmentInput,
       mentor,
     );
   }
 
-  @UseGuards(GqlAuthGuard)
   @Mutation(() => AppointmentDTO)
   toggleAppointmentStatus(
     @Args('mentorId')
@@ -37,7 +38,7 @@ export class AppointmentResolver {
       status,
     );
   }
-  // }
+
   @Query(() => AppointmentDTO)
   viewAppointment(
     @Args('appointmentId')
@@ -52,5 +53,11 @@ export class AppointmentResolver {
     statuses: AppointmentStatus[],
   ): Promise<any> {
     return this.appointmentService.viewAllAppointments(statuses);
+  }
+
+  @UseGuards(GqlAuthGuard, MentorRoleGuard)
+  @Mutation(() => AppointmentDTO)
+  async acceptAppointment(@Args('id') id: string) {
+    return await this.appointmentService.acceptAppointment(id);
   }
 }

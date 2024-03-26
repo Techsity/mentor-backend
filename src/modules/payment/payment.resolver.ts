@@ -3,9 +3,8 @@ import { PaymentService } from './payment.service';
 import { UseGuards } from '@nestjs/common';
 import { GqlAuthGuard } from '../auth/guards/gql-auth.guard';
 import { InitializePaymentResponse } from './dto/initialize-payment-response.dto';
-import { SubscriptionDto } from '../subscription/dto/subscription.dto';
-import { Subscription } from '../subscription/entities/subscription.entity';
 import { ISOCurrency } from './types/payment.type';
+import VerifyPaymentDTO from './dto/verify-payment.response';
 
 @Resolver()
 export class PaymentResolver {
@@ -24,7 +23,7 @@ export class PaymentResolver {
     resourceId: string,
     @Args({ name: 'currency', type: () => ISOCurrency }) currency: ISOCurrency,
   ): Promise<InitializePaymentResponse> {
-    return await this.paymentService.makePayment(
+    return await this.paymentService.initiatePayment(
       amount,
       resourceId,
       resourceType,
@@ -33,8 +32,7 @@ export class PaymentResolver {
   }
 
   @UseGuards(GqlAuthGuard)
-  @Mutation(() => SubscriptionDto)
-  // @Mutation(() => String)
+  @Mutation(() => VerifyPaymentDTO)
   async verifyPayment(@Args('reference') reference: string) {
     return await this.paymentService.verifyPayment(reference);
   }

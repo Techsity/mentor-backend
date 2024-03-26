@@ -27,11 +27,13 @@ type Subscription {
 enum SubscriptionType {
   COURSE
   WORKSHOP
+  MENTORSHIP_APPOINTMENT
 }
 
 type Wallet {
   id: ID!
-  balance: Float!
+  ledger_balance: Float!
+  available_balance: Float!
   created_at: String!
 }
 
@@ -198,6 +200,7 @@ enum MentorExpLevel {
 }
 
 type AppointmentDTO {
+  id: String!
   date: DateTime!
   status: AppointmentStatus!
   mentor: MentorDTO!
@@ -207,9 +210,11 @@ type AppointmentDTO {
 
 """The status of an appointment"""
 enum AppointmentStatus {
+  AWAITING_PAYMENT
   PENDING
   ACCEPTED
   IN_PROGRESS
+  UPCOMING
   DECLINED
   CANCELED
   NO_SHOW
@@ -327,6 +332,11 @@ type InitializePaymentResponse {
   status: String
 }
 
+type VerifyPaymentDTO {
+  subscription: SubscriptionDto
+  appointment: AppointmentDTO
+}
+
 type Query {
   userProfile: UserDTO!
   getMentorProfile: MentorDTO!
@@ -376,6 +386,7 @@ type Mutation {
   createCategory(createCourseCatInput: CreateCourseCatInput!): CourseCategoryDto!
   createAppointment(createAppointmentInput: CreateAppointmentInput!, mentor: String!): AppointmentDTO!
   toggleAppointmentStatus(mentorId: String!, appointmentId: String!, status: String!): AppointmentDTO!
+  acceptAppointment(id: String!): AppointmentDTO!
   createReview(args: CreateReviewArgs!): ReviewDto!
   markAllNotificationsAsRead: Boolean!
   readNotification(notificationId: String!): Boolean!
@@ -393,7 +404,7 @@ type Mutation {
     resourceId: String!
     currency: ISOCurrency!
   ): InitializePaymentResponse!
-  verifyPayment(reference: String!): SubscriptionDto!
+  verifyPayment(reference: String!): VerifyPaymentDTO!
 }
 
 input CreateRegisterInput {

@@ -47,6 +47,8 @@ import { Payment } from './modules/payment/entities/payment.entity';
 import { CardModule } from './modules/card/card.module';
 import Wallet from './modules/wallet/entities/wallet.entity';
 import { Card } from './modules/card/entities/card.entity';
+import { ScheduleModule } from '@nestjs/schedule';
+import { BullModule } from '@nestjs/bull';
 
 @Module({
   imports: [
@@ -55,6 +57,9 @@ import { Card } from './modules/card/entities/card.entity';
       load: [DBConfig, AppConfig],
     }),
     EventEmitterModule.forRoot(),
+    BullModule.forRoot({
+      // set redis configuration
+    }),
     JwtModule.register({
       secret: 'secretKey', // Use something more secure in production
       signOptions: {

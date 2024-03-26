@@ -3,6 +3,8 @@ const EVENTS = {
   NEW_COURSE: 'new_course',
   PAID_COURSE_SUB_SUCCESSFUL: 'PAID_COURSE_SUB_SUCCESSFUL',
   CANCEL_EXISTING_PAYMENT: 'CANCEL_EXISTING_PAYMENT',
+  APPOINTMENT_PAYMENT_CONFIRMED: 'appointment_payment_confirmed',
+  MENTOR_ACCEPT_APPOINTMENT: 'mentor_accept_appointment',
 };
 
 export default EVENTS;

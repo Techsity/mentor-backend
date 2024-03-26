@@ -1,6 +1,7 @@
 import { Global, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import EVENTS from 'src/common/events.constants';
+import { Appointment } from 'src/modules/appointment/entities/appointment.entity';
 import { NotificationResourceType } from 'src/modules/notification/enums';
 import { NotificationService } from 'src/modules/notification/notification.service';
 import { INewCourseNotification } from 'src/modules/notification/types';
@@ -58,13 +59,22 @@ export class EventEmitterListeners {
       // update payment status
       payment.status = PaymentStatus.SUCCESS;
       await Payment.update(payment.id, payment);
-      const mentorId =
-        subscription.course.mentor.id || subscription.workshop.mentor.id;
-
-      // Todo: notify mentor of the subscription
-      //
+      const mentor = subscription.course.mentor || subscription.workshop.mentor;
+      const resource = subscription.course || subscription.workshop;
+      // notify mentor of the subscription
+      this.notificationService.create(mentor.user, {
+        body: `User ( ${
+          subscription.user.name
+        }) subscribed to your paid ${payment.metadata.resourceType.toLowerCase()} -  ${
+          resource.title
+        }`,
+        title: `${
+          payment.metadata.resourceType.charAt(0).toUpperCase() +
+          payment.metadata.resourceType.slice(1).toLowerCase()
+        } subscription`,
+      });
       // fund mentor wallet
-      await this.walletService.creditWallet(mentorId, payment.amount);
+      this.walletService.creditWallet(mentor.id, payment.amount);
     } catch (error) {
       const err = new Error(error);
       this.logger.error(
@@ -97,5 +107,24 @@ export class EventEmitterListeners {
       const stack = new Error();
       this.logger.error('Error procssing payment cancellation', stack);
     }
+  }
+
+  @OnEvent(EVENTS.APPOINTMENT_PAYMENT_CONFIRMED)
+  async appointmentPaymentConfirmed({
+    appointment,
+  }: {
+    appointment: Appointment;
+  }) {
+    console.log('appointment payment confirmed: ', { appointment });
+    // Todo: Fire notification to user
+    // Todo: find payment with the appointment id and send amount to mentor's wallet ledger_balance
+    // Todo: or send amount after session ends
+  }
+
+  @OnEvent(EVENTS.MENTOR_ACCEPT_APPOINTMENT)
+  async processAppointment({ appointment }: { appointment: Appointment }) {
+    console.log('mentor accepts event: ', { appointment });
+    // Todo: Fire notification to user
+    // Todo: or send amount after session ends
   }
 }

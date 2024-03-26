@@ -19,13 +19,17 @@ export default class Wallet extends BaseEntity {
 
   @Field(() => Float)
   @Column('float', { default: 0 })
-  balance: number;
+  ledger_balance: number;
+
+  @Field(() => Float)
+  @Column('float', { default: 0 })
+  available_balance: number;
 
   @OneToOne(() => Mentor, (mentor) => mentor.wallet, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'mentor_id' })
   mentor: Mentor;
 
-  @Column() 
+  @Column()
   mentor_id: string;
 
   //* add more fields...

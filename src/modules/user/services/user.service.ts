@@ -38,6 +38,7 @@ export class UserService {
           'subscriptions',
           'notifications',
           'appointments',
+          'appointments.mentor',
           'appointments.mentor.user',
         ],
       });
