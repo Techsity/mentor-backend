@@ -212,11 +212,11 @@ export class PaymentService {
           subscription = await this.subscriptionService.subscribeToWorkshop(
             paymentRecord.metadata.resourceId,
           );
-
         this.eventEmitter.emit(EVENTS.PAID_COURSE_SUB_SUCCESSFUL, {
           paymentRecord,
           subscription,
         });
+
         // console.log({ res: response.data });
         // return 'Payment Verified';
         return { subscription };
