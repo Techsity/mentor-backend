@@ -184,7 +184,7 @@ export class AppointmentService {
         throw new BadRequestException('Invalid appointmentId');
       return await this.appointmentRepository.findOne({
         where: { id: appointmentId, user_id: authUser.id },
-        relations: ['mentor', 'user'],
+        relations: ['mentor', 'mentor.user'],
       });
     } catch (error) {
       throw error;

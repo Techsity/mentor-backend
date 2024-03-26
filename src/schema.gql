@@ -56,87 +56,11 @@ enum NotificationResourceType {
   WORKSHOP
 }
 
-type AppointmentDTO {
-  date: DateTime!
-  status: AppointmentStatus!
-  created_at: DateTime!
-  updated_at: DateTime!
-}
-
-"""The status of an appointment"""
-enum AppointmentStatus {
-  PENDING
-  ACCEPTED
-  IN_PROGRESS
-  DECLINED
-  CANCELED
-  NO_SHOW
-  COMPLETED
-}
-
-type UserDTO {
-  id: String!
-  email: String!
-  name: String!
-  phone: String!
-  avatar: String
-  country: String!
-  subscriptions: [Subscription!]!
-  notifications: [NotificationDto!]!
-  appointments: [AppointmentDTO!]!
-  is_online: Boolean!
-  allow_push_notifications: Boolean!
-  is_active: Boolean!
-  is_verified: Boolean!
-  is_admin: Boolean!
-  is_mentor: Boolean!
-  created_at: DateTime!
-  updated_at: DateTime!
-}
-
-type LoginResponse {
-  access_token: String!
-  user: UserDTO!
-  is_mentor: Boolean!
-}
-
-type UserDetails {
-  name: String!
-  email: String!
-  id: String!
-}
-
-type RegisterResponse {
-  message: String!
-  user: UserDetails!
-  errors: [String]
-}
-
-type BasicMessageResponse {
-  message: String!
-}
-
-type ReportUser {
-  id: String!
-  email: String!
-  name: String!
-  phone: String
-  avatar: String
-  country: String
-  is_online: Boolean!
-  is_active: Boolean!
-  allow_push_notifications: Boolean!
-  isPremium: Boolean!
-  is_verified: Boolean!
-  is_admin: Boolean!
-  created_at: DateTime!
-  updated_at: DateTime!
-}
-
-type ReportedMentorDTO {
-  id: String!
+type ReviewDto {
+  type: String!
   content: String!
-  created_at: DateTime!
+  reviewed_by: UserDTO
+  rating: Float!
 }
 
 type CourseTypeDto {
@@ -157,11 +81,41 @@ type CourseCategoryDto {
   updated_at: DateTime!
 }
 
-type ReviewDto {
-  type: String!
-  content: String!
-  reviewed_by: UserDTO
-  rating: Float!
+type CourseSection {
+  section_name: String
+  video_url: String
+  notes: String
+}
+
+type CourseContent {
+  title: String
+  course_sections: [CourseSection!]
+}
+
+type CourseDto {
+  id: String!
+  title: String!
+  course_level: CourseLevel!
+  description: String!
+  category: CourseCategoryDto!
+  course_type: CourseTypeDto!
+  what_to_learn: [String!]!
+  requirements: [String!]!
+  price: Float!
+  course_images: String!
+  course_contents: [CourseContent!]
+  mentor: MentorDTO!
+  reviews: [ReviewDto!]!
+  created_at: DateTime!
+  updated_at: DateTime!
+}
+
+"""Different roles of mentors"""
+enum CourseLevel {
+  ALL_LEVELS
+  BEGINNER
+  INTERMMEDIATE
+  SENIOR
 }
 
 type SkillDTO {
@@ -243,41 +197,89 @@ enum MentorExpLevel {
   LEVEL_4
 }
 
-type CourseSection {
-  section_name: String
-  video_url: String
-  notes: String
-}
-
-type CourseContent {
-  title: String
-  course_sections: [CourseSection!]
-}
-
-type CourseDto {
-  id: String!
-  title: String!
-  course_level: CourseLevel!
-  description: String!
-  category: CourseCategoryDto!
-  course_type: CourseTypeDto!
-  what_to_learn: [String!]!
-  requirements: [String!]!
-  price: Float!
-  course_images: String!
-  course_contents: [CourseContent!]
+type AppointmentDTO {
+  date: DateTime!
+  status: AppointmentStatus!
   mentor: MentorDTO!
-  reviews: [ReviewDto!]!
   created_at: DateTime!
   updated_at: DateTime!
 }
 
-"""Different roles of mentors"""
-enum CourseLevel {
-  ALL_LEVELS
-  BEGINNER
-  INTERMMEDIATE
-  SENIOR
+"""The status of an appointment"""
+enum AppointmentStatus {
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  DECLINED
+  CANCELED
+  NO_SHOW
+  COMPLETED
+  OVERDUE
+}
+
+type UserDTO {
+  id: String!
+  email: String!
+  name: String!
+  phone: String!
+  avatar: String
+  country: String!
+  subscriptions: [Subscription!]!
+  notifications: [NotificationDto!]!
+  appointments: [AppointmentDTO!]!
+  is_online: Boolean!
+  allow_push_notifications: Boolean!
+  is_active: Boolean!
+  is_verified: Boolean!
+  is_admin: Boolean!
+  is_mentor: Boolean
+  created_at: DateTime!
+  updated_at: DateTime!
+}
+
+type LoginResponse {
+  access_token: String!
+  user: UserDTO!
+  is_mentor: Boolean!
+}
+
+type UserDetails {
+  name: String!
+  email: String!
+  id: String!
+}
+
+type RegisterResponse {
+  message: String!
+  user: UserDetails!
+  errors: [String]
+}
+
+type BasicMessageResponse {
+  message: String!
+}
+
+type ReportUser {
+  id: String!
+  email: String!
+  name: String!
+  phone: String
+  avatar: String
+  country: String
+  is_online: Boolean!
+  is_active: Boolean!
+  allow_push_notifications: Boolean!
+  isPremium: Boolean!
+  is_verified: Boolean!
+  is_admin: Boolean!
+  created_at: DateTime!
+  updated_at: DateTime!
+}
+
+type ReportedMentorDTO {
+  id: String!
+  content: String!
+  created_at: DateTime!
 }
 
 type WorkshopContent {

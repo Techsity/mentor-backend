@@ -13,6 +13,9 @@ export class AppointmentDTO {
   @Field(() => AppointmentStatus)
   status: AppointmentStatus;
 
+  @Field(() => MentorDTO)
+  mentor: MentorDTO;
+
   @Field()
   created_at: Date;
 
