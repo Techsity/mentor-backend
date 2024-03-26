@@ -43,6 +43,7 @@ import { Notification } from './modules/notification/entities/notification.entit
 import { EventEmitterListeners } from './lib/event-listeners';
 import { ReportedMentor } from './modules/user/entities/reported-mentor.entity';
 import { Workshop } from './modules/workshop/entities/workshop.entity';
+import { Payment } from './modules/payment/entities/payment.entity';
 
 @Module({
   imports: [
@@ -79,7 +80,8 @@ import { Workshop } from './modules/workshop/entities/workshop.entity';
           Appointment,
           Notification,
           ReportedMentor,
-          Workshop
+          Workshop,
+          Payment,
         ],
         synchronize: true,
         logging: !true,

@@ -15,6 +15,6 @@ import { WorkshopModule } from '../workshop/workshop.module';
     TypeOrmModule.forFeature([Subscription]),
   ],
   providers: [SubscriptionResolver, SubscriptionService],
-  exports: [TypeOrmModule.forFeature([Subscription])],
+  exports: [TypeOrmModule.forFeature([Subscription]), SubscriptionService],
 })
 export class SubscriptionModule {}

@@ -77,9 +77,13 @@ export class SubscriptionService {
   async viewSubscription(
     subscriptionId: string,
     subscriptionType: SubscriptionType,
-  ): Promise<any> {
+  ) {
     if (!subscriptionType || !isEnum(subscriptionType, SubscriptionType))
-      throw new BadRequestException('Invalid subscription "type"');
+      throw new BadRequestException(
+        'Invalid subscriptionType | Expected "course" or "workshop"',
+      );
+    if (!isUUID(subscriptionId))
+      throw new BadRequestException(`Invalid ${subscriptionType} Id`);
 
     const authUser = this.request.req.user;
     const relations: string[] =
@@ -123,8 +127,6 @@ export class SubscriptionService {
         },
       ],
     };
-    if (!isUUID(subscriptionId))
-      throw new BadRequestException(`Invalid subscription Id`);
 
     // &&
     // if (subscriptionType === SubscriptionType.COURSE)
@@ -144,7 +146,7 @@ export class SubscriptionService {
     }
   }
 
-  async subscribeToCourse(courseId: string): Promise<any> {
+  async subscribeToCourse(courseId: string) {
     if (!isUUID(courseId)) throw new BadRequestException('Invalid Course ID');
     try {
       const authUser = this.request.req.user;
@@ -155,10 +157,15 @@ export class SubscriptionService {
       if (!course) throw new NotFoundException('Course not found');
       if (course.mentor.user.id === authUser.id)
         throw new BadRequestException("You can't subscribe to your own course");
-      const sub = await this.subscriptionRepository.save({
-        user: authUser,
-        course: course,
+      let sub = await this.subscriptionRepository.findOne({
+        where: { user: { id: authUser.id }, course_id: courseId },
       });
+      if (!sub) {
+        sub = await this.subscriptionRepository.save({
+          user: authUser,
+          course: course,
+        });
+      }
       return sub;
     } catch (error) {
       const stack = new Error().stack;
@@ -183,11 +190,15 @@ export class SubscriptionService {
         throw new BadRequestException(
           "You can't subscribe to your own workshop",
         );
-      const sub = await this.subscriptionRepository.save({
-        user: authUser,
-        workshop,
-        type: SubscriptionType.WORKSHOP,
+      let sub = await this.subscriptionRepository.findOne({
+        where: { user: { id: authUser.id }, workshop_id: workshopId },
       });
+      if (!sub)
+        sub = await this.subscriptionRepository.save({
+          user: authUser,
+          workshop,
+          type: SubscriptionType.WORKSHOP,
+        });
       return sub;
     } catch (error) {
       const stack = new Error().stack;
