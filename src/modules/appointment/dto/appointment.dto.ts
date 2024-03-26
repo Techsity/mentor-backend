@@ -10,9 +10,6 @@ export class AppointmentDTO {
   @Field()
   date: Date;
 
-  @Field()
-  time: string;
-
   @Field(() => AppointmentStatus)
   status: AppointmentStatus;
 

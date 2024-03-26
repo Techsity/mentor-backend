@@ -27,8 +27,9 @@ export class Notification extends BaseEntity {
   read: boolean;
 
   @ManyToOne(() => User, (user) => user.notifications, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'userId' })
   user: User;
-  @JoinColumn()
+  @Column()
   userId: string;
 
   @Column({ enum: NotificationResourceType, type: 'enum', nullable: true })

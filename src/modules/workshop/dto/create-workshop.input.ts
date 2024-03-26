@@ -5,16 +5,10 @@ import {
   IsEnum,
   IsNotEmpty,
   IsNumber,
-  IsObject,
   IsString,
   IsUUID,
-  Validate,
-  ValidateNested,
 } from 'class-validator';
-import {
-  CourseLevel,
-  CourseTypeEnum,
-} from 'src/modules/course/enums/course.enums';
+import { CourseLevel } from 'src/modules/course/enums/course.enums';
 import { WorkshopContentInput } from '../types/workshop.type';
 
 @InputType()
@@ -43,7 +37,9 @@ export class CreateWorkshopInput {
 
   @IsDateString(
     { strict: true },
-    { message: "Invalid date value for 'scheduled_date'" },
+    {
+      message: "Invalid date value for 'scheduled_date' | Expected yyyy-mm-dd",
+    },
   )
   @IsNotEmpty({ message: "'scheduled_date' is required" })
   @Field()

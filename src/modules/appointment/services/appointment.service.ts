@@ -10,15 +10,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Mentor } from '../../mentor/entities/mentor.entity';
 import { User } from '../../user/entities/user.entity';
-import { AppointmentDTO } from '../dto/appointment.dto';
 import { Appointment } from '../entities/appointment.entity';
 import { AppointmentStatus } from '../enums/appointment.enum';
 import { CreateAppointmentInput } from '../dto/create-appointment.input';
+import { isEnum, isUUID } from 'class-validator';
 
 @Injectable()
 export class AppointmentService {
   constructor(
-    @Inject(REQUEST) private readonly request: any,
+    @Inject(REQUEST) private readonly request: { req: { user: User } },
     @InjectRepository(Appointment)
     private appointmentRepository: Repository<Appointment>,
     @InjectRepository(User)
@@ -27,8 +27,44 @@ export class AppointmentService {
     private mentorRepository: Repository<Mentor>,
   ) {}
 
-  private validateAppointmentInput() {
-    // isTimeString
+  private validateAppointmentInput(input: CreateAppointmentInput) {
+    let { date, time } = input;
+    const currentDate = new Date();
+    if (!date.toString().includes('T')) {
+      if (time.includes(':')) {
+        const [hoursStr, minutesStr] = time.split(':');
+        const hours = parseInt(hoursStr);
+        const minutes = parseInt(minutesStr);
+        let parsedHours = hours + 1;
+
+        if (hours === 12) parsedHours = parsedHours - 12;
+        else if (time.slice(-2).toUpperCase() === 'PM') parsedHours += 12;
+        date.setHours(parsedHours, minutes, 0);
+        console.log({ date, currentDate, hours, minutes, parsedHours });
+      } else {
+        date.setTime(parseInt(time));
+      }
+    }
+    console.log({ date });
+    // console.log({ currentDate, date });
+    // if (date < currentDate)
+    //   throw new BadRequestException('Cannot schedule appointment in the past');
+    return date;
+  }
+
+  private async checkAvailability(
+    date: CreateAppointmentInput['date'],
+    availability: Mentor['availability'],
+  ) {
+    // const dayIndex=
+    // const day= daysOfTheWeek
+    // const schedule = availability.map((d) => {});
+    // return schedule;
+    // availability.forEach(({ timeSlots }) =>
+    //   timeSlots.forEach((element) => {
+    //     element.isOpen;
+    //   }),
+    // );
   }
 
   /**
@@ -41,21 +77,25 @@ export class AppointmentService {
     createAppInput: CreateAppointmentInput,
     mentor: string,
   ) {
+    if (!mentor || !isUUID(mentor))
+      throw new BadRequestException('Invalid mentor Id');
+    const date = this.validateAppointmentInput(createAppInput);
+    const mentorProfile = await this.mentorRepository.findOne({
+      where: { id: mentor },
+      relations: ['user'],
+    });
+    if (!mentorProfile) throw new NotFoundException('Mentor not found');
+    this.checkAvailability(date, mentorProfile.availability);
+
     try {
       const authUser = this.request.req.user;
 
-      const mentorProfile = await this.mentorRepository.findOne({
-        where: { id: mentor },
-        relations: ['user'],
-      });
-
-      if (!mentorProfile) throw new NotFoundException('Mentor not found');
-
-      if (!authUser.isPremium && mentorProfile.user.isPremium) {
+      // Check if user is a premium user
+      if (!authUser.isPremium && mentorProfile.user.isPremium)
         throw new ForbiddenException(
           'You are not allowed to schedule appointments with a premium mentor',
         );
-      }
+
       const currentAppointment = await this.appointmentRepository.findOne({
         where: {
           user: { id: authUser.id },
@@ -68,12 +108,9 @@ export class AppointmentService {
         throw new BadRequestException(
           'You already have an appointment with this mentor',
         );
-
-      // Todo: Check if user is a premium user
-
-      // check if any
+      // await Mentor.update({})
       return this.appointmentRepository.save({
-        ...createAppInput,
+        date: new Date(date),
         mentor: mentorProfile,
         user: authUser,
       });
@@ -82,8 +119,13 @@ export class AppointmentService {
     }
   }
 
-  async viewAppointments(statuses?: string[]): Promise<any> {
+  async viewAllAppointments(statuses?: AppointmentStatus[]): Promise<any> {
     try {
+      if (statuses && statuses.length > 0)
+        for (const [status, index] of statuses)
+          if (!isEnum(status, AppointmentStatus))
+            throw new BadRequestException(`Invalid status at index ${index}`);
+
       const authUser = this.request.req.user;
       const query = this.appointmentRepository
         .createQueryBuilder('appointment')
@@ -91,9 +133,9 @@ export class AppointmentService {
         .leftJoinAndSelect('appointment.mentor', 'mentor');
       // .leftJoinAndSelect('appointment.user', 'user');
 
-      if (statuses && statuses.length > 0) {
+      if (statuses && statuses.length > 0)
         query.andWhere('appointment.status IN (:...statuses)', { statuses });
-      }
+
       return query.getMany();
     } catch (error) {
       throw error;
@@ -133,10 +175,15 @@ export class AppointmentService {
       throw error;
     }
   }
+
   async viewAppointment(appointmentId: string): Promise<any> {
+    const authUser = this.request.req.user;
+
     try {
+      if (!isUUID(appointmentId))
+        throw new BadRequestException('Invalid appointmentId');
       return await this.appointmentRepository.findOne({
-        where: { id: appointmentId },
+        where: { id: appointmentId, user_id: authUser.id },
         relations: ['mentor', 'user'],
       });
     } catch (error) {

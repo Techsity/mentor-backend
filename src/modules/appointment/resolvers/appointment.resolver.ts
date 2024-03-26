@@ -4,10 +4,7 @@ import { GqlAuthGuard } from '../../auth/guards/gql-auth.guard';
 import { AppointmentService } from '../services/appointment.service';
 import { AppointmentDTO } from '../dto/appointment.dto';
 import { CreateAppointmentInput } from '../dto/create-appointment.input';
-import { Appointment } from '../entities/appointment.entity';
 import { AppointmentStatus } from '../enums/appointment.enum';
-import { CurrentUser } from 'src/lib/custom-decorators';
-import { User } from 'src/modules/user/entities/user.entity';
 
 @UseGuards(GqlAuthGuard)
 @Resolver()
@@ -18,7 +15,6 @@ export class AppointmentResolver {
     @Args('createAppointmentInput')
     createAppointmentInput: CreateAppointmentInput,
     @Args('mentor') mentor: string,
-    @CurrentUser() user: User,
   ): Promise<any> {
     return this.appointmentService.createAppointment(
       createAppointmentInput,
@@ -49,11 +45,12 @@ export class AppointmentResolver {
   ): Promise<any> {
     return this.appointmentService.viewAppointment(appointmentId);
   }
+
   @Query(() => [AppointmentDTO])
-  viewAppointments(
+  viewAllAppointments(
     @Args('statuses', { type: () => [String] })
     statuses: string[],
   ): Promise<any> {
-    return this.appointmentService.viewAppointments(statuses);
+    return this.appointmentService.viewAllAppointments(statuses);
   }
 }

@@ -67,7 +67,7 @@ export class AuthService {
     } catch (error) {
       const stackTrace = new Error().stack;
       this.logger.error(error, stackTrace);
-      if (error?.code ==String(CustomStatusCodes.DUPLICATE_RESOURCE))
+      if (error?.code == String(CustomStatusCodes.DUPLICATE_RESOURCE))
         throw new CustomResponseMessage(CustomStatusCodes.REG_DUPLICATE_USER);
       if (error.status === HttpStatus.NOT_FOUND)
         throw new CustomResponseMessage(CustomStatusCodes.USER_NOT_FOUND);
@@ -89,6 +89,7 @@ export class AuthService {
         'mentor',
         'subscriptions',
         'notifications',
+        'appointments',
         'mentor.followers',
       ],
     });

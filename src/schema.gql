@@ -56,6 +56,24 @@ enum NotificationResourceType {
   WORKSHOP
 }
 
+type AppointmentDTO {
+  date: DateTime!
+  status: AppointmentStatus!
+  created_at: DateTime!
+  updated_at: DateTime!
+}
+
+"""The status of an appointment"""
+enum AppointmentStatus {
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  DECLINED
+  CANCELED
+  NO_SHOW
+  COMPLETED
+}
+
 type UserDTO {
   id: String!
   email: String!
@@ -65,6 +83,7 @@ type UserDTO {
   country: String!
   subscriptions: [Subscription!]!
   notifications: [NotificationDto!]!
+  appointments: [AppointmentDTO!]!
   is_online: Boolean!
   allow_push_notifications: Boolean!
   is_active: Boolean!
@@ -118,24 +137,6 @@ type ReportedMentorDTO {
   id: String!
   content: String!
   created_at: DateTime!
-}
-
-type AppointmentDTO {
-  date: DateTime!
-  time: String!
-  status: AppointmentStatus!
-  created_at: DateTime!
-  updated_at: DateTime!
-}
-
-"""The status of an appointment"""
-enum AppointmentStatus {
-  PENDING
-  ACCEPTED
-  DECLINED
-  CANCELED
-  NO_SHOW
-  COMPLETED
 }
 
 type CourseTypeDto {
@@ -342,7 +343,7 @@ type Query {
   getAllCategories(courseType: String): [CourseCategoryDto!]!
   getAllCourseTypes: [CourseType!]!
   viewAppointment(appointmentId: String!): AppointmentDTO!
-  viewAppointments(statuses: [String!]!): [AppointmentDTO!]!
+  viewAllAppointments(statuses: [String!]!): [AppointmentDTO!]!
   viewAllNotifications: [NotificationDto!]!
   viewAllWorkshops(skip: Float!, take: Float!, type: CourseTypeEnum, category: String): [WorkshopDto!]!
   viewWorkshop(workshopId: String!): WorkshopDto!
