@@ -73,7 +73,9 @@ export class User extends BaseEntity {
   @OneToOne(() => Mentor, (mentor) => mentor.user, { eager: true })
   mentor: Mentor;
 
-  @OneToMany(() => Appointment, (appointment) => appointment.mentor)
+  @OneToMany(() => Appointment, (appointment) => appointment.user, {
+    eager: true,
+  })
   appointments: Appointment[];
 
   @OneToMany(() => Subscription, (subscription) => subscription.user)

@@ -33,7 +33,13 @@ export class UserService {
       const authUser = this.request.req.user;
       const userProfile = await this.userRepository.findOne({
         where: { id: authUser.id },
-        relations: ['mentor', 'subscriptions', 'notifications', 'appointments'],
+        relations: [
+          'mentor',
+          'subscriptions',
+          'notifications',
+          'appointments',
+          'appointments.mentor.user',
+        ],
       });
       // Update the video_url for each course and section
       // userProfile.courses.forEach((course) => {
