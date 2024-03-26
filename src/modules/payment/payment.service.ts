@@ -197,6 +197,8 @@ export class PaymentService {
         paymentRecord.metadata.resourceType ===
         SubscriptionType.MENTORSHIP_APPOINTMENT
       ) {
+        paymentRecord.status = PaymentStatus.SUCCESS;
+        await Payment.update(paymentRecord.id, paymentRecord);
         return await this.processAppointmentPayment(paymentRecord);
       } else {
         // subscribe to course or workshop
@@ -212,6 +214,9 @@ export class PaymentService {
           subscription = await this.subscriptionService.subscribeToWorkshop(
             paymentRecord.metadata.resourceId,
           );
+        paymentRecord.status = PaymentStatus.SUCCESS;
+        await Payment.update(paymentRecord.id, paymentRecord);
+
         this.eventEmitter.emit(EVENTS.PAID_COURSE_SUB_SUCCESSFUL, {
           paymentRecord,
           subscription,
