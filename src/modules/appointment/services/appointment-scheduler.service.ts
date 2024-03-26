@@ -12,6 +12,7 @@ export class AppointmentSchedulerService {
   //   private appointmentRepository: Repository<Appointment>,
   // ) {}
   // Todo: implement a cron that runs every 20mins to check if an appointment date would be due in 20mins or less, then fire notifications to participants (user and mentor)
+  // Todo: implement a cron that runs every day to check appointment that are awaiting funds - get appointment and payment record and send a payment link to the user's email
   // // run every hour
   // @Cron(CronExpression.EVERY_HOUR)
   // async handleCron() {

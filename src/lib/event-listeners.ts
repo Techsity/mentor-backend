@@ -8,6 +8,7 @@ import { INewCourseNotification } from 'src/modules/notification/types';
 import { Payment } from 'src/modules/payment/entities/payment.entity';
 import { PaymentStatus } from 'src/modules/payment/enum';
 import { Subscription } from 'src/modules/subscription/entities/subscription.entity';
+import { SubscriptionType } from 'src/modules/subscription/enums/subscription.enum';
 import { User } from 'src/modules/user/entities/user.entity';
 import { WalletService } from 'src/modules/wallet/wallet.service';
 
@@ -26,6 +27,7 @@ export class EventEmitterListeners {
     mentorUser,
   }: INewCourseNotification) {
     try {
+      // Todo: use notification queue
       for (const user of followers) {
         // check if user.allow_push_notifications
         if (user.allow_push_notifications) {
@@ -116,15 +118,48 @@ export class EventEmitterListeners {
     appointment: Appointment;
   }) {
     console.log('appointment payment confirmed: ', { appointment });
-    // Todo: Fire notification to user
-    // Todo: find payment with the appointment id and send amount to mentor's wallet ledger_balance
-    // Todo: or send amount after session ends
+    const payment = await Payment.findOne({
+      where: {
+        metadata: {
+          resourceId: appointment.id,
+          resourceType: SubscriptionType.MENTORSHIP_APPOINTMENT,
+        },
+        user_id: appointment.user_id,
+      },
+    });
+    if (!payment) {
+      this.logger.log(
+        `Payment record associated with the appointment ${appointment.id} not found. Can't send funds appointment fees to mentor`,
+      );
+      return;
+    }
+    // Notify user
+    if (payment.status === PaymentStatus.SUCCESS) {
+      this.walletService.topupLedgerBalance(
+        appointment.mentor_id,
+        payment.amount,
+      );
+      this.notificationService.create(appointment.user, {
+        title: 'Payment Confirmed',
+        body: `Your payment for the mentorship session with ${appointment.mentor.user.name} has been confirmed.`,
+      });
+      this.notificationService.create(appointment.mentor.user, {
+        title: 'Mentorship Session Payment',
+        body: `A sum of ${Number(
+          payment.amount.toFixed(),
+        ).toLocaleString()} for a mentorship session with ${
+          appointment.user.name
+        } has been confirmed and paid into your ledge balance.`,
+      });
+    }
   }
 
   @OnEvent(EVENTS.MENTOR_ACCEPT_APPOINTMENT)
-  async processAppointment({ appointment }: { appointment: Appointment }) {
-    console.log('mentor accepts event: ', { appointment });
-    // Todo: Fire notification to user
-    // Todo: or send amount after session ends
+  processAppointment({ appointment }: { appointment: Appointment }) {
+    this.notificationService.create(appointment.user, {
+      title: 'Mentorship Request Accepted',
+      body: `Mentor (${appointment.mentor.user.name}) has accepted your mentorship session request! 
+      You will be notified before the session starts.`,
+    });
   }
 }

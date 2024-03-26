@@ -61,10 +61,10 @@ export class WalletService {
     try {
       await this.walletRepository.save(wallet);
       this.notificationService.create(mentor.user, {
-        body: `Your wallet has been credited with ${amount.toFixed(2)}`,
+        body: `Your ledger balance has been credited with ${amount.toFixed(2)}`,
         title: 'Credit Alert',
       });
-      this.logger.log(`Mentor (${mentor.id})'s wallet got credited`);
+      this.logger.log(`Mentor (${mentor.id})'s wallet got credited | Ledger balance`);
     } catch (error) {
       this.logger.error(
         `Failed to credit wallet for mentor (${mentor.id}): ${error.message}`,
@@ -89,7 +89,7 @@ export class WalletService {
         body: `Your wallet has been credited with ${amount.toFixed(2)}`,
         title: 'Credit Alert',
       });
-      this.logger.log(`Mentor (${mentor.id})'s wallet got credited`);
+      this.logger.log(`Mentor (${mentor.id})'s wallet got credited | Main balance`);
     } catch (error) {
       this.logger.error(
         `Failed to credit wallet for mentor (${mentor.id}): ${error.message}`,

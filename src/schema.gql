@@ -43,8 +43,8 @@ type NotificationDto {
   body: String!
   read: Boolean!
   userId: String!
-  resourceId: String!
-  resourceType: NotificationResourceType!
+  resourceId: String
+  resourceType: NotificationResourceType
   created_at: DateTime!
 }
 

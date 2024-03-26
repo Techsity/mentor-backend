@@ -240,7 +240,7 @@ export class PaymentService {
     const user = this.request.req.user;
     const appointment = await Appointment.findOne({
       where: { id: paymentRecord.metadata.resourceId, user_id: user.id },
-      relations: ['mentor', 'mentor.user'],
+      relations: ['mentor', 'mentor.user', 'user'],
     });
     if (!appointment)
       throw new UnprocessableEntityException(
