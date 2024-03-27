@@ -24,21 +24,6 @@ export class AppointmentResolver {
     );
   }
 
-  @Mutation(() => AppointmentDTO)
-  toggleAppointmentStatus(
-    @Args('mentorId')
-    mentorId: string,
-    @Args('appointmentId')
-    appointmentId: string,
-    @Args('status') status: AppointmentStatus,
-  ): Promise<any> {
-    return this.appointmentService.toggleAppointmentStatus(
-      mentorId,
-      appointmentId,
-      status,
-    );
-  }
-
   @Query(() => AppointmentDTO)
   viewAppointment(
     @Args('appointmentId')

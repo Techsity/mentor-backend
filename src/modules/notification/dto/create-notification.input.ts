@@ -6,22 +6,26 @@ import { NotificationResourceType } from '../enums';
 export class CreateNotificationInput {
   @Field()
   @IsString({ message: 'notification title is required' })
-  // Todo: add length limit
   @IsNotEmpty({ message: 'notification title is required' })
+  // Todo: add length limit
   title: string;
 
   @Field()
-  @IsOptional({ message: 'notification body cannot be empty' })
+  @IsString({ message: 'notification body is required' })
+  @IsNotEmpty({ message: 'notification body is required' })
   // Todo: add length limit
   body: string;
 
-  @Field()
-  @IsString({ message: 'resourceId is required' })
-  @IsNotEmpty({ message: 'resourceId is required' })
+  @Field({ nullable: true })
+  @IsOptional({ message: 'sendEmail is required' })
+  sendEmail?: boolean;
+
+  @Field({ nullable: true })
+  @IsOptional({ message: 'resourceId is required' })
   resourceId?: string;
 
-  @Field(() => NotificationResourceType)
-  @IsNotEmpty({ message: 'resourceType is required' })
+  @Field(() => NotificationResourceType, { nullable: true })
+  @IsOptional({ message: 'resourceId is required' })
   @IsEnum(NotificationResourceType, {
     message: 'resourceType must be typeof NotificationResourceType',
   })

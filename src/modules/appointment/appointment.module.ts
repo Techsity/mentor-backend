@@ -8,9 +8,12 @@ import { AppointmentResolver } from './resolvers/appointment.resolver';
 import { AuthModule } from '../auth/auth.module';
 import { AppointmentStatus } from './enums/appointment.enum';
 import { registerEnumType } from '@nestjs/graphql';
-import { AppointmentSchedulerService } from './services/appointment-scheduler.service';
+import { AppointmentCronService } from './services/appointment-cron.service';
 import { BullModule } from '@nestjs/bull';
 import { AppointmentQueueService } from './services/appointment-queue.service';
+import { QUEUES } from 'src/common/queues.constants';
+import { AppointmentQueueProcessor } from './services/appointment-queue.processor';
+import { NotificationModule } from '../notification/notification.module';
 
 registerEnumType(AppointmentStatus, {
   name: 'AppointmentStatus',
@@ -18,22 +21,27 @@ registerEnumType(AppointmentStatus, {
 });
 @Module({
   imports: [
-    BullModule.registerQueue({ name: 'appointments' }),
+    BullModule.registerQueue({
+      name: QUEUES.APPOINTMENTS,
+    }),
     forwardRef(() => AuthModule),
     forwardRef(() => MentorModule),
     forwardRef(() => UserModule),
     TypeOrmModule.forFeature([Appointment]),
+    NotificationModule,
   ],
   providers: [
     AppointmentResolver,
     AppointmentService,
-    AppointmentSchedulerService,
+    AppointmentCronService,
     AppointmentQueueService,
+    AppointmentQueueProcessor,
   ],
   exports: [
     TypeOrmModule.forFeature([Appointment]),
-    AppointmentSchedulerService,
+    AppointmentCronService,
     AppointmentQueueService,
+    AppointmentQueueProcessor,
   ],
 })
 export class AppointmentModule {}

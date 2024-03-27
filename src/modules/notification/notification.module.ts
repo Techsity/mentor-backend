@@ -4,6 +4,7 @@ import { NotificationResolver } from './notification.resolver';
 import { Notification } from './entities/notification.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { NotificationEventsGateway } from './gateways/notification-events.gateway';
+import { SesService } from 'src/aws/ses.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Notification])],
@@ -11,6 +12,7 @@ import { NotificationEventsGateway } from './gateways/notification-events.gatewa
     NotificationResolver,
     NotificationService,
     NotificationEventsGateway,
+    SesService,
   ],
   exports: [
     TypeOrmModule.forFeature([Notification]),

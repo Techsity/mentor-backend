@@ -58,8 +58,12 @@ import { BullModule } from '@nestjs/bull';
     }),
     EventEmitterModule.forRoot(),
     BullModule.forRoot({
-      // set redis configuration
+      redis: {
+        host: process.env.REDIS_HOST,
+        port: parseInt(process.env.REDIS_PORT, 10),
+      },
     }),
+    ScheduleModule.forRoot(),
     JwtModule.register({
       secret: 'secretKey', // Use something more secure in production
       signOptions: {

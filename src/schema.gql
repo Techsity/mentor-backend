@@ -385,12 +385,11 @@ type Mutation {
   createCourse(createCourseInput: CreateCourseInput!, files: [Upload!]!): CourseDto!
   createCategory(createCourseCatInput: CreateCourseCatInput!): CourseCategoryDto!
   createAppointment(createAppointmentInput: CreateAppointmentInput!, mentor: String!): AppointmentDTO!
-  toggleAppointmentStatus(mentorId: String!, appointmentId: String!, status: String!): AppointmentDTO!
   acceptAppointment(id: String!): AppointmentDTO!
-  createReview(args: CreateReviewArgs!): ReviewDto!
   markAllNotificationsAsRead: Boolean!
   readNotification(notificationId: String!): Boolean!
   deleteNotification(notificationId: String!): Boolean!
+  createReview(args: CreateReviewArgs!): ReviewDto!
   createWorkshop(input: CreateWorkshopInput!): WorkshopDto!
   subscribeToCourse(courseId: String!): Subscription!
   subscribeToWorkshop(workshopId: String!): Subscription!

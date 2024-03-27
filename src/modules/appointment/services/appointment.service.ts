@@ -153,7 +153,7 @@ export class AppointmentService {
 
       if (statuses && statuses.length > 0)
         query.andWhere('appointment.status IN (:...statuses)', { statuses });
-      // Todo: don't include status = AppointmentStatus.AWAITING_PAYMENT
+      // Todo: don't include appointments where status = AppointmentStatus.AWAITING_PAYMENT
 
       return query.getMany();
     } catch (error) {
@@ -163,34 +163,9 @@ export class AppointmentService {
 
   /**
    *
-   * @param mentorId
    * @param appointmentId
-   * @param status
-   * @returns
+   * @returns Appointment
    */
-
-  async toggleAppointmentStatus(
-    mentorId: string,
-    appointmentId: string,
-    status: AppointmentStatus,
-  ): Promise<any> {
-    try {
-      const appointment = await this.appointmentRepository.findOne({
-        where: {
-          id: appointmentId,
-          mentor_id: mentorId,
-          status: Not(AppointmentStatus.AWAITING_PAYMENT),
-        },
-        relations: ['mentor', 'mentor.user'],
-      });
-      if (!appointment) throw new BadRequestException('Appointment not found');
-      appointment.status = status;
-      await appointment.save();
-      return appointment;
-    } catch (error) {
-      throw error;
-    }
-  }
 
   async viewAppointment(appointmentId: string): Promise<any> {
     const authUser = this.request.req.user;
@@ -206,7 +181,6 @@ export class AppointmentService {
         relations: ['mentor', 'mentor.user'],
       });
       if (!appointment) throw new BadRequestException('Appointment not found');
-
       return appointment;
     } catch (error) {
       throw error;
@@ -228,13 +202,14 @@ export class AppointmentService {
         mentor_id: mentorProfile.id,
         status: Not(AppointmentStatus.AWAITING_PAYMENT),
       },
+      relations: ['user', 'mentor', 'mentor.user'],
     });
     if (!appointment) throw new BadRequestException('Appointment not found');
 
     if (appointment.status === AppointmentStatus.PENDING) {
+      // appointment.status = AppointmentStatus.ACCEPTED;
+      // await appointment.save();
       this.eventEmitter.emit(EVENTS.MENTOR_ACCEPT_APPOINTMENT, { appointment });
-      appointment.status = AppointmentStatus.ACCEPTED;
-      await appointment.save();
       return appointment;
     }
     return appointment;

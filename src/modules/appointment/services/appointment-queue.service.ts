@@ -1,21 +1,44 @@
 import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
+import Bull, { Queue } from 'bull';
 import { Appointment } from '../entities/appointment.entity';
 import { OnEvent } from '@nestjs/event-emitter';
 import EVENTS from 'src/common/events.constants';
+import { QUEUES } from 'src/common/queues.constants';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class AppointmentQueueService {
   constructor(
-    @InjectQueue('appointments') private readonly appointmentQueue: Queue,
+    @InjectQueue(QUEUES.APPOINTMENTS) private readonly appointmentQueue: Queue,
   ) {}
   @OnEvent(EVENTS.MENTOR_ACCEPT_APPOINTMENT)
   async scheduleNotification({ appointment }: { appointment: Appointment }) {
-    console.log('scheduling appointment event notification: ', { appointment });
-    const { date } = appointment;
-    const delay = date.getTime() - Date.now() - 20 * 60 * 1000; //20mins before due date
-    console.log('New appointment notification added to the queue');
-    await this.appointmentQueue.add(appointment.id, appointment, { delay });
+    try {
+      console.log('scheduling appointment event notification:: ', {
+        appointment: appointment.status,
+      });
+      const { date } = appointment;
+      // const delay = date.getTime() - Date.now() - 20 * 60 * 1000; //20mins before due date
+      const delay = 5 * 1000;
+      const jobOpts: Bull.JobOptions = {
+        removeOnComplete: true,
+        jobId: randomUUID(),
+        priority: 1,
+        delay,
+        attempts: 3,
+      };
+      const job = await this.appointmentQueue.add(
+        'send_reminder',
+        appointment,
+        jobOpts,
+      );
+      console.log('New appointment notification added to the queue', { job });
+    } catch (error) {
+      console.log(
+        `Error scheduling appointment notification. appointment (${appointment.id})`,
+        { error },
+      );
+    }
   }
 }

@@ -2,6 +2,7 @@ import { Global, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import EVENTS from 'src/common/events.constants';
 import { Appointment } from 'src/modules/appointment/entities/appointment.entity';
+import { AppointmentStatus } from 'src/modules/appointment/enums/appointment.enum';
 import { NotificationResourceType } from 'src/modules/notification/enums';
 import { NotificationService } from 'src/modules/notification/notification.service';
 import { INewCourseNotification } from 'src/modules/notification/types';
@@ -117,7 +118,9 @@ export class EventEmitterListeners {
   }: {
     appointment: Appointment;
   }) {
-    console.log('appointment payment confirmed: ', { appointment });
+    console.log('appointment payment confirmed: ', {
+      appointment: appointment.id,
+    });
     const payment = await Payment.findOne({
       where: {
         metadata: {
@@ -129,7 +132,7 @@ export class EventEmitterListeners {
     });
     if (!payment) {
       this.logger.log(
-        `Payment record associated with the appointment ${appointment.id} not found. Can't send funds appointment fees to mentor`,
+        `Payment record associated with appointment (${appointment.id}) not found. Can't send appointment fees to mentor`,
       );
       return;
     }
@@ -149,17 +152,24 @@ export class EventEmitterListeners {
           payment.amount.toFixed(),
         ).toLocaleString()} for a mentorship session with ${
           appointment.user.name
-        } has been confirmed and paid into your ledge balance.`,
+        } has been confirmed and paid into your ledger balance.`,
       });
     }
   }
 
   @OnEvent(EVENTS.MENTOR_ACCEPT_APPOINTMENT)
   processAppointment({ appointment }: { appointment: Appointment }) {
+    // Todo: check if the appointment date has expired, then postpone to the following week and send notifications to participants (user and mentor)
+    console.log('Appointment accepted', appointment.id);
+    Appointment.update(
+      { id: appointment.id },
+      { status: AppointmentStatus.ACCEPTED },
+    );
     this.notificationService.create(appointment.user, {
       title: 'Mentorship Request Accepted',
-      body: `Mentor (${appointment.mentor.user.name}) has accepted your mentorship session request! 
+      body: `Mentor (${appointment.mentor.user.name}) has accepted your mentorship session request!
       You will be notified before the session starts.`,
+      sendEmail: true,
     });
   }
 }

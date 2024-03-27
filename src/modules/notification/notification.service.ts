@@ -12,6 +12,7 @@ import NotificationDto from './dto/notification.dto';
 import { isUUID } from 'class-validator';
 import { User } from '../user/entities/user.entity';
 import { NotificationEventsGateway } from './gateways/notification-events.gateway';
+import { SesService } from 'src/aws/ses.service';
 
 @Injectable()
 export class NotificationService {
@@ -20,6 +21,7 @@ export class NotificationService {
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
     private notificationGateway: NotificationEventsGateway,
+    private emailService: SesService,
   ) {}
 
   /**
@@ -35,17 +37,22 @@ export class NotificationService {
       ...input,
       user,
     });
-    // if (user.is_active) {
-    // Todo: add to create email service queue
-    // Send email notification
-    // }
+
     this.notificationGateway.dispatchNotification({
       userId: user.id,
       payload: notification,
     });
+
+    // Send email notification
+    if (input.sendEmail) {
+      await this.emailService
+        .sendEmail(user.email, input.title, input.body)
+        .then(console.log);
+    }
+
     this.logger.log(
-      `Notification created for user ${user.id}`,
       `Notification event fired`,
+      `Notification created for user ${user.id}`,
     );
     return notification;
   }

@@ -42,7 +42,7 @@ export class Appointment extends BaseEntity {
   status: AppointmentStatus;
 
   @Column({ default: 0 })
-  extension_count: number;
+  reschedule_count: number;
 
   @CreateDateColumn()
   created_at: Date;
