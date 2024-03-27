@@ -207,7 +207,7 @@ export class AppointmentService {
     if (!appointment) throw new BadRequestException('Appointment not found');
 
     if (appointment.status === AppointmentStatus.PENDING) {
-      // appointment.status = AppointmentStatus.ACCEPTED;
+      appointment.status = AppointmentStatus.ACCEPTED;
       // await appointment.save();
       this.eventEmitter.emit(EVENTS.MENTOR_ACCEPT_APPOINTMENT, { appointment });
       return appointment;

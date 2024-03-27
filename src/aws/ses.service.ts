@@ -19,7 +19,7 @@ export class SesService {
 
   async sendEmail(to: string, subject: string, htmlBody: string) {
     const params: AWS.SES.SendEmailRequest = {
-      // ConfigurationSetName: 'Mentor',
+      ConfigurationSetName: 'Mentor',
       Source: this.configService.get<string>('aws.emailSender'),
       Destination: {
         ToAddresses: [to],

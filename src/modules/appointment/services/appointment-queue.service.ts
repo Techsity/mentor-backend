@@ -2,8 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import Bull, { Queue } from 'bull';
 import { Appointment } from '../entities/appointment.entity';
-import { OnEvent } from '@nestjs/event-emitter';
-import EVENTS from 'src/common/events.constants';
 import { QUEUES } from 'src/common/queues.constants';
 import { randomUUID } from 'crypto';
 
@@ -12,7 +10,6 @@ export class AppointmentQueueService {
   constructor(
     @InjectQueue(QUEUES.APPOINTMENTS) private readonly appointmentQueue: Queue,
   ) {}
-  @OnEvent(EVENTS.MENTOR_ACCEPT_APPOINTMENT)
   async scheduleNotification({ appointment }: { appointment: Appointment }) {
     try {
       console.log('scheduling appointment event notification:: ', {
@@ -28,12 +25,12 @@ export class AppointmentQueueService {
         delay,
         attempts: 3,
       };
-      const job = await this.appointmentQueue.add(
-        'send_reminder',
-        appointment,
-        jobOpts,
-      );
-      console.log('New appointment notification added to the queue', { job });
+      // const job = await this.appointmentQueue.add(
+      //   'send_reminder',
+      //   appointment,
+      //   jobOpts,
+      // );
+      // console.log('New appointment notification added to the queue', { job });
     } catch (error) {
       console.log(
         `Error scheduling appointment notification. appointment (${appointment.id})`,

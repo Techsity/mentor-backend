@@ -3,6 +3,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import EVENTS from 'src/common/events.constants';
 import { Appointment } from 'src/modules/appointment/entities/appointment.entity';
 import { AppointmentStatus } from 'src/modules/appointment/enums/appointment.enum';
+import { AppointmentQueueService } from 'src/modules/appointment/services/appointment-queue.service';
 import { NotificationResourceType } from 'src/modules/notification/enums';
 import { NotificationService } from 'src/modules/notification/notification.service';
 import { INewCourseNotification } from 'src/modules/notification/types';
@@ -19,6 +20,7 @@ export class EventEmitterListeners {
   constructor(
     private readonly notificationService: NotificationService,
     private readonly walletService: WalletService,
+    private readonly appointmentQueueService: AppointmentQueueService,
   ) {}
 
   @OnEvent(EVENTS.NEW_COURSE)
@@ -158,17 +160,39 @@ export class EventEmitterListeners {
   }
 
   @OnEvent(EVENTS.MENTOR_ACCEPT_APPOINTMENT)
-  processAppointment({ appointment }: { appointment: Appointment }) {
-    // Todo: check if the appointment date has expired, then postpone to the following week and send notifications to participants (user and mentor)
-    console.log('Appointment accepted', appointment.id);
-    Appointment.update(
-      { id: appointment.id },
-      { status: AppointmentStatus.ACCEPTED },
-    );
-    this.notificationService.create(appointment.user, {
+  async processAppointment({ appointment }: { appointment: Appointment }) {
+    const appointmentRecord = await Appointment.findOne({
+      where: { id: appointment.id },
+      relations: ['user', 'mentor', 'mentor.user'],
+    });
+
+    // Update status
+    appointmentRecord.status = AppointmentStatus.ACCEPTED;
+
+    // Todo: check if the appointment date has expired, then postpone to the following week and send notifications to user
+    const currentDate = new Date();
+    const appointmentDate = new Date(appointmentRecord.date);
+    const isOverdue = currentDate.getTime() > appointmentDate.getTime();
+
+    if (isOverdue || appointment.status == AppointmentStatus.OVERDUE) {
+      const nextWeek = new Date(appointmentDate);
+      nextWeek.setDate(nextWeek.getDate() + 7);
+      appointmentRecord.date = nextWeek;
+      appointmentRecord.reschedule_count =
+        appointmentRecord.reschedule_count + 1;
+    }
+
+    await appointmentRecord.save();
+    console.log(appointmentRecord.date.toDateString());
+    // Schedule notification and send notification to user
+    this.appointmentQueueService.scheduleNotification({
+      appointment: appointmentRecord,
+    });
+    this.notificationService.create(appointmentRecord.user, {
       title: 'Mentorship Request Accepted',
-      body: `Mentor (${appointment.mentor.user.name}) has accepted your mentorship session request!
-      You will be notified before the session starts.`,
+      body: `${
+        appointment.mentor.user.name
+      } has accepted your mentorship session request! Session is scheduled for ${appointmentRecord.date.toDateString()} by ${appointmentRecord.date.toTimeString()}. You will be notified before the session starts.`,
       sendEmail: true,
     });
   }
