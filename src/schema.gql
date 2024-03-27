@@ -176,6 +176,7 @@ type MentorDTO {
   about: String!
   role: String!
   skills: [SkillDTO!]!
+  appointments: [AppointmentDTO!]
   work_experience: [WorkExperienceDTO!]
   projects: [PastProjectsDTO!]
   exp_level: MentorExpLevel!
@@ -202,6 +203,7 @@ enum MentorExpLevel {
 type AppointmentDTO {
   id: String!
   date: DateTime!
+  user: UserDTO
   status: AppointmentStatus!
   mentor: MentorDTO!
   created_at: DateTime!

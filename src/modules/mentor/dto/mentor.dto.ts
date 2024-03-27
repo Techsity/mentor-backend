@@ -10,6 +10,7 @@ import {
 } from '../enums/mentor.enum';
 import { UserDTO } from 'src/modules/user/dto/user.dto';
 import Wallet from 'src/modules/wallet/entities/wallet.entity';
+import { AppointmentDTO } from 'src/modules/appointment/dto/appointment.dto';
 
 @ObjectType()
 export class SkillDTO {
@@ -116,6 +117,9 @@ export class MentorDTO {
 
   @Field(() => [SkillDTO])
   skills: SkillDTO[];
+
+  @Field(() => [AppointmentDTO], { nullable: true })
+  appointments: AppointmentDTO[];
 
   @Field(() => [WorkExperienceDTO], { nullable: true })
   work_experience: WorkExperienceDTO[];

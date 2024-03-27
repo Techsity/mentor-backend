@@ -147,6 +147,7 @@ export class EventEmitterListeners {
       this.notificationService.create(appointment.user, {
         title: 'Payment Confirmed',
         body: `Your payment for the mentorship session with ${appointment.mentor.user.name} has been confirmed.`,
+        sendEmail: true,
       });
       this.notificationService.create(appointment.mentor.user, {
         title: 'Mentorship Session Payment',

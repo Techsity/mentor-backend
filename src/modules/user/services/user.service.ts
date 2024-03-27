@@ -39,7 +39,7 @@ export class UserService {
           'notifications',
           'appointments',
           'appointments.mentor',
-          'appointments.mentor.user',
+          // 'appointments.mentor.user',
         ],
       });
       // Update the video_url for each course and section

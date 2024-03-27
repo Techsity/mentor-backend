@@ -13,6 +13,9 @@ export class AppointmentDTO {
   @Field()
   date: Date;
 
+  @Field(() => UserDTO, { nullable: true })
+  user: UserDTO;
+
   @Field(() => AppointmentStatus)
   status: AppointmentStatus;
 

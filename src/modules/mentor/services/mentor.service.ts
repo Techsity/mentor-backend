@@ -80,7 +80,8 @@ export class MentorService {
         { user: { id: user.id } },
         updateMentorInput,
       );
-      const mentorProfile = await this.getMentorProfile();
+      const mentorProfile =
+        (await this.getMentorProfile()) as unknown as UpdateMentorInput;
       return mentorProfile;
     } catch (error) {
       throw error;
@@ -95,12 +96,18 @@ export class MentorService {
     return user;
   }
 
-  async getMentorProfile(): Promise<any> {
+  async getMentorProfile() {
     try {
       const user = this.request.req.user;
       const mentorProfile = await this.mentorRepository.findOne({
         where: { user: { id: user.id } },
-        relations: ['user', 'courses', 'reviews'],
+        relations: [
+          'user',
+          'courses',
+          'reviews',
+          'appointments',
+          'appointments.user',
+        ],
       });
       // console.log({ user, mentorProfile });
       if (!mentorProfile)
