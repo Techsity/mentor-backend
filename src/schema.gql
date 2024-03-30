@@ -34,6 +34,7 @@ type Wallet {
   id: ID!
   ledger_balance: Float!
   available_balance: Float!
+  total_earnings: Float!
   created_at: String!
 }
 

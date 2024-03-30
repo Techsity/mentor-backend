@@ -43,6 +43,9 @@ export class Payment extends BaseEntity {
   @Column()
   access_code: string;
 
+  @Column({ name: 'transaction_id', })
+  transactionId: string;
+
   @Column({
     type: 'enum',
     enum: PAYMENT_CHANNELS,
