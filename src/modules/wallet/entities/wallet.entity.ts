@@ -18,15 +18,15 @@ export default class Wallet extends BaseEntity {
   id: string;
 
   @Field(() => Float)
-  @Column('float', { default: 0 })
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0.0 })
   ledger_balance: number;
 
   @Field(() => Float)
-  @Column('float', { default: 0 })
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0.0 })
   available_balance: number;
 
   @Field(() => Float)
-  @Column('float', { default: 0 })
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0.0 })
   total_earnings: number;
 
   @OneToOne(() => Mentor, (mentor) => mentor.wallet, { onDelete: 'RESTRICT' })

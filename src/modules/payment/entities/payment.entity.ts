@@ -22,7 +22,7 @@ export class Payment extends BaseEntity {
   @Column()
   reference: string;
 
-  @Column({ type: 'float' })
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
   amount: number;
 
   @ManyToOne(() => User, { onDelete: 'SET NULL' })
@@ -34,7 +34,7 @@ export class Payment extends BaseEntity {
   @Column({ type: 'enum', enum: ISOCurrency })
   currency: ISOCurrency;
 
-  @Column({ type: 'float' })
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
   exchange_rate: number;
 
   @Column({ type: 'enum', enum: ISOCurrency, default: ISOCurrency.NGN })

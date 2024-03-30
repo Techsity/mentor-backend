@@ -15,3 +15,15 @@ export enum PaymentStatus {
   CANCELLED = 'cancelled',
   ABANDONED = 'abandoned',
 }
+
+export enum TransactionStatus {
+  PENDING = 'pending',
+  SUCCESS = 'successful',
+  FAILED = 'failed',
+  REVERSED = 'reversed',
+}
+
+export enum TransactionType {
+  CREDIT = 'credit',
+  DEBIT = 'debit',
+}
