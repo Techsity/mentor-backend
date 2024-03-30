@@ -25,6 +25,10 @@ export default class Wallet extends BaseEntity {
   @Column('float', { default: 0 })
   available_balance: number;
 
+  @Field(() => Float)
+  @Column('float', { default: 0 })
+  total_earnings: number;
+
   @OneToOne(() => Mentor, (mentor) => mentor.wallet, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'mentor_id' })
   mentor: Mentor;

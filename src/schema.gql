@@ -170,7 +170,7 @@ type IMentorFollowerDTO {
 
 type MentorDTO {
   id: String!
-  user: UserDTO!
+  user: UserDTO
   courses: [CourseDto!]
   reviews: [ReviewDto!]
   about: String!

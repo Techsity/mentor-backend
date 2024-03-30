@@ -100,7 +100,7 @@ export class MentorDTO {
   @Field()
   id: string;
 
-  @Field(() => UserDTO)
+  @Field(() => UserDTO, {nullable:true})
   user: UserDTO;
 
   @Field(() => [CourseDto], { nullable: true })

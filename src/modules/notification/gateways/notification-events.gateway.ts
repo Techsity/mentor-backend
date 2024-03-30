@@ -30,7 +30,7 @@ export class NotificationEventsGateway
       client.join(userRoom);
       console.log(`User ${userId} joined ${userRoom}`);
     } else {
-      console.error('User ID not provided');
+      // console.error('User ID not provided');
       client.disconnect();
     }
   }
