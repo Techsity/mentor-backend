@@ -8,18 +8,20 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToOne,
 } from 'typeorm';
 import { PAYMENT_CHANNELS, PaymentStatus } from '../enum';
 import { User } from 'src/modules/user/entities/user.entity';
 import { SubscriptionType } from 'src/modules/subscription/enums/subscription.enum';
 import { ISOCurrency } from '../types/payment.type';
+import { Transaction } from './transaction.entity';
 
 @Entity('payments')
 export class Payment extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ unique: true })
   reference: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
@@ -42,9 +44,6 @@ export class Payment extends BaseEntity {
 
   @Column()
   access_code: string;
-
-  @Column({ name: 'transaction_id', })
-  transactionId: string;
 
   @Column({
     type: 'enum',

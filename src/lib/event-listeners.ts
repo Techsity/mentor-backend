@@ -4,13 +4,11 @@ import EVENTS from 'src/common/events.constants';
 import { Appointment } from 'src/modules/appointment/entities/appointment.entity';
 import { AppointmentStatus } from 'src/modules/appointment/enums/appointment.enum';
 import { AppointmentQueueService } from 'src/modules/appointment/services/appointment-queue.service';
-import { NotificationResourceType } from 'src/modules/notification/enums';
 import { NotificationService } from 'src/modules/notification/notification.service';
-import { INewCourseNotification } from 'src/modules/notification/types';
+import { FollowersNotificationInterface } from 'src/modules/notification/types';
 import { Payment } from 'src/modules/payment/entities/payment.entity';
 import { PaymentStatus } from 'src/modules/payment/enum';
 import { Subscription } from 'src/modules/subscription/entities/subscription.entity';
-import { SubscriptionType } from 'src/modules/subscription/enums/subscription.enum';
 import { User } from 'src/modules/user/entities/user.entity';
 import { WalletService } from 'src/modules/wallet/wallet.service';
 
@@ -19,26 +17,29 @@ export class EventEmitterListeners {
   private readonly logger = new Logger(EventEmitterListeners.name);
   constructor(
     private readonly notificationService: NotificationService,
+    // Notfication queue
     private readonly walletService: WalletService,
     private readonly appointmentQueueService: AppointmentQueueService,
   ) {}
 
-  @OnEvent(EVENTS.NEW_COURSE)
-  sendNewCourseNotification({
-    followers,
-    course,
-    mentorUser,
-  }: INewCourseNotification) {
+  @OnEvent(EVENTS.NOTIFY_FOLLOWERS)
+  notifyFollowers({
+    mentor,
+    title,
+    body,
+    resource,
+    resourceType,
+  }: FollowersNotificationInterface) {
     try {
+      const followers = mentor.followers;
       // Todo: use notification queue
       for (const user of followers) {
-        // check if user.allow_push_notifications
         if (user.allow_push_notifications) {
           this.notificationService.create(user, {
-            title: 'New Course Published',
-            body: `A mentor you follow (${mentorUser.name}) has published a new course. Check it out!`,
-            resourceId: course.id,
-            resourceType: NotificationResourceType.COURSES,
+            title,
+            body,
+            resourceId: resource.id,
+            resourceType,
           });
         }
       }
@@ -61,9 +62,6 @@ export class EventEmitterListeners {
     subscription: Subscription;
   }) {
     try {
-      // update payment status
-      payment.status = PaymentStatus.SUCCESS;
-      await Payment.update(payment.id, payment);
       const mentor = subscription.course.mentor || subscription.workshop.mentor;
       const resource = subscription.course || subscription.workshop;
       // notify mentor of the subscription
@@ -125,11 +123,7 @@ export class EventEmitterListeners {
     });
     const payment = await Payment.findOne({
       where: {
-        metadata: {
-          resourceId: appointment.id,
-          resourceType: SubscriptionType.MENTORSHIP_APPOINTMENT,
-        },
-        user_id: appointment.user_id,
+        id: appointment.paymentReference,
       },
     });
     if (!payment) {
@@ -140,22 +134,10 @@ export class EventEmitterListeners {
     }
     // Notify user
     if (payment.status === PaymentStatus.SUCCESS) {
-      this.walletService.topupLedgerBalance(
-        appointment.mentor_id,
-        payment.amount,
-      );
       this.notificationService.create(appointment.user, {
         title: 'Payment Confirmed',
         body: `Your payment for the mentorship session with ${appointment.mentor.user.name} has been confirmed.`,
         sendEmail: true,
-      });
-      this.notificationService.create(appointment.mentor.user, {
-        title: 'Mentorship Session Payment',
-        body: `A sum of ${Number(
-          payment.amount.toFixed(),
-        ).toLocaleString()} for a mentorship session with ${
-          appointment.user.name
-        } has been confirmed and paid into your ledger balance.`,
       });
     }
   }
@@ -166,7 +148,6 @@ export class EventEmitterListeners {
       where: { id: appointment.id },
       relations: ['user', 'mentor', 'mentor.user'],
     });
-
     // Update status
     appointmentRecord.status = AppointmentStatus.ACCEPTED;
 
@@ -182,7 +163,6 @@ export class EventEmitterListeners {
       appointmentRecord.reschedule_count =
         appointmentRecord.reschedule_count + 1;
     }
-
     await appointmentRecord.save();
     console.log(appointmentRecord.date.toDateString());
     // Schedule notification and send notification to user

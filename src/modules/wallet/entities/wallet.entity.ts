@@ -19,10 +19,6 @@ export default class Wallet extends BaseEntity {
 
   @Field(() => Float)
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0.0 })
-  ledger_balance: number;
-
-  @Field(() => Float)
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0.0 })
   available_balance: number;
 
   @Field(() => Float)
@@ -42,7 +38,6 @@ export default class Wallet extends BaseEntity {
   @CreateDateColumn({ type: 'timestamp with time zone' })
   created_at: Date;
 
-  // @Field(() => String)
   @CreateDateColumn({ type: 'timestamp with time zone' })
   updated_at: Date;
 }

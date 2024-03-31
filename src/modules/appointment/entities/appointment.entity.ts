@@ -44,8 +44,11 @@ export class Appointment extends BaseEntity {
   @Column({ default: 0 })
   reschedule_count: number;
 
-  @Column({ name: 'payment_id'})
-  paymentId: string;
+  @Column({ name: 'payment_reference' })
+  paymentReference: string;
+
+  @Column({ name: 'cancel_reason', nullable: true })
+  cancelReason: string;
 
   @CreateDateColumn()
   created_at: Date;

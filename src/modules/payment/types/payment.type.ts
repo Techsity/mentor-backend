@@ -12,3 +12,4 @@ registerEnumType(ISOCurrency, {
   name: 'ISOCurrency',
   description: 'The enum of supported currencies for transactions',
 });
+

@@ -48,31 +48,6 @@ export class WalletService {
     return wallet;
   }
 
-  async topupLedgerBalance(mentorId: string, amount: number) {
-    const mentor = await this.findMentorProfile(mentorId);
-    const wallet = await this.findWallet(mentorId);
-
-    const amountDecimal = new Decimal(amount);
-    const walletBalance = new Decimal(wallet.ledger_balance);
-    wallet.ledger_balance = Number(
-      walletBalance.plus(amountDecimal).toFixed(2),
-    );
-
-    try {
-      await this.walletRepository.save(wallet);
-      this.notificationService.create(mentor.user, {
-        body: `Your ledger balance has been credited with ${amount.toFixed(2)}`,
-        title: 'Credit Alert',
-      });
-      this.logger.log(`Mentor (${mentor.id})'s wallet got credited | Ledger balance`);
-    } catch (error) {
-      this.logger.error(
-        `Failed to credit wallet for mentor (${mentor.id}): ${error.message}`,
-      );
-      throw error;
-    }
-  }
-
   async creditWallet(mentorId: string, amount: number) {
     const mentor = await this.findMentorProfile(mentorId);
     const wallet = await this.findWallet(mentorId);
@@ -86,10 +61,14 @@ export class WalletService {
     try {
       await this.walletRepository.save(wallet);
       this.notificationService.create(mentor.user, {
-        body: `Your wallet has been credited with ${amount.toFixed(2)}`,
+        body: `Your wallet has been credited with ${parseInt(
+          Number(amount).toFixed(2),
+        ).toLocaleString()}`,
         title: 'Credit Alert',
       });
-      this.logger.log(`Mentor (${mentor.id})'s wallet got credited | Main balance`);
+      this.logger.log(
+        `Mentor (${mentor.id})'s wallet got credited | Main balance`,
+      );
     } catch (error) {
       this.logger.error(
         `Failed to credit wallet for mentor (${mentor.id}): ${error.message}`,

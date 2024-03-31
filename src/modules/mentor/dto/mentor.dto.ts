@@ -63,6 +63,9 @@ class TimeSlot {
 }
 @ObjectType()
 export class UserAvailabilityDTO {
+  @Field({ nullable: true })
+  id?: string;
+
   @Field()
   day: string;
 
@@ -100,7 +103,7 @@ export class MentorDTO {
   @Field()
   id: string;
 
-  @Field(() => UserDTO, {nullable:true})
+  @Field(() => UserDTO, { nullable: true })
   user: UserDTO;
 
   @Field(() => [CourseDto], { nullable: true })

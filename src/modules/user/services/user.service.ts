@@ -39,7 +39,7 @@ export class UserService {
           'notifications',
           'appointments',
           'appointments.mentor',
-          // 'appointments.mentor.user',
+          'appointments.mentor.user',
         ],
       });
       // Update the video_url for each course and section
@@ -52,6 +52,7 @@ export class UserService {
       //     });
       //   });
       // });
+      if (userProfile.mentor) userProfile.mentor.user = null;
       return { ...userProfile, is_mentor: userProfile.mentor ? true : false };
     } catch (error) {
       throw error;

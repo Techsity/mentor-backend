@@ -49,6 +49,7 @@ import Wallet from './modules/wallet/entities/wallet.entity';
 import { Card } from './modules/card/entities/card.entity';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BullModule } from '@nestjs/bull';
+import { Transaction } from './modules/payment/entities/transaction.entity';
 
 @Module({
   imports: [
@@ -94,6 +95,7 @@ import { BullModule } from '@nestjs/bull';
           ReportedMentor,
           Workshop,
           Payment,
+          Transaction,
           Wallet,
           Card,
         ],

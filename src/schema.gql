@@ -32,7 +32,6 @@ enum SubscriptionType {
 
 type Wallet {
   id: ID!
-  ledger_balance: Float!
   available_balance: Float!
   total_earnings: Float!
   created_at: String!
@@ -149,6 +148,7 @@ type TimeSlot {
 }
 
 type UserAvailabilityDTO {
+  id: String
   day: String!
   timeSlots: [TimeSlot!]!
 }
@@ -203,6 +203,7 @@ enum MentorExpLevel {
 
 type AppointmentDTO {
   id: String!
+  paymentReference: String!
   date: DateTime!
   user: UserDTO
   status: AppointmentStatus!
@@ -219,9 +220,11 @@ enum AppointmentStatus {
   IN_PROGRESS
   UPCOMING
   DECLINED
-  CANCELED
+  CANCELLED_BY_USER
+  CANCELLED_BY_MENTOR
   NO_SHOW
   COMPLETED
+  PENDING_RESCHEDULE_APPROVAL
   OVERDUE
 }
 
@@ -340,6 +343,49 @@ type VerifyPaymentDTO {
   appointment: AppointmentDTO
 }
 
+input SkillInput {
+  skill_name: String!
+  years_of_exp: Int!
+}
+
+input WorkExperienceInput {
+  company: String!
+  job_role: String!
+  description: String!
+  from_year: String!
+  to_year: String!
+}
+
+input EducationInput {
+  school: String!
+  credential_type: String!
+  course_of_study: String!
+  from_year: String!
+  to_year: String!
+}
+
+input CertificationInput {
+  organization: String!
+  title: String!
+  year: String!
+}
+
+input UserAvailabilityInput {
+  day: String!
+  timeSlots: [TimeSlotInput!]!
+}
+
+input TimeSlotInput {
+  startTime: String!
+  endTime: String!
+}
+
+input PastProjectsInput {
+  company: String!
+  job_role: String!
+  description: String!
+}
+
 type Query {
   userProfile: UserDTO!
   getMentorProfile: MentorDTO!
@@ -451,49 +497,6 @@ input CreateMentorInput {
   hourly_rate: Float!
   availability: [UserAvailabilityInput!]
   language: [String!]
-}
-
-input SkillInput {
-  skill_name: String!
-  years_of_exp: Int!
-}
-
-input WorkExperienceInput {
-  company: String!
-  job_role: String!
-  description: String!
-  from_year: String!
-  to_year: String!
-}
-
-input PastProjectsInput {
-  company: String!
-  job_role: String!
-  description: String!
-}
-
-input EducationInput {
-  school: String!
-  credential_type: String!
-  course_of_study: String!
-  from_year: String!
-  to_year: String!
-}
-
-input CertificationInput {
-  organization: String!
-  title: String!
-  year: String!
-}
-
-input UserAvailabilityInput {
-  day: String!
-  timeSlots: [TimeSlotInput!]!
-}
-
-input TimeSlotInput {
-  startTime: String!
-  endTime: String!
 }
 
 input UpdateMentorInput {

@@ -32,6 +32,7 @@ export type Certification = {
 };
 
 export type UserAvailability = {
+  id?: string;
   day: string;
   timeSlots: TimeSlot[];
 };

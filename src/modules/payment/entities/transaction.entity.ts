@@ -4,23 +4,28 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  OneToOne,
+  BaseEntity,
 } from 'typeorm';
-import { TransactionStatus, TransactionType } from '../enum';
+import {
+  TransactionMetaData,
+  TransactionStatus,
+  TransactionType,
+} from '../enum';
 import { User } from 'src/modules/user/entities/user.entity';
 import Wallet from 'src/modules/wallet/entities/wallet.entity';
+import { Payment } from './payment.entity';
 
 @Entity({ name: 'transactions' })
-export class Transaction {
+export class Transaction extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })
   user: User;
-
-  @ManyToOne(() => Wallet)
-  @JoinColumn({ name: 'wallet_id' })
-  wallet: Wallet;
+  @Column({ name: 'user_id' })
+  userId: string;
 
   @Column({ type: 'enum', enum: TransactionType })
   type: TransactionType;
@@ -28,17 +33,11 @@ export class Transaction {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   amount: number;
 
-  @Column({ name: 'balance_before', type: 'decimal', precision: 10, scale: 2 })
-  balanceBefore: number;
-
-  @Column({ name: 'balance_after', type: 'decimal', precision: 10, scale: 2 })
-  balanceAfter: number;
-
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', unique: true })
   reference: string;
 
   @Column({ type: 'jsonb', nullable: true })
-  metadata?: object;
+  metadata?: TransactionMetaData;
 
   @Column({
     type: 'enum',

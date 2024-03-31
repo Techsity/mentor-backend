@@ -11,27 +11,28 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { REQUEST } from '@nestjs/core';
 import axios from 'axios';
-import { User } from '../user/entities/user.entity';
-import { InitializePaymentResponse } from './dto/initialize-payment-response.dto';
+import { User } from '../../user/entities/user.entity';
+import { InitializePaymentResponse } from '../dto/initialize-payment-response.dto';
 import { isEnum, isUUID } from 'class-validator';
-import { SubscriptionType } from '../subscription/enums/subscription.enum';
+import { SubscriptionType } from '../../subscription/enums/subscription.enum';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Payment } from './entities/payment.entity';
-import { Repository } from 'typeorm';
-import { PaymentStatus } from './enum';
-import { Workshop } from '../workshop/entities/workshop.entity';
-import { Course } from '../course/entities/course.entity';
+import { Payment } from '../entities/payment.entity';
+import { FindOptionsWhere, Repository } from 'typeorm';
+import { PaymentStatus, TransactionStatus, TransactionType } from '../enum';
+import { Workshop } from '../../workshop/entities/workshop.entity';
+import { Course } from '../../course/entities/course.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import EVENTS from 'src/common/events.constants';
-import { SubscriptionService } from '../subscription/services/subscription.service';
+import { SubscriptionService } from '../../subscription/services/subscription.service';
 import { CustomResponseMessage, CustomStatusCodes } from 'src/common/constants';
-import { Subscription } from '../subscription/entities/subscription.entity';
+import { Subscription } from '../../subscription/entities/subscription.entity';
 import PaystackProvider from 'src/providers/paystack/paystack.provider';
 import Decimal from 'decimal.js';
-import { ISOCurrency } from './types/payment.type';
-import { Appointment } from '../appointment/entities/appointment.entity';
-import VerifyPaymentDTO from './dto/verify-payment.response';
-import { AppointmentStatus } from '../appointment/enums/appointment.enum';
+import { ISOCurrency } from '../types/payment.type';
+import { Appointment } from '../../appointment/entities/appointment.entity';
+import VerifyPaymentDTO from '../dto/verify-payment.response';
+import { AppointmentStatus } from '../../appointment/enums/appointment.enum';
+import { Transaction } from '../entities/transaction.entity';
 
 @Injectable()
 export class PaymentService {
@@ -43,6 +44,8 @@ export class PaymentService {
     private configService: ConfigService,
     @InjectRepository(Payment)
     private readonly paymentsRepository: Repository<Payment>,
+    @InjectRepository(Transaction)
+    private readonly transactionsRepository: Repository<Transaction>,
     @InjectRepository(Workshop)
     private readonly workshopRepository: Repository<Workshop>,
     @InjectRepository(Course)
@@ -82,6 +85,8 @@ export class PaymentService {
   ): Promise<InitializePaymentResponse> {
     await this.validatePaymentInput(resourceId, resourceType);
     const user = this.request.req.user;
+    let reference = 'ref_' + Date.now();
+    let appointment;
 
     if (resourceType !== SubscriptionType.MENTORSHIP_APPOINTMENT) {
       const sub = await this.subscriptionRepository.findOne({
@@ -99,23 +104,26 @@ export class PaymentService {
         ],
       });
       if (sub) throw new BadRequestException('Already subscribed');
+    } else if (resourceType == SubscriptionType.MENTORSHIP_APPOINTMENT) {
+      appointment = await Appointment.findOne({ where: { id: resourceId } });
+      if (!appointment) throw new NotFoundException('Appointment not found');
+      reference = appointment.paymentReference;
     }
     // Get the currency's exchange rate to NGN
     const exchangeRate = await this.paystackService.getExchangeRate(currency),
       amountDesc = new Decimal(amount * exchangeRate);
 
-    const reference = 'ref_' + Date.now(),
-      metadata = {
-        resourceId,
-        resourceType: resourceType as SubscriptionType,
-      };
+    const metadata = {
+      resourceId,
+      resourceType: resourceType as SubscriptionType,
+    };
     let callbackUrl = this.configService.get('PAYMENT_CALLBACK_URL');
 
     // Cancel exisiting pending payments for the resource
     this.eventEmitter.emit(EVENTS.CANCEL_EXISTING_PAYMENT, { metadata, user });
 
-    //* create payement record
-    const paymentRecord = this.paymentsRepository.create({
+    //* create payment record
+    let paymentRecord = this.paymentsRepository.create({
       amount: Number(amountDesc.toFixed(2)),
       currency,
       user_id: user.id,
@@ -172,9 +180,15 @@ export class PaymentService {
       );
     // check if payment has been processed
     if (paymentRecord.status === PaymentStatus.SUCCESS)
-      throw new BadRequestException('Transaction is already completed');
+      throw new BadRequestException(
+        'Transaction is already completed. Kindly wait for confirmation',
+      );
     else if (paymentRecord.status === PaymentStatus.FAILED)
       throw new BadRequestException('Transaction failed. Contact support');
+    else if (paymentRecord.status === PaymentStatus.REVERSED)
+      throw new BadRequestException(
+        'Transaction has been reversed. Contact support if you have any questions.',
+      );
 
     try {
       const { status } = await this.paystackService.verifyTransaction(
@@ -198,7 +212,7 @@ export class PaymentService {
         SubscriptionType.MENTORSHIP_APPOINTMENT
       ) {
         paymentRecord.status = PaymentStatus.SUCCESS;
-        await Payment.update(paymentRecord.id, paymentRecord);
+        await paymentRecord.save();
         return await this.processAppointmentPayment(paymentRecord);
       } else {
         // subscribe to course or workshop
@@ -221,7 +235,6 @@ export class PaymentService {
           paymentRecord,
           subscription,
         });
-
         // console.log({ res: response.data });
         // return 'Payment Verified';
         return { subscription };

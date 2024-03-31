@@ -123,11 +123,13 @@ export class AppointmentService {
         throw new BadRequestException(
           'You already have an appointment with this mentor',
         );
+      const reference = 'ref_' + Date.now();
 
       const appointment = await this.appointmentRepository.save({
         date: new Date(date),
         mentor: mentorProfile,
         user: authUser,
+        paymentReference: reference,
       });
       return appointment;
     } catch (error) {
@@ -215,6 +217,22 @@ export class AppointmentService {
     return appointment;
   }
 
-  // async rescheduleAppointment() {}
-  // async rejectAppointment() {}
+  async declineAppointment() {}
+
+  async cancelAppointment() {
+    // find appointment
+    // confirm status and update status - CANCELLED_BY_USER || CANCELLED_BY_MENTOR (appointment.mentor.user.id === user.id)
+    // create refund record
+    // response
+  }
+
+  async rescheduleAppointment() {
+    // find appointment
+    // if reschedule is being made by user, set to PENDING_RESCHEDULE_APPROVAL and notify mentor to accept
+    // update reschedule_count
+  }
+
+  async updateNewSchedule(acceptNewSchedule: boolean) {
+    // acceptNewSchedule
+  }
 }

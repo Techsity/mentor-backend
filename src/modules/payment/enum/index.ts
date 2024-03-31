@@ -14,6 +14,7 @@ export enum PaymentStatus {
   FAILED = 'failed',
   CANCELLED = 'cancelled',
   ABANDONED = 'abandoned',
+  REVERSED = 'reversed',
 }
 
 export enum TransactionStatus {
@@ -27,3 +28,8 @@ export enum TransactionType {
   CREDIT = 'credit',
   DEBIT = 'debit',
 }
+
+export type TransactionMetaData = {
+  title?: string;
+  narration?: string;
+};
