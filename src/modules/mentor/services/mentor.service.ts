@@ -119,16 +119,15 @@ export class MentorService {
   ): Promise<UpdateMentorInput> {
     const user = this.request.req.user;
     let { availability } = updateMentorInput;
+    let mentorProfile: Mentor = await this.mentorRepository.findOneBy({
+      user: { id: user.id },
+    });
+
+    if (!mentorProfile) throw new NotFoundException('Mentor profile not found');
+
     try {
       return await this._entityManager.transaction(
         async (transactionalEntityManager) => {
-          let mentorProfile: Mentor = await this.mentorRepository.findOneBy({
-            user: { id: user.id },
-          });
-
-          if (!mentorProfile)
-            throw new NotFoundException('Mentor profile not found');
-
           if (availability) {
             const validatedAvailability =
               this.validateAvailabilityInput(availability);
@@ -145,7 +144,6 @@ export class MentorService {
                       vSlot.startTime === slot.startTime &&
                       vSlot.endTime === slot.endTime,
                   );
-                console.log({ conflictingSlot });
                 if (conflictingSlot) {
                   if (!conflictingSlot.isOpen)
                     throw new BadRequestException(
@@ -154,7 +152,6 @@ export class MentorService {
                   // if it's not open, update time
                   conflictingSlot.startTime = slot.startTime;
                   conflictingSlot.endTime = slot.endTime;
-                  console.log({ newConflictingSlot: conflictingSlot });
                 }
               });
 
@@ -206,7 +203,6 @@ export class MentorService {
           'appointments.user',
         ],
       });
-      // console.log({ user, mentorProfile });
       if (!mentorProfile)
         throw new NotFoundException(`No Mentor Profile found!`);
       return mentorProfile;
