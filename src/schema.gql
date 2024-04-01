@@ -224,7 +224,8 @@ enum AppointmentStatus {
   CANCELLED_BY_MENTOR
   NO_SHOW
   COMPLETED
-  PENDING_RESCHEDULE_APPROVAL
+  RESCHEDULED_BY_USER
+  RESCHEDULED_BY_MENTOR
   OVERDUE
 }
 
@@ -435,6 +436,7 @@ type Mutation {
   createCategory(createCourseCatInput: CreateCourseCatInput!): CourseCategoryDto!
   createAppointment(createAppointmentInput: CreateAppointmentInput!, mentor: String!): AppointmentDTO!
   acceptAppointment(id: String!): AppointmentDTO!
+  rescheduleAppointment(appointmentId: String!, input: CreateAppointmentInput!): AppointmentDTO!
   markAllNotificationsAsRead: Boolean!
   readNotification(notificationId: String!): Boolean!
   deleteNotification(notificationId: String!): Boolean!

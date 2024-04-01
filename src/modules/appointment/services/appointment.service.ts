@@ -4,10 +4,11 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Not, Repository } from 'typeorm';
+import { In, Not, Repository } from 'typeorm';
 import { Mentor } from '../../mentor/entities/mentor.entity';
 import { User } from '../../user/entities/user.entity';
 import { Appointment } from '../entities/appointment.entity';
@@ -18,6 +19,8 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import EVENTS from 'src/common/events.constants';
 import { Payment } from 'src/modules/payment/entities/payment.entity';
 import { PaymentStatus } from 'src/modules/payment/enum';
+import { UserAvailability } from 'src/modules/mentor/types/mentor.type';
+import { daysOfTheWeek } from 'src/common/constants';
 
 @Injectable()
 export class AppointmentService {
@@ -32,44 +35,38 @@ export class AppointmentService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  private validateAppointmentInput(input: CreateAppointmentInput) {
+  private validateAppointmentDate(input: CreateAppointmentInput) {
     let { date, time } = input;
-    const currentDate = new Date();
-    if (!date.toString().includes('T')) {
-      if (time.includes(':')) {
-        const [hoursStr, minutesStr] = time.split(':');
-        const hours = parseInt(hoursStr);
-        const minutes = parseInt(minutesStr);
-        let parsedHours = hours + 1;
-
-        if (hours === 12) parsedHours = parsedHours - 12;
-        else if (time.slice(-2).toUpperCase() === 'PM') parsedHours += 12;
-        date.setHours(parsedHours, minutes, 0);
-        console.log({ date, currentDate, hours, minutes, parsedHours });
-      } else {
-        date.setTime(parseInt(time));
-      }
-    }
-    console.log({ date });
-    // console.log({ currentDate, date });
-    // if (date < currentDate)
-    //   throw new BadRequestException('Cannot schedule appointment in the past');
-    return date;
+    const formattedDate = new Date(date);
+    if (time.includes(':')) {
+      const [hoursStr, minutesStr] = time.split(':', 2);
+      let hours = parseInt(hoursStr);
+      const minutes = parseInt(minutesStr);
+      if (hours === 12) hours = hours - 12;
+      else if (time.slice(-2).toUpperCase() === 'PM') hours += 12;
+      formattedDate.setHours(hours, minutes, 0);
+    } else formattedDate.setTime(parseInt(time));
+    return formattedDate;
   }
 
-  private async checkAvailability(
-    date: CreateAppointmentInput['date'],
-    availability: Mentor['availability'],
-  ) {
-    // const dayIndex=
-    // const day= daysOfTheWeek
-    // const schedule = availability.map((d) => {});
-    // return schedule;
-    // availability.forEach(({ timeSlots }) =>
-    //   timeSlots.forEach((element) => {
-    //     element.isOpen;
-    //   }),
-    // );
+  private checkAvailability(date: Date, availability: UserAvailability[]) {
+    const dayOfWeek = date.getDay();
+    const hour = date.getHours();
+    const mins = date.getMinutes();
+    const { day, timeSlots, id } = availability.find((avail) => {
+      return avail.day.toLowerCase() == daysOfTheWeek[dayOfWeek].toLowerCase();
+    });
+    if (!day)
+      throw new BadRequestException(
+        "Session not available on the mentor's availability schedule",
+      );
+    const { slot, slotIndex } = findEqualTimeSlot(timeSlots, hour, mins);
+    if (!slot)
+      throw new BadRequestException(
+        "Session not available on mentor's availability schedule",
+      );
+    if (!slot.isOpen) throw new BadRequestException('Session is booked');
+    return { id, day, slot, slotIndex };
   }
 
   /**
@@ -84,25 +81,16 @@ export class AppointmentService {
 
     if (!mentor || !isUUID(mentor))
       throw new BadRequestException('Invalid mentor Id');
-    const date = this.validateAppointmentInput(input);
-    // // Confirm if payment has been made
-    // const paymentRecord = await Payment.findOne({
-    //   where: {
-    //     user_id: authUser.id,
-    //     reference: input.paymentReference,
-    //     status: PaymentStatus.SUCCESS,
-    //   },
-    // });
-    // if (!paymentRecord)
-    //   throw new BadRequestException(
-    //     'No payment record found for this appointment',
-    //   );
+    const date = this.validateAppointmentDate(input);
     const mentorProfile = await this.mentorRepository.findOne({
       where: { id: mentor },
       relations: ['user'],
     });
     if (!mentorProfile) throw new NotFoundException('Mentor not found');
-    this.checkAvailability(date, mentorProfile.availability);
+    const { id, slotIndex } = this.checkAvailability(
+      date,
+      mentorProfile.availability,
+    );
 
     try {
       // Check if user is a premium user
@@ -115,16 +103,28 @@ export class AppointmentService {
         where: {
           user: { id: authUser.id },
           mentor: { id: mentorProfile.id },
-          status: AppointmentStatus.PENDING || AppointmentStatus.ACCEPTED,
+          status: Not(
+            In([
+              AppointmentStatus.DECLINED,
+              AppointmentStatus.PENDING,
+              AppointmentStatus.COMPLETED,
+              AppointmentStatus.CANCELLED_BY_USER,
+              AppointmentStatus.CANCELLED_BY_MENTOR,
+            ]),
+          ),
         },
       });
+
       // Check if user has a pending appointment
       if (currentAppointment)
         throw new BadRequestException(
           'You already have an appointment with this mentor',
         );
       const reference = 'ref_' + Date.now();
-
+      mentorProfile.availability.forEach((d) => {
+        if (d.id === id) d.timeSlots[slotIndex].isOpen = false;
+      });
+      await mentorProfile.save();
       const appointment = await this.appointmentRepository.save({
         date: new Date(date),
         mentor: mentorProfile,
@@ -155,7 +155,6 @@ export class AppointmentService {
 
       if (statuses && statuses.length > 0)
         query.andWhere('appointment.status IN (:...statuses)', { statuses });
-      // Todo: don't include appointments where status = AppointmentStatus.AWAITING_PAYMENT
 
       return query.getMany();
     } catch (error) {
@@ -163,23 +162,13 @@ export class AppointmentService {
     }
   }
 
-  /**
-   *
-   * @param appointmentId
-   * @returns Appointment
-   */
-
   async viewAppointment(appointmentId: string): Promise<any> {
     const authUser = this.request.req.user;
     try {
       if (!isUUID(appointmentId))
         throw new BadRequestException('Invalid appointmentId');
       const appointment = await this.appointmentRepository.findOne({
-        where: {
-          id: appointmentId,
-          user_id: authUser.id,
-          status: Not(AppointmentStatus.AWAITING_PAYMENT),
-        },
+        where: { id: appointmentId, user_id: authUser.id },
         relations: ['mentor', 'mentor.user'],
       });
       if (!appointment) throw new BadRequestException('Appointment not found');
@@ -208,12 +197,70 @@ export class AppointmentService {
     });
     if (!appointment) throw new BadRequestException('Appointment not found');
 
-    if (appointment.status === AppointmentStatus.PENDING) {
-      appointment.status = AppointmentStatus.ACCEPTED;
-      // await appointment.save();
+    if (appointment.status === AppointmentStatus.PENDING)
       this.eventEmitter.emit(EVENTS.MENTOR_ACCEPT_APPOINTMENT, { appointment });
-      return appointment;
+    return appointment;
+  }
+
+  async rescheduleAppointment(
+    appointmentId: string,
+    input: CreateAppointmentInput,
+  ) {
+    if (!appointmentId)
+      throw new BadRequestException('appointmentId is required');
+    if (!isUUID(appointmentId))
+      throw new BadRequestException('Invalid appointmentId');
+    const user = this.request.req.user;
+    const date = this.validateAppointmentDate(input);
+    const appointment = await this.appointmentRepository.findOne({
+      where: { id: appointmentId },
+      relations: ['mentor', 'user', 'mentor.user'],
+    });
+    if (!appointment) throw new NotFoundException('Appointment not found');
+
+    let mentorProfile = await this.mentorRepository.findOneBy({
+      user: { id: user.id },
+    });
+    appointment.status = AppointmentStatus.RESCHEDULED_BY_MENTOR;
+    if (!mentorProfile) {
+      appointment.status = AppointmentStatus.RESCHEDULED_BY_USER;
+      mentorProfile = await this.mentorRepository.findOneBy({
+        id: appointment.mentor_id,
+      });
     }
+    if (!mentorProfile)
+      throw new UnprocessableEntityException('Mentor profile not found');
+    const previousAppointmentDate = new Date(appointment.date);
+
+    const { id, slotIndex } = this.checkAvailability(
+      date,
+      mentorProfile.availability,
+    );
+    // update slots availability - isOpen
+    mentorProfile.availability.forEach(({ id: slotId, timeSlots }) => {
+      if (slotId === id) timeSlots[slotIndex].isOpen = false;
+      const hour =
+        previousAppointmentDate.getHours() === 0
+          ? 12
+          : previousAppointmentDate.getHours() > 12
+          ? previousAppointmentDate.getHours() - 12
+          : previousAppointmentDate.getHours();
+      const { slot: prevSlot } = findEqualTimeSlot(
+        timeSlots,
+        hour,
+        previousAppointmentDate.getMinutes(),
+      );
+      if (prevSlot) prevSlot.isOpen = true;
+    });
+    await mentorProfile.save();
+    appointment.date = date;
+    appointment.reschedule_count = appointment.reschedule_count + 1;
+    await appointment.save();
+    appointment.status === AppointmentStatus.RESCHEDULED_BY_USER
+      ? (appointment.user = null)
+      : appointment.status === AppointmentStatus.RESCHEDULED_BY_MENTOR
+      ? (appointment.mentor = null)
+      : {};
     return appointment;
   }
 
@@ -226,13 +273,26 @@ export class AppointmentService {
     // response
   }
 
-  async rescheduleAppointment() {
-    // find appointment
-    // if reschedule is being made by user, set to PENDING_RESCHEDULE_APPROVAL and notify mentor to accept
-    // update reschedule_count
-  }
-
   async updateNewSchedule(acceptNewSchedule: boolean) {
     // acceptNewSchedule
   }
+}
+
+function findEqualTimeSlot(
+  timeSlots: UserAvailability['timeSlots'],
+  hour: number,
+  mins: number,
+) {
+  let slotIndex;
+  const slot = timeSlots.find(({ startTime }, index) => {
+    const [hoursStr, minutesStr] = startTime.split(':', 2);
+    let hours = parseInt(hoursStr);
+    const minutes = parseInt(minutesStr);
+    if (hours === 12) hours = hours - 12;
+    else if (startTime.slice(-2).toUpperCase() === 'PM') hours += 12;
+    const equalSlot = hour === hours && mins === minutes;
+    slotIndex = equalSlot ? index : null;
+    return equalSlot;
+  });
+  return { slot, slotIndex };
 }

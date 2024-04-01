@@ -25,10 +25,10 @@ export class NotificationEventsGateway
     if (userId && userId !== undefined && userId !== 'undefined') {
       const userRoom = `${userId}`;
       this.userSockets.set(userId, { socket: client, room: userRoom });
-      console.log(`User ${userId} connected`);
+      // console.log(`User ${userId} connected`);
       this.server.socketsJoin(userId);
       client.join(userRoom);
-      console.log(`User ${userId} joined ${userRoom}`);
+      // console.log(`User ${userId} joined ${userRoom}`);
     } else {
       // console.error('User ID not provided');
       client.disconnect();
@@ -41,15 +41,15 @@ export class NotificationEventsGateway
       if (value.socket === client) {
         disconnectedUserId = userId;
         this.userSockets.delete(userId);
-        console.log(`User ${userId} disconnected`);
+        // console.log(`User ${userId} disconnected`);
       }
     });
-    console.log({ disconnectedUserId });
+    // console.log({ disconnectedUserId });
     if (disconnectedUserId) {
       const user = this.userSockets.get(disconnectedUserId);
       if (user) {
         user.socket.leave(user.room);
-        console.log(`User ${disconnectedUserId} left room ${user.room}`);
+        // console.log(`User ${disconnectedUserId} left room ${user.room}`);
       }
     }
   }

@@ -9,6 +9,7 @@ export enum AppointmentStatus {
   CANCELLED_BY_MENTOR = 'cancelled_by_mentor',
   NO_SHOW = 'no_show',
   COMPLETED = 'completed',
-  PENDING_RESCHEDULE_APPROVAL = 'pending_reschedule_approval',
+  RESCHEDULED_BY_USER = 'rescheduled_by_user',
+  RESCHEDULED_BY_MENTOR = 'rescheduled_by_mentor',
   OVERDUE = 'overdue',
 }

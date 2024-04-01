@@ -123,7 +123,7 @@ export class EventEmitterListeners {
     });
     const payment = await Payment.findOne({
       where: {
-        id: appointment.paymentReference,
+        reference: appointment.paymentReference,
       },
     });
     if (!payment) {

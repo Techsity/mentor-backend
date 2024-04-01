@@ -45,4 +45,17 @@ export class AppointmentResolver {
   async acceptAppointment(@Args('id') id: string) {
     return await this.appointmentService.acceptAppointment(id);
   }
+
+  @UseGuards(GqlAuthGuard)
+  @Mutation(() => AppointmentDTO)
+  async rescheduleAppointment(
+    @Args('appointmentId')
+    appointmentId: string,
+    @Args('input') input: CreateAppointmentInput,
+  ) {
+    return await this.appointmentService.rescheduleAppointment(
+      appointmentId,
+      input,
+    );
+  }
 }
