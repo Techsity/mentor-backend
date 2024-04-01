@@ -17,7 +17,6 @@ export class EventEmitterListeners {
   private readonly logger = new Logger(EventEmitterListeners.name);
   constructor(
     private readonly notificationService: NotificationService,
-    // Notfication queue
     private readonly walletService: WalletService,
     private readonly appointmentQueueService: AppointmentQueueService,
   ) {}
@@ -148,33 +147,69 @@ export class EventEmitterListeners {
       where: { id: appointment.id },
       relations: ['user', 'mentor', 'mentor.user'],
     });
-    // Update status
-    appointmentRecord.status = AppointmentStatus.ACCEPTED;
+    // // Update status
+    // appointmentRecord.status = AppointmentStatus.ACCEPTED;
 
-    // Todo: check if the appointment date has expired, then postpone to the following week and send notifications to user
-    const currentDate = new Date();
-    const appointmentDate = new Date(appointmentRecord.date);
-    const isOverdue = currentDate.getTime() > appointmentDate.getTime();
+    // // Todo: check if the appointment date has expired, then postpone to the following week and send notifications to user
+    // const currentDate = new Date();
+    // const appointmentDate = new Date(appointmentRecord.date);
+    // const isOverdue = currentDate.getTime() > appointmentDate.getTime();
 
-    if (isOverdue || appointment.status == AppointmentStatus.OVERDUE) {
-      const nextWeek = new Date(appointmentDate);
-      nextWeek.setDate(nextWeek.getDate() + 7);
-      appointmentRecord.date = nextWeek;
-      appointmentRecord.reschedule_count =
-        appointmentRecord.reschedule_count + 1;
-    }
-    await appointmentRecord.save();
-    console.log(appointmentRecord.date.toDateString());
+    // if (isOverdue || appointment.status == AppointmentStatus.OVERDUE) {
+    //   const nextWeek = new Date(appointmentDate);
+    //   nextWeek.setDate(nextWeek.getDate() + 7);
+    //   appointmentRecord.date = nextWeek;
+    //   appointmentRecord.reschedule_count =
+    //     appointmentRecord.reschedule_count + 1;
+    // }
+    // await appointmentRecord.save();
+    // console.log(appointmentRecord.date.toDateString());
     // Schedule notification and send notification to user
     this.appointmentQueueService.scheduleNotification({
       appointment: appointmentRecord,
     });
-    this.notificationService.create(appointmentRecord.user, {
-      title: 'Mentorship Request Accepted',
-      body: `${
-        appointment.mentor.user.name
-      } has accepted your mentorship session request! Session is scheduled for ${appointmentRecord.date.toDateString()} by ${appointmentRecord.date.toTimeString()}. You will be notified before the session starts.`,
+    // this.notificationService.create(appointmentRecord.user, {
+    //   title: 'Mentorship Request Accepted',
+    //   body: `${
+    //     appointment.mentor.user.name
+    //   } has accepted your mentorship session request! Session is scheduled for ${appointmentRecord.date.toDateString()} by ${appointmentRecord.date.toTimeString()}. You will be notified before the session starts.`,
+    //   sendEmail: true,
+    // });
+  }
+
+  @OnEvent(EVENTS.APPOINTMENT_RESCHEDULE)
+  async sendRescheduleNotification({
+    appointment,
+  }: {
+    appointment: Appointment;
+  }) {
+    // re-schedule notification cron
+
+    const msg = `Session is now scheduled for ${appointment.date.toDateString()} by ${appointment.date.toTimeString()}. You will be notified before the session starts.`;
+    this.notificationService.create(appointment.user, {
+      title: 'Mentorship Session Rescheduled',
+      body:
+        appointment.status === AppointmentStatus.RESCHEDULED_BY_MENTOR
+          ? `${appointment.mentor.user.name} rescheduled a session with you.` +
+            msg
+          : AppointmentStatus.RESCHEDULED_BY_USER &&
+            `You have successfully rescheduled your session with ${appointment.mentor.user.name}. ` +
+              msg,
       sendEmail: true,
+    });
+
+    this.notificationService.create(appointment.mentor.user, {
+      title: 'Mentorship Session Rescheduled',
+      body:
+        appointment.status === AppointmentStatus.RESCHEDULED_BY_USER
+          ? `${appointment.user.name} rescheduled a session with you.` + msg
+          : AppointmentStatus.RESCHEDULED_BY_MENTOR &&
+            `You have successfully rescheduled your session with ${appointment.user.name}. ` +
+              msg,
+      sendEmail: true,
+    });
+    await this.appointmentQueueService.rescheduleNotification({
+      appointment,
     });
   }
 }

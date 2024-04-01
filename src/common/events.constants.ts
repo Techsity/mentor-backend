@@ -6,6 +6,7 @@ const EVENTS = {
   CANCEL_EXISTING_PAYMENT: 'CANCEL_EXISTING_PAYMENT',
   APPOINTMENT_PAYMENT_CONFIRMED: 'appointment_payment_confirmed',
   MENTOR_ACCEPT_APPOINTMENT: 'mentor_accept_appointment',
+  APPOINTMENT_RESCHEDULE: 'appointment_reschedule',
 };
 
 export default EVENTS;

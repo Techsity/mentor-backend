@@ -20,7 +20,7 @@ import EVENTS from 'src/common/events.constants';
 import { Payment } from 'src/modules/payment/entities/payment.entity';
 import { PaymentStatus } from 'src/modules/payment/enum';
 import { UserAvailability } from 'src/modules/mentor/types/mentor.type';
-import { daysOfTheWeek } from 'src/common/constants';
+import { daysOfTheWeek, RESCHDULE_THRESHOLD } from 'src/common/constants';
 
 @Injectable()
 export class AppointmentService {
@@ -217,7 +217,10 @@ export class AppointmentService {
       relations: ['mentor', 'user', 'mentor.user'],
     });
     if (!appointment) throw new NotFoundException('Appointment not found');
-
+    if (appointment.reschedule_count >= RESCHDULE_THRESHOLD)
+      throw new BadRequestException(
+        'This appointment has reached reschedule limit',
+      );
     let mentorProfile = await this.mentorRepository.findOneBy({
       user: { id: user.id },
     });
@@ -238,26 +241,20 @@ export class AppointmentService {
     );
     // update slots availability - isOpen
     mentorProfile.availability.forEach(({ id: slotId, timeSlots, day }) => {
-      if (slotId === id) {
-        timeSlots[slotIndex].isOpen = false;
-        console.log({ day, slot: timeSlots[slotIndex] });
-      }
-
+      if (slotId === id) timeSlots[slotIndex].isOpen = false;
       const { slot: prevSlot } = findEqualTimeSlot(
         timeSlots,
         previousAppointmentDate.getHours(),
         previousAppointmentDate.getMinutes(),
       );
-      if (prevSlot) {
-        prevSlot.isOpen = true;
-        console.log({ prevSlot });
-      }
+      if (prevSlot) prevSlot.isOpen = true;
     });
+
     await mentorProfile.save();
     appointment.date = date;
     appointment.reschedule_count = appointment.reschedule_count + 1;
     await appointment.save();
-    // Todo: alert mentor and user of the update
+    this.eventEmitter.emit(EVENTS.APPOINTMENT_RESCHEDULE, { appointment });
     appointment.status === AppointmentStatus.RESCHEDULED_BY_USER
       ? (appointment.user = null)
       : appointment.status === AppointmentStatus.RESCHEDULED_BY_MENTOR
@@ -290,8 +287,8 @@ function findEqualTimeSlot(
     const [hoursStr, minutesStr] = startTime.split(':', 2);
     let hours = parseInt(hoursStr);
     const minutes = parseInt(minutesStr);
-    if (hours > 12) hours = hours - 12;
-    else if (startTime.slice(-2).toUpperCase() === 'PM') hours += 12;
+    if (hour > 12) hour = hour - 12;
+    else if (hour === 12) hour = 12;
     const equalSlot = hour === hours && mins === minutes;
     slotIndex = equalSlot ? index : null;
     return equalSlot;

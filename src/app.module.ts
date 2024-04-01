@@ -59,10 +59,10 @@ import { Transaction } from './modules/payment/entities/transaction.entity';
     }),
     EventEmitterModule.forRoot(),
     BullModule.forRoot({
-      redis: {
-        host: process.env.REDIS_HOST,
-        port: parseInt(process.env.REDIS_PORT, 10),
-      },
+      // redis: {
+      //   host: process.env.REDIS_HOST,
+      //   port: parseInt(process.env.REDIS_PORT, 10),
+      // },
     }),
     ScheduleModule.forRoot(),
     JwtModule.register({

@@ -88,4 +88,14 @@ export const videoUploadValidation = {
   MAX_FILE_SIZE: 200 * 1024 * 1024, // 200 MB
 };
 
-export const daysOfTheWeek = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+export const daysOfTheWeek = [
+  'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+];
+
+export const RESCHDULE_THRESHOLD = 5;
