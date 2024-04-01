@@ -1,10 +1,12 @@
 import {
+  BadRequestException,
   HttpException,
   HttpStatus,
   Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -38,9 +40,12 @@ export class AuthService {
   async login(loginPayload: any) {
     const { email, password } = loginPayload;
     const user = await this.validateUser(email, password);
-    if (!user) throw new Error('Invalid credentials');
-    if (!user.is_active) throw new Error('Your account is not active.');
-    if (!user.is_verified) throw new Error('Kindly verify your email.');
+    if (!user) throw new BadRequestException('Invalid credentials');
+    if (!user.is_verified)
+      throw new BadRequestException('Kindly verify your email.');
+    if (!user.is_active)
+      throw new UnauthorizedException('Your account is deactivated');
+
     const payload = { email: email, sub: user.id };
     return {
       access_token: this.jwtService.sign(payload, {
