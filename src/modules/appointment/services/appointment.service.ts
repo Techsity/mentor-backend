@@ -237,25 +237,27 @@ export class AppointmentService {
       mentorProfile.availability,
     );
     // update slots availability - isOpen
-    mentorProfile.availability.forEach(({ id: slotId, timeSlots }) => {
-      if (slotId === id) timeSlots[slotIndex].isOpen = false;
-      const hour =
-        previousAppointmentDate.getHours() === 0
-          ? 12
-          : previousAppointmentDate.getHours() > 12
-          ? previousAppointmentDate.getHours() - 12
-          : previousAppointmentDate.getHours();
+    mentorProfile.availability.forEach(({ id: slotId, timeSlots, day }) => {
+      if (slotId === id) {
+        timeSlots[slotIndex].isOpen = false;
+        console.log({ day, slot: timeSlots[slotIndex] });
+      }
+
       const { slot: prevSlot } = findEqualTimeSlot(
         timeSlots,
-        hour,
+        previousAppointmentDate.getHours(),
         previousAppointmentDate.getMinutes(),
       );
-      if (prevSlot) prevSlot.isOpen = true;
+      if (prevSlot) {
+        prevSlot.isOpen = true;
+        console.log({ prevSlot });
+      }
     });
     await mentorProfile.save();
     appointment.date = date;
     appointment.reschedule_count = appointment.reschedule_count + 1;
     await appointment.save();
+    // Todo: alert mentor and user of the update
     appointment.status === AppointmentStatus.RESCHEDULED_BY_USER
       ? (appointment.user = null)
       : appointment.status === AppointmentStatus.RESCHEDULED_BY_MENTOR
@@ -288,7 +290,7 @@ function findEqualTimeSlot(
     const [hoursStr, minutesStr] = startTime.split(':', 2);
     let hours = parseInt(hoursStr);
     const minutes = parseInt(minutesStr);
-    if (hours === 12) hours = hours - 12;
+    if (hours > 12) hours = hours - 12;
     else if (startTime.slice(-2).toUpperCase() === 'PM') hours += 12;
     const equalSlot = hour === hours && mins === minutes;
     slotIndex = equalSlot ? index : null;
