@@ -8,13 +8,22 @@ import { User } from '../../user/entities/user.entity';
 @ObjectType()
 export class AppointmentDTO {
   @Field()
-  date: Date;
+  id: string;
 
   @Field()
-  time: string;
+  paymentReference: string;
+
+  @Field()
+  date: Date;
+
+  @Field(() => UserDTO, { nullable: true })
+  user: UserDTO;
 
   @Field(() => AppointmentStatus)
   status: AppointmentStatus;
+
+  @Field(() => MentorDTO)
+  mentor: MentorDTO;
 
   @Field()
   created_at: Date;

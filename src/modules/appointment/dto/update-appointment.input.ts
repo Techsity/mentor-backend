@@ -10,14 +10,14 @@ import { AppointmentStatus } from '../enums/appointment.enum';
 export class UpdateAppointmentInput extends PartialType(
   CreateAppointmentInput,
 ) {
-  @Field({ nullable: true })
-  date?: Date;
+  // @Field({ nullable: true })
+  // date?: Date;
 
-  @Field({ nullable: true })
-  time?: string;
+  // @Field({ nullable: true })
+  // time?: string;
 
-  @Field((type) => AppointmentStatus, { nullable: true })
-  status?: AppointmentStatus;
+  // @Field((type) => AppointmentStatus, { nullable: true })
+  // status?: AppointmentStatus;
 }
 registerEnumType(AppointmentStatus, {
   name: 'AppointmentStatus',

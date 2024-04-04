@@ -8,20 +8,23 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToOne,
 } from 'typeorm';
 import { PAYMENT_CHANNELS, PaymentStatus } from '../enum';
 import { User } from 'src/modules/user/entities/user.entity';
 import { SubscriptionType } from 'src/modules/subscription/enums/subscription.enum';
+import { ISOCurrency } from '../types/payment.type';
+import { Transaction } from './transaction.entity';
 
 @Entity('payments')
 export class Payment extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ unique: true })
   reference: string;
 
-  @Column({ type: 'float' })
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
   amount: number;
 
   @ManyToOne(() => User, { onDelete: 'SET NULL' })
@@ -30,14 +33,24 @@ export class Payment extends BaseEntity {
   @Column()
   user_id: string;
 
-  @Column()
-  currency: string;
+  @Column({ type: 'enum', enum: ISOCurrency })
+  currency: ISOCurrency;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  exchange_rate: number;
+
+  @Column({ type: 'enum', enum: ISOCurrency, default: ISOCurrency.NGN })
+  base_currency: ISOCurrency;
 
   @Column()
   access_code: string;
 
-  @Column({ type: 'character varying', nullable: true })
-  channel: keyof typeof PAYMENT_CHANNELS | null;
+  @Column({
+    type: 'enum',
+    enum: PAYMENT_CHANNELS,
+    default: PAYMENT_CHANNELS.CARD,
+  })
+  channel: PAYMENT_CHANNELS;
 
   @Column({ type: 'enum', enum: PaymentStatus, default: PaymentStatus.PENDING })
   status: PaymentStatus;

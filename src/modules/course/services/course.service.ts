@@ -25,8 +25,12 @@ import { User } from 'src/modules/user/entities/user.entity';
 import { NotificationResourceType } from 'src/modules/notification/enums';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import EVENTS from 'src/common/events.constants';
-import { INewCourseNotification } from 'src/modules/notification/types';
+import {
+  FollowersNotificationInterface,
+  INewCourseNotification,
+} from 'src/modules/notification/types';
 import { randomUUID } from 'crypto';
+import { Mentor } from 'src/modules/mentor/entities/mentor.entity';
 
 @Injectable()
 export class CourseService {
@@ -117,12 +121,18 @@ export class CourseService {
       // Todo: check if mentor has "notify_followers_on_new_course"
       // Todo: move notification event to where the admin approves the course
       //* emit notifications event
-      const eventPayload: INewCourseNotification = {
-        mentorUser: { name: user.name },
-        course: savedCourse,
-        followers: user.mentor.followers,
+      const mentorProfile = await Mentor.findOne({
+        where: { user: { id: user.id } },
+        relations: ['followers'],
+      });
+      const eventPayload: FollowersNotificationInterface = {
+        title: 'New Course Published',
+        body: `(${user.name}) has published a new course. Check it out!`,
+        mentor: mentorProfile,
+        resource: savedCourse,
+        resourceType: NotificationResourceType.COURSES,
       };
-      this.eventEmitter.emit(EVENTS.NEW_COURSE, eventPayload);
+      this.eventEmitter.emit(EVENTS.NOTIFY_FOLLOWERS, eventPayload);
       return savedCourse;
     } catch (error) {
       const stackTrace = new Error().stack;

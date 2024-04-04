@@ -97,6 +97,7 @@ export class SubscriptionService {
             'course.mentor.followers',
             'course.mentor.user',
             'course.reviews',
+            'course.reviews.reviewed_by',
           ]
         : [
             'workshop',

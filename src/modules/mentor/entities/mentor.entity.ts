@@ -25,6 +25,7 @@ import {
   WorkExperience,
 } from '../types/mentor.type';
 import { Workshop } from 'src/modules/workshop/entities/workshop.entity';
+import Wallet from 'src/modules/wallet/entities/wallet.entity';
 
 @Entity('mentors')
 export class Mentor extends BaseEntity {
@@ -35,6 +36,9 @@ export class Mentor extends BaseEntity {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
+  @OneToOne(() => Wallet, (wallet) => wallet.mentor, { eager: true })
+  wallet: Wallet;
+
   @OneToMany(() => Course, (courses) => courses.mentor)
   @JoinColumn({ name: 'course_id' })
   courses: Course[];
@@ -43,7 +47,9 @@ export class Mentor extends BaseEntity {
   @JoinColumn({ name: 'workshop_id' })
   workshops: Workshop[];
 
-  @ManyToMany(() => User, (user) => user.following)
+  @ManyToMany(() => User, (user) => user.following, {
+    onDelete: 'SET NULL',
+  })
   followers: User[];
 
   @OneToMany(() => Review, (review) => review.mentor)
@@ -76,7 +82,7 @@ export class Mentor extends BaseEntity {
   @Column('jsonb', { nullable: true })
   certifications: Certification[];
 
-  @Column({ type: 'int' })
+  @Column({ type: 'float', default: 0.0 })
   hourly_rate: number;
 
   @Column('jsonb', { nullable: true })

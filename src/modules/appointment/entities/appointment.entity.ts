@@ -22,19 +22,33 @@ export class Appointment extends BaseEntity {
   @ManyToOne(() => Mentor, (mentor) => mentor.appointments)
   @JoinColumn({ name: 'mentor_id' })
   mentor: Mentor;
+  @Column()
+  mentor_id: string;
 
   @ManyToOne(() => User, (user) => user.appointments)
   @JoinColumn({ name: 'user_id' })
   user: User;
-
   @Column()
+  user_id: string;
+
+  @Column({ type: 'timestamptz' })
   date: Date;
 
-  @Column()
-  time: string;
-
-  @Column({ type: 'enum', enum: AppointmentStatus, default: 'pending' })
+  @Column({
+    type: 'enum',
+    enum: AppointmentStatus,
+    default: AppointmentStatus.AWAITING_PAYMENT,
+  })
   status: AppointmentStatus;
+
+  @Column({ default: 0 })
+  reschedule_count: number;
+
+  @Column({ name: 'payment_reference' })
+  paymentReference: string;
+
+  @Column({ name: 'cancel_reason', nullable: true })
+  cancelReason: string;
 
   @CreateDateColumn()
   created_at: Date;
@@ -42,6 +56,7 @@ export class Appointment extends BaseEntity {
   @UpdateDateColumn()
   updated_at: Date;
 }
+
 registerEnumType(AppointmentStatus, {
   name: 'AppointmentStatus',
   description: 'Appointment Statuses',

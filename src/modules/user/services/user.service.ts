@@ -33,7 +33,14 @@ export class UserService {
       const authUser = this.request.req.user;
       const userProfile = await this.userRepository.findOne({
         where: { id: authUser.id },
-        relations: ['mentor', 'subscriptions', 'notifications'],
+        relations: [
+          'mentor',
+          'subscriptions',
+          'notifications',
+          'appointments',
+          'appointments.mentor',
+          'appointments.mentor.user',
+        ],
       });
       // Update the video_url for each course and section
       // userProfile.courses.forEach((course) => {
@@ -45,6 +52,7 @@ export class UserService {
       //     });
       //   });
       // });
+      if (userProfile.mentor) userProfile.mentor.user = null;
       return { ...userProfile, is_mentor: userProfile.mentor ? true : false };
     } catch (error) {
       throw error;

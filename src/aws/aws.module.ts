@@ -4,5 +4,6 @@ import { SesService } from './ses.service';
 
 @Module({
   providers: [S3Service, SesService],
+  exports:[SesService]
 })
 export class AwsModule {}

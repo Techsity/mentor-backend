@@ -4,44 +4,26 @@ import { GqlAuthGuard } from '../../auth/guards/gql-auth.guard';
 import { AppointmentService } from '../services/appointment.service';
 import { AppointmentDTO } from '../dto/appointment.dto';
 import { CreateAppointmentInput } from '../dto/create-appointment.input';
-import { Appointment } from '../entities/appointment.entity';
 import { AppointmentStatus } from '../enums/appointment.enum';
-import { CurrentUser } from 'src/lib/custom-decorators';
-import { User } from 'src/modules/user/entities/user.entity';
+import MentorRoleGuard from 'src/modules/auth/guards/mentor-role.guard';
 
 @UseGuards(GqlAuthGuard)
 @Resolver()
 export class AppointmentResolver {
   constructor(private readonly appointmentService: AppointmentService) {}
+
   @Mutation(() => AppointmentDTO)
-  createAppointment(
+  async createAppointment(
     @Args('createAppointmentInput')
     createAppointmentInput: CreateAppointmentInput,
     @Args('mentor') mentor: string,
-    @CurrentUser() user: User,
   ): Promise<any> {
-    return this.appointmentService.createAppointment(
+    return await this.appointmentService.createAppointment(
       createAppointmentInput,
       mentor,
     );
   }
 
-  @UseGuards(GqlAuthGuard)
-  @Mutation(() => AppointmentDTO)
-  toggleAppointmentStatus(
-    @Args('mentorId')
-    mentorId: string,
-    @Args('appointmentId')
-    appointmentId: string,
-    @Args('status') status: AppointmentStatus,
-  ): Promise<any> {
-    return this.appointmentService.toggleAppointmentStatus(
-      mentorId,
-      appointmentId,
-      status,
-    );
-  }
-  // }
   @Query(() => AppointmentDTO)
   viewAppointment(
     @Args('appointmentId')
@@ -49,11 +31,31 @@ export class AppointmentResolver {
   ): Promise<any> {
     return this.appointmentService.viewAppointment(appointmentId);
   }
+
   @Query(() => [AppointmentDTO])
-  viewAppointments(
-    @Args('statuses', { type: () => [String] })
-    statuses: string[],
+  viewAllAppointments(
+    @Args('statuses', { type: () => [AppointmentStatus] })
+    statuses: AppointmentStatus[],
   ): Promise<any> {
-    return this.appointmentService.viewAppointments(statuses);
+    return this.appointmentService.viewAllAppointments(statuses);
+  }
+
+  @UseGuards(GqlAuthGuard, MentorRoleGuard)
+  @Mutation(() => AppointmentDTO)
+  async acceptAppointment(@Args('id') id: string) {
+    return await this.appointmentService.acceptAppointment(id);
+  }
+
+  @UseGuards(GqlAuthGuard)
+  @Mutation(() => AppointmentDTO)
+  async rescheduleAppointment(
+    @Args('appointmentId')
+    appointmentId: string,
+    @Args('input') input: CreateAppointmentInput,
+  ) {
+    return await this.appointmentService.rescheduleAppointment(
+      appointmentId,
+      input,
+    );
   }
 }
