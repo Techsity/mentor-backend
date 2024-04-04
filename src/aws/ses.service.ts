@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Global } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as AWS from 'aws-sdk';
 
+@Global()
 @Injectable()
 export class SesService {
   private ses: AWS.SES;
@@ -18,7 +19,7 @@ export class SesService {
 
   async sendEmail(to: string, subject: string, htmlBody: string) {
     const params: AWS.SES.SendEmailRequest = {
-      // ConfigurationSetName: 'Mentor',
+      ConfigurationSetName: 'Mentor',
       Source: this.configService.get<string>('aws.emailSender'),
       Destination: {
         ToAddresses: [to],

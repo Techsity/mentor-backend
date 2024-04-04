@@ -32,12 +32,13 @@ export type Certification = {
 };
 
 export type UserAvailability = {
+  id?: string;
   day: string;
-  isOpen: boolean;
   timeSlots: TimeSlot[];
 };
 
 type TimeSlot = {
   startTime: string; // e.g., '9:00 AM'
   endTime: string; // e.g., '1:00 PM'
+  isOpen: boolean;
 };

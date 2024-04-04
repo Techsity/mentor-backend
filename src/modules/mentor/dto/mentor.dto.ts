@@ -9,6 +9,8 @@ import {
   AvailailabilityDays,
 } from '../enums/mentor.enum';
 import { UserDTO } from 'src/modules/user/dto/user.dto';
+import Wallet from 'src/modules/wallet/entities/wallet.entity';
+import { AppointmentDTO } from 'src/modules/appointment/dto/appointment.dto';
 
 @ObjectType()
 export class SkillDTO {
@@ -55,9 +57,15 @@ class TimeSlot {
   @Field()
   @Column({ type: 'time' })
   endTime: string;
+
+  @Field(() => Boolean)
+  isOpen: boolean;
 }
 @ObjectType()
 export class UserAvailabilityDTO {
+  @Field({ nullable: true })
+  id?: string;
+
   @Field()
   day: string;
 
@@ -95,7 +103,7 @@ export class MentorDTO {
   @Field()
   id: string;
 
-  @Field(() => UserDTO)
+  @Field(() => UserDTO, { nullable: true })
   user: UserDTO;
 
   @Field(() => [CourseDto], { nullable: true })
@@ -112,6 +120,9 @@ export class MentorDTO {
 
   @Field(() => [SkillDTO])
   skills: SkillDTO[];
+
+  @Field(() => [AppointmentDTO], { nullable: true })
+  appointments: AppointmentDTO[];
 
   @Field(() => [WorkExperienceDTO], { nullable: true })
   work_experience: WorkExperienceDTO[];
@@ -136,6 +147,9 @@ export class MentorDTO {
 
   @Field(() => [String], { nullable: true })
   language: string[];
+
+  @Field(() => Wallet, { nullable: true })
+  wallet: Wallet;
 
   @Field()
   mentor_verified: boolean;

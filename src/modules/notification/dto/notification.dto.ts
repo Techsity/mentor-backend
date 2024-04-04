@@ -13,9 +13,9 @@ export default class NotificationDto {
   read: boolean;
   @Field()
   userId: string;
-  @Field()
+  @Field({ nullable: true })
   resourceId: string;
-  @Field(() =>NotificationResourceType )
+  @Field(() => NotificationResourceType, { nullable: true })
   resourceType: NotificationResourceType;
   @Field(() => Date)
   created_at: Date;

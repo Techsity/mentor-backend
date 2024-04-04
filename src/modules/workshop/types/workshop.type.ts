@@ -23,12 +23,12 @@ export class WorkshopContentInput {
   @Field()
   date: string;
 
-  @IsString({ message: 'content title must be a string' })
-  @IsNotEmpty({ message: 'content title is required' })
+  @IsString({ message: 'content startTime must be a string' })
+  @IsNotEmpty({ message: 'content startTime is required' })
   @Field()
   startTime: string;
 
-  @IsString({ message: 'content title must be a string' })
+  @IsString({ message: 'content endTime must be a string' })
   @IsNotEmpty({ message: 'content endTime is required' })
   @Field()
   endTime: string;

@@ -1,6 +1,7 @@
 import { ObjectType, Field } from '@nestjs/graphql';
 import { Subscription } from '../../subscription/entities/subscription.entity';
 import NotificationDto from 'src/modules/notification/dto/notification.dto';
+import { AppointmentDTO } from 'src/modules/appointment/dto/appointment.dto';
 
 @ObjectType()
 export class UserDTO {
@@ -28,6 +29,9 @@ export class UserDTO {
   @Field(() => [NotificationDto])
   notifications: NotificationDto[];
 
+  @Field(() => [AppointmentDTO])
+  appointments: AppointmentDTO[];
+
   @Field()
   is_online: boolean;
 
@@ -43,8 +47,8 @@ export class UserDTO {
   @Field()
   is_admin: boolean;
 
-  @Field()
-  is_mentor: boolean;
+  @Field({nullable:true})
+  is_mentor?: boolean;
 
   @Field()
   created_at: Date;
