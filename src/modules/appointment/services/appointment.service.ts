@@ -304,7 +304,8 @@ export class AppointmentService {
     ) {
       const cancelledBy = appointment.status.split('_').join(' ').toLowerCase();
       throw new BadRequestException(
-        `This appointment has already being ${cancelledBy}`,
+        // `This appointment has already been ${cancelledBy}`,
+        `This appointment has already been cancelled`,
       );
     }
     let mentorProfile = await this.mentorRepository.findOne({
@@ -324,15 +325,17 @@ export class AppointmentService {
     if (!mentorProfile)
       throw new BadRequestException('mentorProfile not found');
     // update slots availability - isOpen
-    mentorProfile.availability.forEach(({ id: slotId, timeSlots }) => {
+    mentorProfile.availability.forEach(({ timeSlots }) => {
       const previousAppointmentDate = new Date(appointment.date);
       const { slot } = findEqualTimeSlot(
         timeSlots,
         previousAppointmentDate.getHours(),
         previousAppointmentDate.getMinutes(),
       );
-      if (slot) slot.isOpen = false;
-      console.log({ slot });
+      if (slot) {
+        slot.isOpen = true;
+        console.log({ slot });
+      }
     });
 
     await this.refundRepository.save({
