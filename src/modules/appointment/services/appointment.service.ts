@@ -302,7 +302,6 @@ export class AppointmentService {
       appointment.status === AppointmentStatus.CANCELLED_BY_MENTOR ||
       appointment.status === AppointmentStatus.CANCELLED_BY_USER
     ) {
-      const cancelledBy = appointment.status.split('_').join(' ').toLowerCase();
       throw new BadRequestException(
         // `This appointment has already been ${cancelledBy}`,
         `This appointment has already been cancelled`,
@@ -332,22 +331,12 @@ export class AppointmentService {
         previousAppointmentDate.getHours(),
         previousAppointmentDate.getMinutes(),
       );
-      if (slot) {
-        slot.isOpen = true;
-        console.log({ slot });
-      }
-    });
-
-    await this.refundRepository.save({
-      appointment,
-      paymentReference: appointment.paymentReference,
-      reason,
-      requestedAt: new Date(),
-      userId: appointment.user.id,
+      if (slot) slot.isOpen = true;
     });
     await mentorProfile.save();
     await appointment.save();
-    //Todo: notify mentor and user
+    this.eventEmitter.emit(EVENTS.CANCEL_APPOINTMENT, { appointment, reason });
+    //notify mentor and user
     return appointment;
   }
 
