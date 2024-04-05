@@ -13,3 +13,8 @@ export enum AppointmentStatus {
   RESCHEDULED_BY_MENTOR = 'rescheduled_by_mentor',
   OVERDUE = 'overdue',
 }
+
+export enum AppointmentRescheduleStatus {
+  AWAITING_USER_APPROVAL = 'awaiting_user_approval',
+  AWAITING_MENTOR_APPROVAL = 'awaiting_mentor_approval',
+}

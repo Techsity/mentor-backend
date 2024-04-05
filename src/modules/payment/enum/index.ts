@@ -24,6 +24,12 @@ export enum TransactionStatus {
   REVERSED = 'reversed',
 }
 
+export enum RefundStatus {
+  PENDING = 'pending',
+  SUCCESS = 'successful',
+  FAILED = 'failed',
+}
+
 export enum TransactionType {
   CREDIT = 'credit',
   DEBIT = 'debit',

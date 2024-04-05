@@ -1,6 +1,7 @@
 import { Global, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import EVENTS from 'src/common/events.constants';
+import { AppointmentRefundRequest } from 'src/modules/appointment/entities/appointment-refund-request.entity';
 import { Appointment } from 'src/modules/appointment/entities/appointment.entity';
 import { AppointmentStatus } from 'src/modules/appointment/enums/appointment.enum';
 import { AppointmentQueueService } from 'src/modules/appointment/services/appointment-queue.service';
@@ -163,7 +164,7 @@ export class EventEmitterListeners {
     //     appointmentRecord.reschedule_count + 1;
     // }
     // await appointmentRecord.save();
-    // console.log(appointmentRecord.date.toDateString());
+    // console.log(appointmentRecord.date.toString());
     // Schedule notification and send notification to user
     this.appointmentQueueService.scheduleNotification({
       appointment: appointmentRecord,
@@ -172,7 +173,7 @@ export class EventEmitterListeners {
     //   title: 'Mentorship Request Accepted',
     //   body: `${
     //     appointment.mentor.user.name
-    //   } has accepted your mentorship session request! Session is scheduled for ${appointmentRecord.date.toDateString()} by ${appointmentRecord.date.toTimeString()}. You will be notified before the session starts.`,
+    //   } has accepted your mentorship session request! Session is scheduled for ${appointmentRecord.date.toString()} by ${appointmentRecord.date.toTimeString()}. You will be notified before the session starts.`,
     //   sendEmail: true,
     // });
   }
@@ -185,7 +186,7 @@ export class EventEmitterListeners {
   }) {
     // re-schedule notification cron
 
-    const msg = `Session is now scheduled for ${appointment.date.toDateString()} by ${appointment.date.toTimeString()}. You will be notified before the session starts.`;
+    const msg = `Session is now scheduled for ${appointment.date.toString()} by ${appointment.date.toTimeString()}. You will be notified before the session starts.`;
     this.notificationService.create(appointment.user, {
       title: 'Mentorship Session Rescheduled',
       body:
@@ -212,4 +213,74 @@ export class EventEmitterListeners {
       appointment,
     });
   }
+
+  @OnEvent(EVENTS.CANCEL_APPOINTMENT)
+  async cancelAppointment({
+    appointment,
+    reason,
+  }: {
+    appointment: Appointment;
+    reason: string;
+  }) {
+    try {
+      let cancelledBy = appointment.status
+        .split('_')
+        .join(' ')
+        .toLowerCase() as CancelledBy;
+      cancelledBy = cancelledBy.split('cancelled by ')[1] as CancelledBy;
+      const title = 'Mentorship Session Cancelled';
+      let msg;
+      if (cancelledBy === 'user') {
+        msg = `The appointment with ${
+          appointment.user.name
+        } scheduled for ${appointment.date.toString()} has been cancelled by ${
+          appointment.user.name
+        }.`;
+        this.notificationService.create(appointment.mentor.user, {
+          title,
+          body: msg,
+          sendEmail: true,
+        });
+        msg = `You have cancelled your appointment with ${
+          appointment.mentor.user.name
+        } scheduled for ${appointment.date.toString()}.`;
+        this.notificationService.create(appointment.user, {
+          title,
+          body: msg,
+          sendEmail: true,
+        });
+      } else if (cancelledBy === 'mentor') {
+        msg = `The appointment with ${
+          appointment.mentor.user.name
+        } scheduled for ${appointment.date.toString()} has been cancelled by ${
+          appointment.mentor.user.name
+        }.`;
+        this.notificationService.create(appointment.user, {
+          title,
+          body: msg,
+          sendEmail: true,
+        });
+        msg = `You have cancelled your appointment with ${
+          appointment.user.name
+        } scheduled for ${appointment.date.toString()}.`;
+        this.notificationService.create(appointment.mentor.user, {
+          title,
+          body: msg,
+          sendEmail: true,
+        });
+      }
+      await AppointmentRefundRequest.save({
+        appointment,
+        paymentReference: appointment.paymentReference,
+        reason,
+        requestedAt: new Date(),
+        userId: appointment.user.id,
+      });
+    } catch (error) {
+      const stack = new Error().stack;
+      this.logger.error(error, stack);
+    }
+  }
 }
+
+type CancelledBy = 'user' | 'mentor';
