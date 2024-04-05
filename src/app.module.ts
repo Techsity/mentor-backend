@@ -50,7 +50,7 @@ import { Card } from './modules/card/entities/card.entity';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BullModule } from '@nestjs/bull';
 import { Transaction } from './modules/payment/entities/transaction.entity';
-
+import { AppointmentRefundRequest } from './modules/appointment/entities/appointment-refund-request.entity';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -91,6 +91,7 @@ import { Transaction } from './modules/payment/entities/transaction.entity';
           Subscription,
           Review,
           Appointment,
+          AppointmentRefundRequest,
           Notification,
           ReportedMentor,
           Workshop,

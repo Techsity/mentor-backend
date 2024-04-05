@@ -437,6 +437,7 @@ type Mutation {
   createAppointment(createAppointmentInput: CreateAppointmentInput!, mentor: String!): AppointmentDTO!
   acceptAppointment(id: String!): AppointmentDTO!
   rescheduleAppointment(appointmentId: String!, input: CreateAppointmentInput!): AppointmentDTO!
+  cancelAppointment(appointmentId: String!, reason: String!): AppointmentDTO!
   markAllNotificationsAsRead: Boolean!
   readNotification(notificationId: String!): Boolean!
   deleteNotification(notificationId: String!): Boolean!

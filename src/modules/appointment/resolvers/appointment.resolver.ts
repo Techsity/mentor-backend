@@ -46,6 +46,12 @@ export class AppointmentResolver {
     return await this.appointmentService.acceptAppointment(id);
   }
 
+  // @UseGuards(GqlAuthGuard, MentorRoleGuard)
+  // @Mutation(() => AppointmentDTO)
+  // async declineAppointment(@Args('id') id: string) {
+  //   return await this.appointmentService.declineAppointment(id);
+  // }
+
   @UseGuards(GqlAuthGuard)
   @Mutation(() => AppointmentDTO)
   async rescheduleAppointment(
@@ -56,6 +62,18 @@ export class AppointmentResolver {
     return await this.appointmentService.rescheduleAppointment(
       appointmentId,
       input,
+    );
+  }
+
+  @UseGuards(GqlAuthGuard)
+  @Mutation(() => AppointmentDTO)
+  async cancelAppointment(
+    @Args('appointmentId') appointmentId: string,
+    @Args('reason') reason: string,
+  ) {
+    return await this.appointmentService.cancelAppointment(
+      appointmentId,
+      reason,
     );
   }
 }

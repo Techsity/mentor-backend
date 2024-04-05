@@ -6,13 +6,18 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Mentor } from '../../mentor/entities/mentor.entity';
 import { User } from '../../user/entities/user.entity';
-import { AppointmentStatus } from '../enums/appointment.enum';
+import {
+  AppointmentRescheduleStatus,
+  AppointmentStatus,
+} from '../enums/appointment.enum';
+import { AppointmentRefundRequest } from './appointment-refund-request.entity';
 
 @Entity('appointments')
 export class Appointment extends BaseEntity {
@@ -47,9 +52,6 @@ export class Appointment extends BaseEntity {
   @Column({ name: 'payment_reference' })
   paymentReference: string;
 
-  @Column({ name: 'cancel_reason', nullable: true })
-  cancelReason: string;
-
   @CreateDateColumn()
   created_at: Date;
 
@@ -60,4 +62,9 @@ export class Appointment extends BaseEntity {
 registerEnumType(AppointmentStatus, {
   name: 'AppointmentStatus',
   description: 'Appointment Statuses',
+});
+
+registerEnumType(AppointmentRescheduleStatus, {
+  name: 'AppointmentRescheduleStatus',
+  description: 'Appointment Reschedule Statuses',
 });

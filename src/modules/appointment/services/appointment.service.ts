@@ -21,6 +21,7 @@ import { Payment } from 'src/modules/payment/entities/payment.entity';
 import { PaymentStatus } from 'src/modules/payment/enum';
 import { UserAvailability } from 'src/modules/mentor/types/mentor.type';
 import { daysOfTheWeek, RESCHDULE_THRESHOLD } from 'src/common/constants';
+import { AppointmentRefundRequest } from '../entities/appointment-refund-request.entity';
 
 @Injectable()
 export class AppointmentService {
@@ -28,6 +29,8 @@ export class AppointmentService {
     @Inject(REQUEST) private readonly request: { req: { user: User } },
     @InjectRepository(Appointment)
     private appointmentRepository: Repository<Appointment>,
+    @InjectRepository(AppointmentRefundRequest)
+    private refundRepository: Repository<AppointmentRefundRequest>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
     @InjectRepository(Mentor)
@@ -168,7 +171,14 @@ export class AppointmentService {
       if (!isUUID(appointmentId))
         throw new BadRequestException('Invalid appointmentId');
       const appointment = await this.appointmentRepository.findOne({
-        where: { id: appointmentId, user_id: authUser.id },
+        where: {
+          id: appointmentId,
+          user_id: authUser.id,
+          status: Not(
+            AppointmentStatus.CANCELLED_BY_MENTOR ||
+              AppointmentStatus.CANCELLED_BY_USER,
+          ),
+        },
         relations: ['mentor', 'mentor.user'],
       });
       if (!appointment) throw new BadRequestException('Appointment not found');
@@ -196,7 +206,15 @@ export class AppointmentService {
       relations: ['user', 'mentor', 'mentor.user'],
     });
     if (!appointment) throw new BadRequestException('Appointment not found');
-
+    else if (
+      appointment.status === AppointmentStatus.CANCELLED_BY_MENTOR ||
+      appointment.status === AppointmentStatus.CANCELLED_BY_USER
+    ) {
+      const cancelledBy = appointment.status.split('_').join(' ').toLowerCase();
+      throw new BadRequestException(
+        `This appointment has already being ${cancelledBy}`,
+      );
+    }
     if (appointment.status === AppointmentStatus.PENDING)
       this.eventEmitter.emit(EVENTS.MENTOR_ACCEPT_APPOINTMENT, { appointment });
     return appointment;
@@ -217,10 +235,19 @@ export class AppointmentService {
       relations: ['mentor', 'user', 'mentor.user'],
     });
     if (!appointment) throw new NotFoundException('Appointment not found');
-    if (appointment.reschedule_count >= RESCHDULE_THRESHOLD)
+    else if (
+      appointment.status === AppointmentStatus.CANCELLED_BY_MENTOR ||
+      appointment.status === AppointmentStatus.CANCELLED_BY_USER
+    ) {
+      const cancelledBy = appointment.status.split('_').join(' ').toLowerCase();
       throw new BadRequestException(
-        'This appointment has reached reschedule limit',
+        `This appointment has already being ${cancelledBy}`,
       );
+    } else if (appointment.reschedule_count >= RESCHDULE_THRESHOLD)
+      throw new BadRequestException(
+        'Limit reached. No further rescheduling is allowed for this appointment',
+      );
+
     let mentorProfile = await this.mentorRepository.findOneBy({
       user: { id: user.id },
     });
@@ -240,7 +267,7 @@ export class AppointmentService {
       mentorProfile.availability,
     );
     // update slots availability - isOpen
-    mentorProfile.availability.forEach(({ id: slotId, timeSlots, day }) => {
+    mentorProfile.availability.forEach(({ id: slotId, timeSlots }) => {
       if (slotId === id) timeSlots[slotIndex].isOpen = false;
       const { slot: prevSlot } = findEqualTimeSlot(
         timeSlots,
@@ -263,18 +290,65 @@ export class AppointmentService {
     return appointment;
   }
 
+  async cancelAppointment(id: string, reason: string) {
+    const user = this.request.req.user;
+    if (!isUUID(id)) throw new BadRequestException('Invalid appointment Id');
+    const appointment = await this.appointmentRepository.findOne({
+      where: { id },
+      relations: ['user', 'mentor', 'mentor.user'],
+    });
+    if (!appointment) throw new BadRequestException('Appointment not found');
+    else if (
+      appointment.status === AppointmentStatus.CANCELLED_BY_MENTOR ||
+      appointment.status === AppointmentStatus.CANCELLED_BY_USER
+    ) {
+      const cancelledBy = appointment.status.split('_').join(' ').toLowerCase();
+      throw new BadRequestException(
+        `This appointment has already being ${cancelledBy}`,
+      );
+    }
+    let mentorProfile = await this.mentorRepository.findOne({
+      where: { user: { id: user.id } },
+      relations: ['user'],
+    });
+
+    appointment.status = AppointmentStatus.CANCELLED_BY_MENTOR;
+    if (!mentorProfile) {
+      appointment.status = AppointmentStatus.CANCELLED_BY_USER;
+      mentorProfile = await this.mentorRepository.findOne({
+        where: { id: appointment.mentor_id },
+        relations: ['user'],
+      });
+    }
+
+    if (!mentorProfile)
+      throw new BadRequestException('mentorProfile not found');
+    // update slots availability - isOpen
+    mentorProfile.availability.forEach(({ id: slotId, timeSlots }) => {
+      const previousAppointmentDate = new Date(appointment.date);
+      const { slot } = findEqualTimeSlot(
+        timeSlots,
+        previousAppointmentDate.getHours(),
+        previousAppointmentDate.getMinutes(),
+      );
+      if (slot) slot.isOpen = false;
+      console.log({ slot });
+    });
+
+    await this.refundRepository.save({
+      appointment,
+      paymentReference: appointment.paymentReference,
+      reason,
+      requestedAt: new Date(),
+      userId: appointment.user.id,
+    });
+    await mentorProfile.save();
+    await appointment.save();
+    //Todo: notify mentor and user
+    return appointment;
+  }
+
   async declineAppointment() {}
-
-  async cancelAppointment() {
-    // find appointment
-    // confirm status and update status - CANCELLED_BY_USER || CANCELLED_BY_MENTOR (appointment.mentor.user.id === user.id)
-    // create refund record
-    // response
-  }
-
-  async updateNewSchedule(acceptNewSchedule: boolean) {
-    // acceptNewSchedule
-  }
 }
 
 function findEqualTimeSlot(
