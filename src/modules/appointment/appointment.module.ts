@@ -14,6 +14,7 @@ import { AppointmentQueueService } from './services/appointment-queue.service';
 import { QUEUES } from 'src/common/queues.constants';
 import { AppointmentQueueProcessor } from './services/appointment-queue.processor';
 import { NotificationModule } from '../notification/notification.module';
+import { AppointmentRefundRequest } from './entities/appointment-refund-request.entity';
 
 registerEnumType(AppointmentStatus, {
   name: 'AppointmentStatus',
@@ -27,7 +28,7 @@ registerEnumType(AppointmentStatus, {
     forwardRef(() => AuthModule),
     forwardRef(() => MentorModule),
     forwardRef(() => UserModule),
-    TypeOrmModule.forFeature([Appointment]),
+    TypeOrmModule.forFeature([Appointment, AppointmentRefundRequest]),
     NotificationModule,
   ],
   providers: [
@@ -38,7 +39,7 @@ registerEnumType(AppointmentStatus, {
     AppointmentQueueProcessor,
   ],
   exports: [
-    TypeOrmModule.forFeature([Appointment]),
+    TypeOrmModule.forFeature([Appointment, AppointmentRefundRequest]),
     AppointmentCronService,
     AppointmentQueueService,
     AppointmentQueueProcessor,

@@ -78,6 +78,7 @@ export class SubscriptionService {
     subscriptionId: string,
     subscriptionType: SubscriptionType,
   ) {
+    console.log({ subscriptionId, subscriptionType });
     if (!subscriptionType || !isEnum(subscriptionType, SubscriptionType))
       throw new BadRequestException(
         'Invalid subscriptionType | Expected "course" or "workshop"',
@@ -129,18 +130,12 @@ export class SubscriptionService {
       ],
     };
 
-    // &&
-    // if (subscriptionType === SubscriptionType.COURSE)
-    //   options.course_id = resourceId;
-    // else if (subscriptionType === SubscriptionType.WORKSHOP)
-    //   options.workshop_id = resourceId;
-
     try {
       const sub = await this.subscriptionRepository.findOne({
         ...options,
         relations,
       });
-      if (!sub) throw new NotFoundException('Subscription not found');
+      if (!sub) throw new NotFoundException(`${subscriptionType} not found`);
       return sub;
     } catch (error) {
       throw error;

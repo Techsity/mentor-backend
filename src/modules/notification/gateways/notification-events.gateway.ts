@@ -4,14 +4,12 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
-import { isNotEmpty, isString } from 'class-validator';
-import { Server, Socket, Namespace } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import EVENTS from 'src/common/events.constants';
-import { Notification } from 'src/modules/notification/entities/notification.entity';
 
 type IUserRoomSet = { socket: Socket; room: string };
 
-@WebSocketGateway(80, { transports: ['websocket'], cors: '*' })
+@WebSocketGateway(81, { transports: ['websocket'], cors: '*' })
 export class NotificationEventsGateway
   implements OnGatewayConnection, OnGatewayDisconnect
 {

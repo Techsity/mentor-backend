@@ -1,9 +1,10 @@
-import { ObjectType, Field, ID } from '@nestjs/graphql';
+import { ObjectType, Field } from '@nestjs/graphql';
 import { MentorDTO } from '../../mentor/dto/mentor.dto';
 import { UserDTO } from '../../user/dto/user.dto';
-import { AppointmentStatus } from '../enums/appointment.enum';
-import { Mentor } from '../../mentor/entities/mentor.entity';
-import { User } from '../../user/entities/user.entity';
+import {
+  AppointmentRescheduleStatus,
+  AppointmentStatus,
+} from '../enums/appointment.enum';
 
 @ObjectType()
 export class AppointmentDTO {
