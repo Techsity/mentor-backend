@@ -90,8 +90,8 @@ export class NotificationService {
       id: notificationId,
       userId,
     });
-    if (!notification.affected)
-      throw new NotFoundException('Notification not found');
+    // if (!notification.affected)
+    //   throw new NotFoundException('Notification not found');
 
     return true;
   }

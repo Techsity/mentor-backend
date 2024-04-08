@@ -149,7 +149,7 @@ export class EventEmitterListeners {
       relations: ['user', 'mentor', 'mentor.user'],
     });
     // // Update status
-    // appointmentRecord.status = AppointmentStatus.ACCEPTED;
+    appointmentRecord.status = AppointmentStatus.ACCEPTED;
 
     // // Todo: check if the appointment date has expired, then postpone to the following week and send notifications to user
     // const currentDate = new Date();
@@ -163,19 +163,18 @@ export class EventEmitterListeners {
     //   appointmentRecord.reschedule_count =
     //     appointmentRecord.reschedule_count + 1;
     // }
-    // await appointmentRecord.save();
-    // console.log(appointmentRecord.date.toString());
+    await appointmentRecord.save();
     // Schedule notification and send notification to user
     this.appointmentQueueService.scheduleNotification({
       appointment: appointmentRecord,
     });
-    // this.notificationService.create(appointmentRecord.user, {
-    //   title: 'Mentorship Request Accepted',
-    //   body: `${
-    //     appointment.mentor.user.name
-    //   } has accepted your mentorship session request! Session is scheduled for ${appointmentRecord.date.toString()} by ${appointmentRecord.date.toTimeString()}. You will be notified before the session starts.`,
-    //   sendEmail: true,
-    // });
+    this.notificationService.create(appointmentRecord.user, {
+      title: 'Mentorship Request Accepted',
+      body: `${
+        appointment.mentor.user.name
+      } has accepted your mentorship session request! Session is scheduled for ${appointmentRecord.date.toString()} by ${appointmentRecord.date.toTimeString()}. You will be notified before the session starts.`,
+      sendEmail: true,
+    });
   }
 
   @OnEvent(EVENTS.APPOINTMENT_RESCHEDULE)
@@ -231,7 +230,7 @@ export class EventEmitterListeners {
       const title = 'Mentorship Session Cancelled';
       let msg;
       if (cancelledBy === 'user') {
-        msg = `The appointment with ${
+        msg = `Your appointment with ${
           appointment.user.name
         } scheduled for ${appointment.date.toString()} has been cancelled by ${
           appointment.user.name
@@ -243,18 +242,18 @@ export class EventEmitterListeners {
         });
         msg = `You have cancelled your appointment with ${
           appointment.mentor.user.name
-        } scheduled for ${appointment.date.toString()}.`;
+        } scheduled for ${appointment.date.toString()}. If your payment was successful, it will be refunded within 5-business days.`;
         this.notificationService.create(appointment.user, {
           title,
           body: msg,
           sendEmail: true,
         });
       } else if (cancelledBy === 'mentor') {
-        msg = `The appointment with ${
+        msg = `Your appointment with ${
           appointment.mentor.user.name
         } scheduled for ${appointment.date.toString()} has been cancelled by ${
           appointment.mentor.user.name
-        }.`;
+        }. If your payment was successful, it will be refunded within 5-business days.`;
         this.notificationService.create(appointment.user, {
           title,
           body: msg,

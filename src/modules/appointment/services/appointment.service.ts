@@ -69,6 +69,8 @@ export class AppointmentService {
         "Session not available on mentor's availability schedule",
       );
     if (!slot.isOpen) throw new BadRequestException('Session is booked');
+    // Todo: check if user doesn't already have an appointment with someone else on this date
+
     return { id, day, slot, slotIndex };
   }
 
@@ -76,7 +78,6 @@ export class AppointmentService {
    *
    * @param input
    * @param mentor
-   * TODO: Send email to both users, integrate payment
    */
 
   async createAppointment(input: CreateAppointmentInput, mentor: string) {
@@ -170,16 +171,21 @@ export class AppointmentService {
     try {
       if (!isUUID(appointmentId))
         throw new BadRequestException('Invalid appointmentId');
+      const opts = {
+        id: appointmentId,
+        status: Not(
+          In([
+            AppointmentStatus.CANCELLED_BY_MENTOR,
+            AppointmentStatus.CANCELLED_BY_USER,
+          ]),
+        ),
+      };
       const appointment = await this.appointmentRepository.findOne({
-        where: {
-          id: appointmentId,
-          user_id: authUser.id,
-          status: Not(
-            AppointmentStatus.CANCELLED_BY_MENTOR ||
-              AppointmentStatus.CANCELLED_BY_USER,
-          ),
-        },
-        relations: ['mentor', 'mentor.user'],
+        where: [
+          { ...opts, mentor: { user: { id: authUser.id } } },
+          { user_id: authUser.id, ...opts },
+        ],
+        relations: ['mentor', 'mentor.user', "user"],
       });
       if (!appointment) throw new BadRequestException('Appointment not found');
       return appointment;
@@ -214,6 +220,10 @@ export class AppointmentService {
       throw new BadRequestException(
         `This appointment has already being ${cancelledBy}`,
       );
+    } else if (appointment.status === AppointmentStatus.COMPLETED) {
+      throw new BadRequestException(
+        `This appointment has already being concluded`,
+      );
     }
     if (appointment.status === AppointmentStatus.PENDING)
       this.eventEmitter.emit(EVENTS.MENTOR_ACCEPT_APPOINTMENT, { appointment });
@@ -247,6 +257,11 @@ export class AppointmentService {
       throw new BadRequestException(
         'Limit reached. No further rescheduling is allowed for this appointment',
       );
+    else if (appointment.status === AppointmentStatus.COMPLETED) {
+      throw new BadRequestException(
+        `This appointment has already being concluded`,
+      );
+    }
 
     let mentorProfile = await this.mentorRepository.findOneBy({
       user: { id: user.id },
@@ -305,6 +320,10 @@ export class AppointmentService {
       throw new BadRequestException(
         // `This appointment has already been ${cancelledBy}`,
         `This appointment has already been cancelled`,
+      );
+    } else if (appointment.status === AppointmentStatus.COMPLETED) {
+      throw new BadRequestException(
+        `This appointment has already being concluded`,
       );
     }
     let mentorProfile = await this.mentorRepository.findOne({

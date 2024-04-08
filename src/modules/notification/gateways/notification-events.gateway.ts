@@ -19,7 +19,7 @@ export class NotificationEventsGateway
   private userSockets: Map<string, IUserRoomSet> = new Map();
 
   handleConnection(client: Socket) {
-    const userId = client.handshake.query.userId as string;
+    const userId = client.handshake.auth.userId as string;
     if (userId && userId !== undefined && userId !== 'undefined') {
       const userRoom = `${userId}`;
       this.userSockets.set(userId, { socket: client, room: userRoom });
