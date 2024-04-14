@@ -9,9 +9,9 @@ class VerifyPaymentData {
   status: string;
   @Field()
   reference: string;
-  @Field(() => Float)
+  @Field(() => Float, { nullable: true })
   amount: number;
-  @Field()
+  @Field({ nullable: true })
   gateway_response: string;
 }
 @ObjectType()

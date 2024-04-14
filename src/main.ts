@@ -25,9 +25,10 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       exceptionFactory: (errors) => {
-        const errorMessage = errors
-          .flatMap((error) => Object.values(error.constraints))
-          .join(', ');
+        const errorMessage = errors.flatMap((error) =>
+          Object.values(error.constraints),
+        )[0];
+        // .join(', ');
         return new BadRequestException(errorMessage);
       },
     }),

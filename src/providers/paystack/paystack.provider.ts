@@ -10,6 +10,7 @@ import {
   PaystackInitializePaymentInput,
   PaystackInitializePaymentResponse,
   PaystackVerifyTransactionResponse,
+  ValidateAccountNumberResponse,
 } from './paystack.interface';
 import axios, { AxiosResponse } from 'axios';
 import { ISOCurrency } from 'src/modules/payment/types/payment.type';
@@ -25,17 +26,30 @@ export default class PaystackProvider {
     this.secretKey = this.configService.get('PAYSTACK_SECRET_KEY');
   }
 
-  private async request(path: string, payload?: object) {
+  private async request(
+    path: string,
+    payload?: object,
+    method?: 'POST' | 'GET',
+  ) {
     const url = `${this.paystackBaseUrl}${path}`;
-    return await axios.post(url, payload, {
+    return await axios(url, {
       headers: {
         Authorization: `Bearer ${this.secretKey}`,
         'Content-Type': 'application/json',
       },
+      method: method || 'POST',
+      data: payload,
     });
   }
 
-  async validateAccount(accountNumber: string, bankCode: string) {}
+  async validateAccount(accountNumber: string, bankCode: string) {
+    const { data: isValidAcct } = await this.request(
+      `/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`,
+      undefined,
+      'GET',
+    );
+    return isValidAcct as ValidateAccountNumberResponse;
+  }
 
   async chargeAccount(
     input: InitializePaymentInput & { email: string },
@@ -43,8 +57,9 @@ export default class PaystackProvider {
     const { accountNumber, amount, bankCode, birthday, email } = input;
     const payload = {
       email,
-      amount: amount * 100,
+      amount: parseInt(amount.toFixed(0)) * 100,
       bank: { code: bankCode, account_number: accountNumber },
+      currency: input.currency,
       birthday,
     };
     const { data: res } = await this.request('/charge', payload);
@@ -57,13 +72,18 @@ export default class PaystackProvider {
     return data as PaystackVerifyTransactionResponse;
   }
 
+  async confirmPendingCharge(ref: string) {
+    const { data: data } = await this.request(`/charge/${ref}`);
+    return data;
+  }
+
   async getExchangeRate(currency: ISOCurrency): Promise<number> {
     try {
-      // Fetch exchange rate from an external API
+      // Fetch exchange rate
       const response = await axios.get(
         `https://api.exchangerate-api.com/v4/latest/${currency}`,
       );
-      return response.data.rates.NGN; // rates to naira
+      return response.data.rates.NGN; // rates against naira
     } catch (error) {
       throw error;
     }

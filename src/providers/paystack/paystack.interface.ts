@@ -24,7 +24,13 @@ export interface PaystackVerifyTransactionResponse {
   data: {
     id: number;
     domain: string;
-    status: string;
+    status:
+      | 'pending'
+      | 'timeout'
+      | 'success'
+      | 'send_birthday'
+      | 'send_otp'
+      | 'failed';
     reference: string;
     receipt_number: any;
     amount: number;
@@ -72,5 +78,15 @@ export interface ChargeAccountResponse {
       | 'send_otp'
       | 'failed';
     display_text: string;
+  };
+}
+
+export interface ValidateAccountNumberResponse {
+  status: boolean;
+  message: string;
+  data: {
+    account_number: string;
+    account_name: string;
+    bank_id: number;
   };
 }

@@ -66,6 +66,9 @@ export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: false })
   password: string;
 
+  @Column({  nullable: true })
+  dob: string;
+
   @Field()
   @Column({ type: 'boolean', default: false })
   is_admin: boolean;

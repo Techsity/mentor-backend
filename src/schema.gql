@@ -333,6 +333,49 @@ type SubscriptionDto {
   updated_at: DateTime!
 }
 
+type Payment {
+  id: ID!
+  reference: String!
+  amount: Float!
+  resourceId: ID!
+  resourceType: SubscriptionType!
+  currency: ISOCurrency!
+  accountNumber: String!
+  accountName: String!
+  bankCode: String!
+  channel: Payment_channels!
+  status: Payment_status!
+  created_at: DateTime!
+}
+
+"""The enum of supported currencies for transactions"""
+enum ISOCurrency {
+  NGN
+  USD
+  GHS
+  ZAR
+  KES
+}
+
+enum Payment_channels {
+  CARD
+  BANK
+  USSD
+  QR_CODE
+  BANK_TRANSFER
+  MOBILE_MONEY
+  WALLET
+}
+
+enum Payment_status {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+  ABANDONED
+  REVERSED
+}
+
 type InitializePaymentResponse {
   display_text: String
   reference: String
@@ -342,8 +385,8 @@ type InitializePaymentResponse {
 type VerifyPaymentData {
   status: String!
   reference: String!
-  amount: Float!
-  gateway_response: String!
+  amount: Float
+  gateway_response: String
 }
 
 type VerifyPaymentDTO {
@@ -456,6 +499,7 @@ type Mutation {
   subscribeToWorkshop(workshopId: String!): Subscription!
   initiatePayment(input: InitializePaymentInput!): InitializePaymentResponse!
   verifyPayment(reference: String!, otp: String!): VerifyPaymentDTO!
+  confirmPendingTransaction(resourceId: String!, reference: String!, resourceType: SubscriptionType!): Payment!
 }
 
 input CreateRegisterInput {
@@ -606,13 +650,6 @@ input InitializePaymentInput {
   bankCode: String!
   accountNumber: String!
   birthday: String!
-}
-
-"""The enum of supported currencies for transactions"""
-enum ISOCurrency {
-  NGN
-  USD
-  GHS
-  ZAR
-  KES
+  resourceId: String!
+  resourceType: SubscriptionType!
 }

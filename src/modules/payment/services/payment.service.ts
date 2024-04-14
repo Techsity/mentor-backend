@@ -18,7 +18,12 @@ import { SubscriptionType } from '../../subscription/enums/subscription.enum';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Payment } from '../entities/payment.entity';
 import { FindOptionsWhere, Repository } from 'typeorm';
-import { PaymentStatus, TransactionStatus, TransactionType } from '../enum';
+import {
+  PAYMENT_CHANNELS,
+  PaymentStatus,
+  TransactionStatus,
+  TransactionType,
+} from '../enum';
 import { Workshop } from '../../workshop/entities/workshop.entity';
 import { Course } from '../../course/entities/course.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -30,7 +35,7 @@ import PaystackProvider from 'src/providers/paystack/paystack.provider';
 import Decimal from 'decimal.js';
 import { ISOCurrency } from '../types/payment.type';
 import { Appointment } from '../../appointment/entities/appointment.entity';
-import VerifyPaymentDTO from '../dto/verify-payment.response';
+import VerifyPaymentDTO from '../dto/verify-payment.response.dto';
 import { AppointmentStatus } from '../../appointment/enums/appointment.enum';
 import { Transaction } from '../entities/transaction.entity';
 import { InitializePaymentInput } from '../dto/initialize-payment-input.dto';
@@ -58,14 +63,10 @@ export class PaymentService {
     private paystackService: PaystackProvider,
   ) {}
 
-  private async validatePaymentInput(resourceId: string, resourceType: string) {
-    // Validate input
-    if (!isEnum(resourceType, SubscriptionType))
-      throw new BadRequestException(
-        `Invalid resourceType | Expected either 'course' or 'workshop' o 'mentorship_appointment'`,
-      );
-    if (!isUUID(resourceId))
-      throw new BadRequestException(`Invalid ${resourceType} Id`);
+  private async confirmResource(
+    resourceId: string,
+    resourceType: SubscriptionType,
+  ) {
     // confirm if course or workshop exist
     if (resourceType !== SubscriptionType.MENTORSHIP_APPOINTMENT) {
       let resource;
@@ -73,38 +74,83 @@ export class PaymentService {
         resource = await this.courseRepository.findOneBy({ id: resourceId });
       else if (resourceType === SubscriptionType.WORKSHOP)
         resource = await this.workshopRepository.findOneBy({ id: resourceId });
-      if (!resource)
-        throw new BadRequestException(`Invalid ${resourceType} Id`);
+      if (!resource) throw new BadRequestException(`Unknown resource`);
     }
   }
 
   async initiatePayment(input: InitializePaymentInput) {
+    const user = this.request.req.user;
+    await this.confirmResource(input.resourceId, input.resourceType);
     try {
-      const user = this.request.req.user;
+      const isValidAcct = await this.paystackService.validateAccount(
+        input.accountNumber,
+        input.bankCode,
+      );
+      if (!isValidAcct.status)
+        throw new BadRequestException('Invalid bank account details');
+      // const rate = await this.paystackService.getExchangeRate(input.currency);
+      // console.log({ rate });
+      // console.log({ amount: input.amount, exchanged: input.amount * rate });
       const {
         data: { display_text, reference, status },
       } = await this.paystackService.chargeAccount({
         ...input,
         email: user.email,
       });
+      await this.paymentsRepository.save({
+        user,
+        currency: input.currency,
+        channel: PAYMENT_CHANNELS.BANK,
+        amount: input.amount,
+        accountNumber: input.accountNumber,
+        accountName: isValidAcct.data.account_name,
+        bankCode: input.bankCode,
+        reference,
+        resourceId: input.resourceId,
+        resourceType: input.resourceType,
+      });
       return { display_text, reference, status };
     } catch (error) {
       this.logger.error('An error occured while initiating transaction', error);
-      if (error.response && error.response.data)
+      if (error.response && error.response.data) {
+        console.log({ error: error.response.data });
         // && error.response.status == 400
-        throw new BadRequestException(error.response.data.message);
+        throw new BadRequestException(
+          error.response.data?.data
+            ? error.response.data?.data.message
+            : error.response.data.message,
+        );
+      }
+      console.error({ error });
       throw new InternalServerErrorException('Something went wrong');
     }
   }
 
   async verifyTransaction(ref: string, otp: string): Promise<VerifyPaymentDTO> {
     try {
-      const res = await this.paystackService.verifyChargeOTP(ref, otp);
+      let {
+        data: {
+          amount,
+          reference,
+          display_text,
+          status,
+          gateway_response,
+          authorization,
+        },
+        message,
+      } = await this.paystackService.verifyChargeOTP(ref, otp);
+      amount = amount ? amount / 100 : null;
+      if (status == 'success') {
+        await this.paymentsRepository.update(
+          { reference },
+          { status: PaymentStatus.SUCCESS, metadata: authorization },
+        );
+      }
       return {
-        data: res?.data,
-        reference: res.data.reference,
-        status: res.data.status,
-        display_text: res.data.display_text,
+        data: { amount, reference, status, gateway_response },
+        reference,
+        status,
+        display_text: display_text || message,
       };
     } catch (error) {
       this.logger.error('An error occured while verifying transaction', error);
@@ -124,6 +170,35 @@ export class PaymentService {
           throw new BadRequestException(error.response.data.message);
       throw new InternalServerErrorException('Something went wrong', error);
     }
+  }
+
+  async confirmPendingTransaction(input: {
+    reference: string;
+    resourceId: string;
+    resourceType;
+  }): Promise<Payment> {
+    const { reference, resourceType, resourceId } = input;
+    if (!isUUID(resourceId))
+      throw new BadRequestException('resourceId must be a valid uuid');
+
+    if (!isEnum(resourceType, SubscriptionType))
+      throw new BadRequestException(
+        `Invalid resourceType | Expected either 'course' or 'workshop' or 'mentorship_appointment'`,
+      );
+    const paymentRecord = await this.paymentsRepository.findOne({
+      where: { reference, resourceId, resourceType },
+    });
+    if (!paymentRecord) throw new NotFoundException('Payment record not found');
+    const isCompleted = await this.paystackService.confirmPendingCharge(
+      paymentRecord.reference,
+    );
+    console.log({ isCompleted });
+
+    if (isCompleted && paymentRecord.status) {
+      // paymentRecord.status= PaymentStatus.
+      // await paymentRecord.save()
+    }
+    return paymentRecord;
   }
 
   // async verifyPayment(reference: string): Promise<VerifyPaymentDTO> {
