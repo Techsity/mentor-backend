@@ -49,7 +49,7 @@ export class Appointment extends BaseEntity {
   @Column({ default: 0 })
   reschedule_count: number;
 
-  @Column({ name: 'payment_reference' })
+  @Column({ name: 'payment_reference', nullable: true })
   paymentReference: string;
 
   @CreateDateColumn()

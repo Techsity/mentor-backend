@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
+  BankDTO,
   ChargeAccountResponse,
   PaystackInitializePaymentInput,
   PaystackInitializePaymentResponse,
@@ -72,9 +73,24 @@ export default class PaystackProvider {
     return data as PaystackVerifyTransactionResponse;
   }
 
-  async confirmPendingCharge(ref: string) {
-    const { data: data } = await this.request(`/charge/${ref}`);
+  async confirmPendingCharge(
+    ref: string,
+  ): Promise<PaystackVerifyTransactionResponse> {
+    const { data: data } = await this.request(
+      `/charge/${ref}`,
+      undefined,
+      'GET',
+    );
     return data;
+  }
+
+  async fetchBanks() {
+    const { data } = await this.request(
+      '/bank?pay_with_bank=true&country=nigeria',
+      undefined,
+      'GET',
+    );
+    return data.data as BankDTO[];
   }
 
   async getExchangeRate(currency: ISOCurrency): Promise<number> {

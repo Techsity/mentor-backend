@@ -77,6 +77,9 @@ export class Payment extends BaseEntity {
   @Column()
   bankCode: string;
 
+  @Column('int', { default: 0 })
+  chargeAttempt: number;
+
   @Field(() => PAYMENT_CHANNELS)
   @Column({
     type: 'enum',

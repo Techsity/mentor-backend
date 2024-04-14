@@ -396,6 +396,17 @@ type VerifyPaymentDTO {
   data: VerifyPaymentData
 }
 
+type BankDTO {
+  name: String!
+  slug: String!
+  code: String!
+  longcode: String!
+  pay_with_bank: Boolean!
+  active: Boolean!
+  is_deleted: Boolean!
+  id: Int!
+}
+
 input SkillInput {
   skill_name: String!
   years_of_exp: Int!
@@ -463,6 +474,7 @@ type Query {
   viewWorkshop(workshopId: String!): WorkshopDto!
   viewSubscriptions(subscriptionType: String!): [SubscriptionDto!]!
   viewSubscription(resourceId: String!, subscriptionType: SubscriptionType!): SubscriptionDto!
+  fetchBanks: [BankDTO!]!
 }
 
 """Course types"""

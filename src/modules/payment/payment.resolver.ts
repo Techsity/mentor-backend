@@ -1,4 +1,4 @@
-import { Mutation, Resolver, Args } from '@nestjs/graphql';
+import { Mutation, Resolver, Args, Query } from '@nestjs/graphql';
 import { PaymentService } from './services/payment.service';
 import { UseGuards } from '@nestjs/common';
 import { GqlAuthGuard } from '../auth/guards/gql-auth.guard';
@@ -7,11 +7,17 @@ import VerifyPaymentDTO from './dto/verify-payment.response.dto';
 import { InitializePaymentInput } from './dto/initialize-payment-input.dto';
 import { SubscriptionType } from '../subscription/enums/subscription.enum';
 import { Payment } from './entities/payment.entity';
+import { BankDTO } from 'src/providers/paystack/paystack.interface';
 
 @Resolver()
 @UseGuards(GqlAuthGuard)
 export class PaymentResolver {
   constructor(private readonly paymentService: PaymentService) {}
+
+  @Query(() => [BankDTO])
+  async fetchBanks() {
+    return await this.paymentService.fetchBanks();
+  }
 
   @Mutation(() => InitializePaymentResponse)
   async initiatePayment(

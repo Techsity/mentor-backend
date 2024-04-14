@@ -1,3 +1,5 @@
+import { Field, Int, ObjectType } from '@nestjs/graphql';
+
 type InitializePaymentPayload = {
   amount: number;
   email: string;
@@ -89,4 +91,30 @@ export interface ValidateAccountNumberResponse {
     account_name: string;
     bank_id: number;
   };
+}
+
+@ObjectType()
+export class BankDTO {
+  @Field()
+  name: string;
+  @Field()
+  slug: string;
+  @Field()
+  code: string;
+  @Field()
+  longcode: string;
+  gateway: any;
+  @Field()
+  pay_with_bank: boolean;
+  @Field()
+  active: boolean;
+  @Field()
+  is_deleted: boolean;
+  country: string;
+  currency: string;
+  type: string;
+  @Field(() => Int)
+  id: number;
+  createdAt: string;
+  updatedAt: string;
 }

@@ -22,6 +22,7 @@ import { PaymentStatus } from 'src/modules/payment/enum';
 import { UserAvailability } from 'src/modules/mentor/types/mentor.type';
 import { daysOfTheWeek, RESCHDULE_THRESHOLD } from 'src/common/constants';
 import { AppointmentRefundRequest } from '../entities/appointment-refund-request.entity';
+import { PaymentService } from 'src/modules/payment/services/payment.service';
 
 @Injectable()
 export class AppointmentService {
@@ -69,7 +70,6 @@ export class AppointmentService {
         "Session not available on mentor's availability schedule",
       );
     if (!slot.isOpen) throw new BadRequestException('Session is booked');
-    // Todo: check if user doesn't already have an appointment with someone else on this date
 
     return { id, day, slot, slotIndex };
   }
@@ -95,14 +95,12 @@ export class AppointmentService {
       date,
       mentorProfile.availability,
     );
-
     try {
       // Check if user is a premium user
       if (!authUser.isPremium && mentorProfile.user.isPremium)
         throw new ForbiddenException(
           'You are not allowed to schedule appointments with a premium mentor',
         );
-
       const currentAppointment = await this.appointmentRepository.findOne({
         where: {
           user: { id: authUser.id },
@@ -118,13 +116,11 @@ export class AppointmentService {
           ),
         },
       });
-
       // Check if user has a pending appointment
       if (currentAppointment)
         throw new BadRequestException(
           'You already have an appointment with this mentor',
         );
-      const reference = 'ref_' + Date.now();
       mentorProfile.availability.forEach((d) => {
         if (d.id === id) d.timeSlots[slotIndex].isOpen = false;
       });
@@ -133,7 +129,6 @@ export class AppointmentService {
         date: new Date(date),
         mentor: mentorProfile,
         user: authUser,
-        paymentReference: reference,
       });
       return appointment;
     } catch (error) {
@@ -173,19 +168,19 @@ export class AppointmentService {
         throw new BadRequestException('Invalid appointmentId');
       const opts = {
         id: appointmentId,
-        status: Not(
-          In([
-            AppointmentStatus.CANCELLED_BY_MENTOR,
-            AppointmentStatus.CANCELLED_BY_USER,
-          ]),
-        ),
+        // status: Not(
+        //   In([
+        //     AppointmentStatus.CANCELLED_BY_MENTOR,
+        //     AppointmentStatus.CANCELLED_BY_USER,
+        //   ]),
+        // ),
       };
       const appointment = await this.appointmentRepository.findOne({
         where: [
           { ...opts, mentor: { user: { id: authUser.id } } },
-          { user_id: authUser.id, ...opts },
+          { ...opts, user_id: authUser.id },
         ],
-        relations: ['mentor', 'mentor.user', "user"],
+        relations: ['mentor', 'mentor.user', 'user'],
       });
       if (!appointment) throw new BadRequestException('Appointment not found');
       return appointment;
