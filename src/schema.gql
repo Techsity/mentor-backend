@@ -334,14 +334,23 @@ type SubscriptionDto {
 }
 
 type InitializePaymentResponse {
-  authorization_url: String
+  display_text: String
   reference: String
   status: String
 }
 
+type VerifyPaymentData {
+  status: String!
+  reference: String!
+  amount: Float!
+  gateway_response: String!
+}
+
 type VerifyPaymentDTO {
-  subscription: SubscriptionDto
-  appointment: AppointmentDTO
+  display_text: String
+  reference: String
+  status: String
+  data: VerifyPaymentData
 }
 
 input SkillInput {
@@ -445,17 +454,8 @@ type Mutation {
   createWorkshop(input: CreateWorkshopInput!): WorkshopDto!
   subscribeToCourse(courseId: String!): Subscription!
   subscribeToWorkshop(workshopId: String!): Subscription!
-  initiatePayment(
-    amount: Float!
-
-    """A value from the SubscriptionType enum"""
-    resourceType: String!
-
-    """Either course or workshop Id """
-    resourceId: String!
-    currency: ISOCurrency!
-  ): InitializePaymentResponse!
-  verifyPayment(reference: String!): VerifyPaymentDTO!
+  initiatePayment(input: InitializePaymentInput!): InitializePaymentResponse!
+  verifyPayment(reference: String!, otp: String!): VerifyPaymentDTO!
 }
 
 input CreateRegisterInput {
@@ -598,6 +598,14 @@ input WorkshopContentInput {
   date: String!
   startTime: String!
   endTime: String!
+}
+
+input InitializePaymentInput {
+  amount: Float!
+  currency: ISOCurrency!
+  bankCode: String!
+  accountNumber: String!
+  birthday: String!
 }
 
 """The enum of supported currencies for transactions"""

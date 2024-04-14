@@ -33,6 +33,7 @@ import { Appointment } from '../../appointment/entities/appointment.entity';
 import VerifyPaymentDTO from '../dto/verify-payment.response';
 import { AppointmentStatus } from '../../appointment/enums/appointment.enum';
 import { Transaction } from '../entities/transaction.entity';
+import { InitializePaymentInput } from '../dto/initialize-payment-input.dto';
 
 @Injectable()
 export class PaymentService {
@@ -77,177 +78,134 @@ export class PaymentService {
     }
   }
 
-  async initiatePayment(
-    amount: number,
-    resourceId: string,
-    resourceType: string,
-    currency: ISOCurrency,
-  ): Promise<InitializePaymentResponse> {
-    await this.validatePaymentInput(resourceId, resourceType);
-    const user = this.request.req.user;
-    let reference = 'ref_' + Date.now();
-    let appointment;
-
-    if (resourceType !== SubscriptionType.MENTORSHIP_APPOINTMENT) {
-      const sub = await this.subscriptionRepository.findOne({
-        where: [
-          {
-            course_id: resourceId,
-            type: resourceType as SubscriptionType,
-            user: { id: user.id },
-          },
-          {
-            workshop_id: resourceId,
-            type: resourceType as SubscriptionType,
-            user: { id: user.id },
-          },
-        ],
-      });
-      if (sub) throw new BadRequestException('Already subscribed');
-    } else if (resourceType == SubscriptionType.MENTORSHIP_APPOINTMENT) {
-      appointment = await Appointment.findOne({ where: { id: resourceId } });
-      if (!appointment) throw new NotFoundException('Appointment not found');
-      reference = appointment.paymentReference;
-    }
-    // Get the currency's exchange rate to NGN
-    const exchangeRate = await this.paystackService.getExchangeRate(currency),
-      amountDesc = new Decimal(amount * exchangeRate);
-
-    const metadata = {
-      resourceId,
-      resourceType: resourceType as SubscriptionType,
-    };
-    let callbackUrl = this.configService.get('PAYMENT_CALLBACK_URL');
-
-    // Cancel exisiting pending payments for the resource
-    this.eventEmitter.emit(EVENTS.CANCEL_EXISTING_PAYMENT, { metadata, user });
-
-    //* create payment record
-    let paymentRecord = this.paymentsRepository.create({
-      amount: Number(amountDesc.toFixed(2)),
-      currency,
-      user_id: user.id,
-      exchange_rate: exchangeRate,
-      reference,
-      metadata,
-    });
-
-    const payload = {
-      amount: Number(new Decimal(Number(amountDesc) * 100).toFixed(2)),
-      email: user.email,
-      currency: ISOCurrency.NGN,
-      callback_url: callbackUrl + `/${reference}`,
-      reference: paymentRecord.reference,
-      metadata,
-    };
+  async initiatePayment(input: InitializePaymentInput) {
     try {
-      const response = await this.paystackService.initializePayment({
-        payload,
+      const user = this.request.req.user;
+      const {
+        data: { display_text, reference, status },
+      } = await this.paystackService.chargeAccount({
+        ...input,
+        email: user.email,
       });
-      if (Boolean(response.status) && response.authorization_url)
-        //save payment record
-        await this.paymentsRepository.save({
-          ...paymentRecord,
-          access_code: response.access_code,
-        });
-      // Todo: send notification to user email with a link to verify their payment
+      return { display_text, reference, status };
+    } catch (error) {
+      this.logger.error('An error occured while initiating transaction', error);
+      if (error.response && error.response.data)
+        // && error.response.status == 400
+        throw new BadRequestException(error.response.data.message);
+      throw new InternalServerErrorException('Something went wrong');
+    }
+  }
+
+  async verifyTransaction(ref: string, otp: string): Promise<VerifyPaymentDTO> {
+    try {
+      const res = await this.paystackService.verifyChargeOTP(ref, otp);
       return {
-        reference,
-        status: String(response.status),
-        authorization_url: response.authorization_url,
+        data: res?.data,
+        reference: res.data.reference,
+        status: res.data.status,
+        display_text: res.data.display_text,
       };
     } catch (error) {
-      // payment record won't be saved
-      console.error(
-        'Payment error:',
-        error.response.data || error.response || error,
-      );
-      const err = new InternalServerErrorException('Payment initiation failed');
-      this.logger.error(error, err.stack);
-      throw err;
-    }
-  }
-
-  async verifyPayment(reference: string): Promise<VerifyPaymentDTO> {
-    const user = this.request.req.user;
-    const paymentRecord = await this.paymentsRepository.findOne({
-      where: { user_id: user.id, reference },
-      relations: ['user'],
-    });
-    if (!paymentRecord)
-      throw new NotFoundException(
-        'We could not find the transaction. The reference you provided might be incorrect',
-      );
-    // check if payment has been processed
-    if (paymentRecord.status === PaymentStatus.SUCCESS)
-      throw new BadRequestException(
-        'Transaction is already completed. Kindly wait for confirmation',
-      );
-    else if (paymentRecord.status === PaymentStatus.FAILED)
-      throw new BadRequestException('Transaction failed. Contact support');
-    else if (paymentRecord.status === PaymentStatus.REVERSED)
-      throw new BadRequestException(
-        'Transaction has been reversed. Contact support if you have any questions.',
-      );
-
-    try {
-      const { status } = await this.paystackService.verifyTransaction(
-        reference,
-      );
-
-      if (status === 'abandoned')
-        throw new UnprocessableEntityException(
-          CustomResponseMessage.getErrorMessage(
-            CustomStatusCodes.ABANDONED_PAYMENT,
-          ).concat(` | ${paymentRecord.access_code}`),
-        );
-
-      if (status !== 'success')
-        throw new UnprocessableEntityException(
-          'This request cannot be processed. The reference you provided might be incorrect',
-        );
-
-      if (
-        paymentRecord.metadata.resourceType ===
-        SubscriptionType.MENTORSHIP_APPOINTMENT
-      ) {
-        paymentRecord.status = PaymentStatus.SUCCESS;
-        await paymentRecord.save();
-        return await this.processAppointmentPayment(paymentRecord);
-      } else {
-        // subscribe to course or workshop
-        let subscription;
-
-        if (paymentRecord.metadata.resourceType === SubscriptionType.COURSE)
-          subscription = await this.subscriptionService.subscribeToCourse(
-            paymentRecord.metadata.resourceId,
-          );
-        else if (
-          paymentRecord.metadata.resourceType === SubscriptionType.WORKSHOP
+      this.logger.error('An error occured while verifying transaction', error);
+      console.log({ error: error.response.data });
+      if (error.response)
+        if (
+          error.response.status == 400 &&
+          error.response.data.message == 'Charge attempted' &&
+          error.response.data.data
         )
-          subscription = await this.subscriptionService.subscribeToWorkshop(
-            paymentRecord.metadata.resourceId,
+          throw new BadRequestException(
+            error.response.data.data.message.includes('Incorrect Token')
+              ? 'Invalid OTP'
+              : error.response.data.data.message,
           );
-        paymentRecord.status = PaymentStatus.SUCCESS;
-        await Payment.update(paymentRecord.id, paymentRecord);
-
-        this.eventEmitter.emit(EVENTS.PAID_COURSE_SUB_SUCCESSFUL, {
-          paymentRecord,
-          subscription,
-        });
-        // console.log({ res: response.data });
-        // return 'Payment Verified';
-        return { subscription };
-      }
-    } catch (error) {
-      console.log({ error });
-      // payment record won't be saved
-      const errMsg = new Error('Payment verification error');
-      this.logger.error(error, errMsg.stack);
-      if (error.status === HttpStatus.UNPROCESSABLE_ENTITY) throw error;
-      throw new InternalServerErrorException(errMsg.message);
+        else if (error.response.status == 400)
+          throw new BadRequestException(error.response.data.message);
+      throw new InternalServerErrorException('Something went wrong', error);
     }
   }
+
+  // async verifyPayment(reference: string): Promise<VerifyPaymentDTO> {
+  //   const user = this.request.req.user;
+  //   const paymentRecord = await this.paymentsRepository.findOne({
+  //     where: { user_id: user.id, reference },
+  //     relations: ['user'],
+  //   });
+  //   if (!paymentRecord)
+  //     throw new NotFoundException(
+  //       'We could not find the transaction. The reference you provided might be incorrect',
+  //     );
+  //   // check if payment has been processed
+  //   if (paymentRecord.status === PaymentStatus.SUCCESS)
+  //     throw new BadRequestException(
+  //       'Transaction is already completed. Kindly wait for confirmation',
+  //     );
+  //   else if (paymentRecord.status === PaymentStatus.FAILED)
+  //     throw new BadRequestException('Transaction failed. Contact support');
+  //   else if (paymentRecord.status === PaymentStatus.REVERSED)
+  //     throw new BadRequestException(
+  //       'Transaction has been reversed. Contact support if you have any questions.',
+  //     );
+
+  //   try {
+  //     const { status } = await this.paystackService.verifyTransaction(
+  //       reference,
+  //     );
+
+  //     if (status === 'abandoned')
+  //       throw new UnprocessableEntityException(
+  //         CustomResponseMessage.getErrorMessage(
+  //           CustomStatusCodes.ABANDONED_PAYMENT,
+  //         ).concat(` | ${paymentRecord.access_code}`),
+  //       );
+
+  //     if (status !== 'success')
+  //       throw new UnprocessableEntityException(
+  //         'This request cannot be processed. The reference you provided might be incorrect',
+  //       );
+
+  //     if (
+  //       paymentRecord.metadata.resourceType ===
+  //       SubscriptionType.MENTORSHIP_APPOINTMENT
+  //     ) {
+  //       paymentRecord.status = PaymentStatus.SUCCESS;
+  //       await paymentRecord.save();
+  //       return await this.processAppointmentPayment(paymentRecord);
+  //     } else {
+  //       // subscribe to course or workshop
+  //       let subscription;
+
+  //       if (paymentRecord.metadata.resourceType === SubscriptionType.COURSE)
+  //         subscription = await this.subscriptionService.subscribeToCourse(
+  //           paymentRecord.metadata.resourceId,
+  //         );
+  //       else if (
+  //         paymentRecord.metadata.resourceType === SubscriptionType.WORKSHOP
+  //       )
+  //         subscription = await this.subscriptionService.subscribeToWorkshop(
+  //           paymentRecord.metadata.resourceId,
+  //         );
+  //       paymentRecord.status = PaymentStatus.SUCCESS;
+  //       await Payment.update(paymentRecord.id, paymentRecord);
+
+  //       this.eventEmitter.emit(EVENTS.PAID_COURSE_SUB_SUCCESSFUL, {
+  //         paymentRecord,
+  //         subscription,
+  //       });
+  //       // console.log({ res: response.data });
+  //       // return 'Payment Verified';
+  //       return { subscription };
+  //     }
+  //   } catch (error) {
+  //     console.log({ error });
+  //     // payment record won't be saved
+  //     const errMsg = new Error('Payment verification error');
+  //     this.logger.error(error, errMsg.stack);
+  //     if (error.status === HttpStatus.UNPROCESSABLE_ENTITY) throw error;
+  //     throw new InternalServerErrorException(errMsg.message);
+  //   }
+  // }
 
   private async processAppointmentPayment(paymentRecord: Payment) {
     const user = this.request.req.user;
