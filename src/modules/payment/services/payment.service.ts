@@ -281,6 +281,12 @@ export class PaymentService {
         });
       }
     }
+    if (
+      paymentRecord.status === PaymentStatus.SUCCESS &&
+      paymentRecord.resourceType == SubscriptionType.MENTORSHIP_APPOINTMENT
+    )
+      await this.processAppointmentPayment(paymentRecord);
+
     return paymentRecord;
   }
 
@@ -297,7 +303,11 @@ export class PaymentService {
   private async processAppointmentPayment(paymentRecord: Payment) {
     const user = this.request.req.user;
     const appointment = await Appointment.findOne({
-      where: { id: paymentRecord.metadata.resourceId, user_id: user.id },
+      where: {
+        id: paymentRecord.resourceId,
+        user_id: user.id,
+        status: AppointmentStatus.AWAITING_PAYMENT,
+      },
       relations: ['mentor', 'mentor.user', 'user'],
     });
     if (!appointment)
