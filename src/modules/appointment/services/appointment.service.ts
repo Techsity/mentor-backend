@@ -91,6 +91,26 @@ export class AppointmentService {
       relations: ['user'],
     });
     if (!mentorProfile) throw new NotFoundException('Mentor not found');
+    const currentAppointment = await this.appointmentRepository.findOne({
+      where: {
+        user: { id: authUser.id },
+        mentor: { id: mentorProfile.id },
+        status: Not(
+          In([
+            AppointmentStatus.DECLINED,
+            AppointmentStatus.PENDING,
+            AppointmentStatus.COMPLETED,
+            AppointmentStatus.CANCELLED_BY_USER,
+            AppointmentStatus.CANCELLED_BY_MENTOR,
+          ]),
+        ),
+      },
+    });
+    // Check if user has a pending appointment
+    if (currentAppointment)
+      throw new BadRequestException(
+        'You already have an appointment with this mentor',
+      );
     const { id, slotIndex } = this.checkAvailability(
       date,
       mentorProfile.availability,
@@ -101,26 +121,7 @@ export class AppointmentService {
         throw new ForbiddenException(
           'You are not allowed to schedule appointments with a premium mentor',
         );
-      const currentAppointment = await this.appointmentRepository.findOne({
-        where: {
-          user: { id: authUser.id },
-          mentor: { id: mentorProfile.id },
-          status: Not(
-            In([
-              AppointmentStatus.DECLINED,
-              AppointmentStatus.PENDING,
-              AppointmentStatus.COMPLETED,
-              AppointmentStatus.CANCELLED_BY_USER,
-              AppointmentStatus.CANCELLED_BY_MENTOR,
-            ]),
-          ),
-        },
-      });
-      // Check if user has a pending appointment
-      if (currentAppointment)
-        throw new BadRequestException(
-          'You already have an appointment with this mentor',
-        );
+
       mentorProfile.availability.forEach((d) => {
         if (d.id === id) d.timeSlots[slotIndex].isOpen = false;
       });
@@ -349,7 +350,11 @@ export class AppointmentService {
     });
     await mentorProfile.save();
     await appointment.save();
-    this.eventEmitter.emit(EVENTS.CANCEL_APPOINTMENT, { appointment, reason });
+    if (appointment.paymentReference)
+      this.eventEmitter.emit(EVENTS.CANCEL_APPOINTMENT, {
+        appointment,
+        reason,
+      });
     //notify mentor and user
     return appointment;
   }

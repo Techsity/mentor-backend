@@ -203,7 +203,7 @@ enum MentorExpLevel {
 
 type AppointmentDTO {
   id: String!
-  paymentReference: String!
+  paymentReference: String
   date: DateTime!
   user: UserDTO
   status: AppointmentStatus!
@@ -511,7 +511,7 @@ type Mutation {
   subscribeToWorkshop(workshopId: String!): Subscription!
   initiatePayment(input: InitializePaymentInput!): InitializePaymentResponse!
   verifyPayment(reference: String!, otp: String!): VerifyPaymentDTO!
-  confirmPendingTransaction(resourceId: String!, reference: String!, resourceType: SubscriptionType!): Payment!
+  confirmPendingTransaction(resourceId: String!, resourceType: SubscriptionType!): Payment!
 }
 
 input CreateRegisterInput {

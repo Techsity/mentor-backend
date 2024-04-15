@@ -219,6 +219,7 @@ export class EventEmitterListeners {
         requestedAt: new Date(),
         userId: appointment.user.id,
       });
+
       let cancelledBy = appointment.status
         .split('_')
         .join(' ')

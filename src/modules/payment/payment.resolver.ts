@@ -37,12 +37,12 @@ export class PaymentResolver {
   @Mutation(() => Payment)
   async confirmPendingTransaction(
     @Args('resourceId') resourceId: string,
-    @Args('reference') reference: string,
+    // @Args('reference') reference: string,
     @Args({ type: () => SubscriptionType, name: 'resourceType' })
     resourceType: SubscriptionType,
   ) {
     return await this.paymentService.confirmPendingTransaction({
-      reference,
+      // reference,
       resourceId,
       resourceType,
     });

@@ -157,7 +157,7 @@ export class PaymentService {
         pendingPayment.accountNumber = input.accountNumber;
         pendingPayment.accountName = isValidAcct.data.account_name;
         pendingPayment.bankCode = input.bankCode;
-        pendingPayment.chargeAttempt = pendingPayment.chargeAttempt + 1;
+        pendingPayment.attempts = pendingPayment.attempts + 1;
         await pendingPayment.save();
       } else {
         await this.paymentsRepository.save({
@@ -250,39 +250,36 @@ export class PaymentService {
   }
 
   async confirmPendingTransaction(input: {
-    reference: string;
+    // reference: string;
     resourceId: string;
     resourceType;
   }): Promise<Payment> {
     const user = this.request.req.user;
-    const { reference, resourceType, resourceId } = input;
+    const { resourceType, resourceId } = input;
     if (!isUUID(resourceId))
       throw new BadRequestException('resourceId must be a valid uuid');
-    if (!isEnum(resourceType, SubscriptionType))
-      throw new BadRequestException(
-        `Invalid resourceType | Expected either 'course' or 'workshop' or 'mentorship_appointment'`,
-      );
+
     const paymentRecord = await this.paymentsRepository.findOne({
-      where: { reference, resourceId, resourceType },
+      where: { resourceId, resourceType, user_id: user.id },
     });
-    if (!paymentRecord) throw new UnprocessableEntityException();
-    const isCompleted = await this.paystackService.confirmPendingCharge(
-      paymentRecord.reference,
-    );
-    // console.log({ isCompleted });
-    if (isCompleted.data.status !== 'success')
-      throw new UnprocessableEntityException(
-        'Payment has not been verified. Please contact support.',
+    if (!paymentRecord)
+      throw new UnprocessableEntityException('No payment record found');
+    if (paymentRecord.status !== PaymentStatus.SUCCESS) {
+      const isCompleted = await this.paystackService.confirmPendingCharge(
+        paymentRecord.reference,
       );
-    if (isCompleted.data.status === 'success') {
-      if (paymentRecord.status !== PaymentStatus.SUCCESS) {
+      if (isCompleted.data.status !== 'success') return paymentRecord;
+      // throw new UnprocessableEntityException(
+      //   'Payment has not been verified. Please contact support.',
+      // );
+      if (isCompleted.data.status === 'success') {
         paymentRecord.status = PaymentStatus.SUCCESS;
         await paymentRecord.save();
+        this.eventEmitter.emit(EVENTS.NOTIFY_MENTOR_SUBSCRIPTION_PAYMENT, {
+          reference: paymentRecord.reference,
+          user,
+        });
       }
-      this.eventEmitter.emit(EVENTS.NOTIFY_MENTOR_SUBSCRIPTION_PAYMENT, {
-        reference: paymentRecord.reference,
-        user,
-      });
     }
     return paymentRecord;
   }

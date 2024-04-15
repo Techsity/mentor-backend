@@ -78,7 +78,7 @@ export class Payment extends BaseEntity {
   bankCode: string;
 
   @Column('int', { default: 0 })
-  chargeAttempt: number;
+  attempts: number;
 
   @Field(() => PAYMENT_CHANNELS)
   @Column({
