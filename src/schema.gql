@@ -323,16 +323,6 @@ type WorkshopDto {
   updated_at: DateTime!
 }
 
-type SubscriptionDto {
-  id: String!
-  type: String!
-  course: CourseDto
-  workshop: WorkshopDto
-  is_completed: Boolean!
-  created_at: DateTime!
-  updated_at: DateTime!
-}
-
 type Payment {
   id: ID!
   reference: String!
@@ -374,6 +364,16 @@ enum Payment_status {
   CANCELLED
   ABANDONED
   REVERSED
+}
+
+type SubscriptionDto {
+  id: String!
+  type: String!
+  course: CourseDto
+  workshop: WorkshopDto
+  is_completed: Boolean!
+  created_at: DateTime!
+  updated_at: DateTime!
 }
 
 type InitializePaymentResponse {

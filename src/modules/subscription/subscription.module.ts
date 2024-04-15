@@ -6,13 +6,14 @@ import { SubscriptionResolver } from './resolvers/subscription.resolver';
 import { UserModule } from '../user/user.module';
 import { CourseModule } from '../course/course.module';
 import { WorkshopModule } from '../workshop/workshop.module';
+import { Payment } from '../payment/entities/payment.entity';
 
 @Module({
   imports: [
     forwardRef(() => UserModule),
     CourseModule,
     WorkshopModule,
-    TypeOrmModule.forFeature([Subscription]),
+    TypeOrmModule.forFeature([Subscription, Payment]),
   ],
   providers: [SubscriptionResolver, SubscriptionService],
   exports: [TypeOrmModule.forFeature([Subscription]), SubscriptionService],

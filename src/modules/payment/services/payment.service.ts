@@ -107,7 +107,6 @@ export class PaymentService {
 
   async initiatePayment(input: InitializePaymentInput) {
     const user = this.request.req.user;
-
     try {
       await this.resourceValidation(input.resourceId, input.resourceType);
       const isValidAcct = await this.paystackService.validateAccount(
@@ -120,28 +119,46 @@ export class PaymentService {
       // const rate = await this.paystackService.getExchangeRate(input.currency);
       // console.log({ rate });
       // console.log({ amount: input.amount, exchanged: input.amount * rate });
+
+      // check
+      const exisitingSuccessPayment = await this.paymentsRepository.findOne({
+        where: {
+          resourceId: input.resourceId,
+          user_id: user.id,
+          status: PaymentStatus.SUCCESS,
+        },
+      });
+
+      if (exisitingSuccessPayment) {
+        return {
+          display_text: 'Approved',
+          reference: exisitingSuccessPayment.reference,
+          status: 'success',
+        };
+      }
+
       const {
         data: { display_text, reference, status },
       } = await this.paystackService.chargeAccount({
         ...input,
         email: user.email,
       });
-      const exisitingPayment = await this.paymentsRepository.findOne({
+      const pendingPayment = await this.paymentsRepository.findOne({
         where: {
           resourceId: input.resourceId,
           user_id: user.id,
           status: PaymentStatus.PENDING,
         },
       });
-      if (exisitingPayment) {
-        exisitingPayment.reference = reference;
-        exisitingPayment.amount = input.amount;
-        exisitingPayment.currency = input.currency;
-        exisitingPayment.accountNumber = input.accountNumber;
-        exisitingPayment.accountName = isValidAcct.data.account_name;
-        exisitingPayment.bankCode = input.bankCode;
-        exisitingPayment.chargeAttempt = exisitingPayment.chargeAttempt++;
-        await exisitingPayment.save();
+      if (pendingPayment) {
+        pendingPayment.reference = reference;
+        pendingPayment.amount = input.amount;
+        pendingPayment.currency = input.currency;
+        pendingPayment.accountNumber = input.accountNumber;
+        pendingPayment.accountName = isValidAcct.data.account_name;
+        pendingPayment.bankCode = input.bankCode;
+        pendingPayment.chargeAttempt = pendingPayment.chargeAttempt + 1;
+        await pendingPayment.save();
       } else {
         await this.paymentsRepository.save({
           user,
@@ -175,6 +192,14 @@ export class PaymentService {
 
   async verifyTransaction(ref: string, otp: string): Promise<VerifyPaymentDTO> {
     const user = this.request.req.user;
+    const payment = await this.paymentsRepository.findOne({
+      where: {
+        reference: ref,
+        user_id: user.id,
+        status: PaymentStatus.PENDING,
+      },
+    });
+    if (!payment) throw new UnprocessableEntityException();
     try {
       let {
         data: {
