@@ -203,7 +203,7 @@ enum MentorExpLevel {
 
 type AppointmentDTO {
   id: String!
-  paymentReference: String!
+  paymentReference: String
   date: DateTime!
   user: UserDTO
   status: AppointmentStatus!
@@ -323,6 +323,49 @@ type WorkshopDto {
   updated_at: DateTime!
 }
 
+type Payment {
+  id: ID!
+  reference: String!
+  amount: Float!
+  resourceId: ID!
+  resourceType: SubscriptionType!
+  currency: ISOCurrency!
+  accountNumber: String!
+  accountName: String!
+  bankCode: String!
+  channel: Payment_channels!
+  status: Payment_status!
+  created_at: DateTime!
+}
+
+"""The enum of supported currencies for transactions"""
+enum ISOCurrency {
+  NGN
+  USD
+  GHS
+  ZAR
+  KES
+}
+
+enum Payment_channels {
+  CARD
+  BANK
+  USSD
+  QR_CODE
+  BANK_TRANSFER
+  MOBILE_MONEY
+  WALLET
+}
+
+enum Payment_status {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+  ABANDONED
+  REVERSED
+}
+
 type SubscriptionDto {
   id: String!
   type: String!
@@ -334,14 +377,34 @@ type SubscriptionDto {
 }
 
 type InitializePaymentResponse {
-  authorization_url: String
+  display_text: String
   reference: String
   status: String
 }
 
+type VerifyPaymentData {
+  status: String!
+  reference: String!
+  amount: Float
+  gateway_response: String
+}
+
 type VerifyPaymentDTO {
-  subscription: SubscriptionDto
-  appointment: AppointmentDTO
+  display_text: String
+  reference: String
+  status: String
+  data: VerifyPaymentData
+}
+
+type BankDTO {
+  name: String!
+  slug: String!
+  code: String!
+  longcode: String!
+  pay_with_bank: Boolean!
+  active: Boolean!
+  is_deleted: Boolean!
+  id: Int!
 }
 
 input SkillInput {
@@ -411,6 +474,7 @@ type Query {
   viewWorkshop(workshopId: String!): WorkshopDto!
   viewSubscriptions(subscriptionType: String!): [SubscriptionDto!]!
   viewSubscription(resourceId: String!, subscriptionType: SubscriptionType!): SubscriptionDto!
+  fetchBanks: [BankDTO!]!
 }
 
 """Course types"""
@@ -445,17 +509,9 @@ type Mutation {
   createWorkshop(input: CreateWorkshopInput!): WorkshopDto!
   subscribeToCourse(courseId: String!): Subscription!
   subscribeToWorkshop(workshopId: String!): Subscription!
-  initiatePayment(
-    amount: Float!
-
-    """A value from the SubscriptionType enum"""
-    resourceType: String!
-
-    """Either course or workshop Id """
-    resourceId: String!
-    currency: ISOCurrency!
-  ): InitializePaymentResponse!
-  verifyPayment(reference: String!): VerifyPaymentDTO!
+  initiatePayment(input: InitializePaymentInput!): InitializePaymentResponse!
+  verifyPayment(reference: String!, otp: String!): VerifyPaymentDTO!
+  confirmPendingTransaction(resourceId: String!, resourceType: SubscriptionType!): Payment!
 }
 
 input CreateRegisterInput {
@@ -600,11 +656,12 @@ input WorkshopContentInput {
   endTime: String!
 }
 
-"""The enum of supported currencies for transactions"""
-enum ISOCurrency {
-  NGN
-  USD
-  GHS
-  ZAR
-  KES
+input InitializePaymentInput {
+  amount: Float!
+  currency: ISOCurrency!
+  bankCode: String!
+  accountNumber: String!
+  birthday: String!
+  resourceId: String!
+  resourceType: SubscriptionType!
 }

@@ -11,7 +11,7 @@ export class AppointmentDTO {
   @Field()
   id: string;
 
-  @Field()
+  @Field({ nullable: true })
   paymentReference: string;
 
   @Field()

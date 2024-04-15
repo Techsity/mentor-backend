@@ -9,7 +9,6 @@ import { NotificationService } from 'src/modules/notification/notification.servi
 import { FollowersNotificationInterface } from 'src/modules/notification/types';
 import { Payment } from 'src/modules/payment/entities/payment.entity';
 import { PaymentStatus } from 'src/modules/payment/enum';
-import { Subscription } from 'src/modules/subscription/entities/subscription.entity';
 import { User } from 'src/modules/user/entities/user.entity';
 import { WalletService } from 'src/modules/wallet/wallet.service';
 
@@ -53,62 +52,53 @@ export class EventEmitterListeners {
     }
   }
 
-  @OnEvent(EVENTS.PAID_COURSE_SUB_SUCCESSFUL)
-  async processPaidCourseSubscription({
-    paymentRecord: payment,
-    subscription,
-  }: {
-    paymentRecord: Payment;
-    subscription: Subscription;
-  }) {
-    try {
-      const mentor = subscription.course.mentor || subscription.workshop.mentor;
-      const resource = subscription.course || subscription.workshop;
-      // notify mentor of the subscription
-      this.notificationService.create(mentor.user, {
-        body: `User ( ${
-          subscription.user.name
-        }) subscribed to your paid ${payment.metadata.resourceType.toLowerCase()} -  ${
-          resource.title
-        }`,
-        title: `${
-          payment.metadata.resourceType.charAt(0).toUpperCase() +
-          payment.metadata.resourceType.slice(1).toLowerCase()
-        } subscription`,
-      });
-      // fund mentor wallet
-      this.walletService.creditWallet(mentor.id, payment.amount);
-    } catch (error) {
-      const err = new Error(error);
-      this.logger.error(
-        'Error processing paid course subscription: ' + err.message,
-        err.stack,
-      );
-    }
-  }
-
-  @OnEvent(EVENTS.CANCEL_EXISTING_PAYMENT)
-  async cancelPendingPayment({
-    metadata,
+  @OnEvent(EVENTS.NOTIFY_MENTOR_SUBSCRIPTION_PAYMENT)
+  async processPaidSubscription({
+    reference,
     user,
   }: {
-    metadata: Payment['metadata'];
+    reference: string;
     user: User;
   }) {
     try {
-      const payments = await Payment.find({
-        where: { metadata, user_id: user.id },
-      });
-      for (const paymentRecord of payments) {
-        if (paymentRecord && paymentRecord.status !== PaymentStatus.SUCCESS) {
-          paymentRecord.status = PaymentStatus.CANCELLED;
-          await paymentRecord.save();
-        }
+      const paymentRecord = await Payment.findOne({ where: { reference } });
+      // console.log('event:', { paymentRecord, user });
+      let exisitingSub;
+      exisitingSub = user.subscriptions.find(
+        (sub) =>
+          sub.course_id === paymentRecord.resourceId ||
+          sub.workshop_id === paymentRecord.resourceId,
+      );
+      if (!exisitingSub)
+        exisitingSub = user.appointments.find(
+          (sub) => sub.id === paymentRecord.resourceId,
+        );
+      if (!exisitingSub) {
       }
+      console.log({ exisitingSub });
+
+      // const mentor = subscription.course.mentor || subscription.workshop.mentor;
+      // const resource = subscription.course || subscription.workshop;
+      // // notify mentor of the subscription
+      // this.notificationService.create(mentor.user, {
+      //   body: `User ( ${
+      //     subscription.user.name
+      //   }) subscribed to your paid ${payment.metadata.resourceType.toLowerCase()} -  ${
+      //     resource.title
+      //   }`,
+      //   title: `${
+      //     payment.metadata.resourceType.charAt(0).toUpperCase() +
+      //     payment.metadata.resourceType.slice(1).toLowerCase()
+      //   } subscription`,
+      // });
+      // // fund mentor wallet
+      // this.walletService.creditWallet(mentor.id, payment.amount);
     } catch (error) {
-      console.log({ error });
-      const stack = new Error();
-      this.logger.error('Error procssing payment cancellation', stack);
+      const err = new Error(error);
+      this.logger.error(
+        'Error processing paid subscription: ' + err.message,
+        err.stack,
+      );
     }
   }
 
@@ -149,7 +139,7 @@ export class EventEmitterListeners {
       relations: ['user', 'mentor', 'mentor.user'],
     });
     // // Update status
-    // appointmentRecord.status = AppointmentStatus.ACCEPTED;
+    appointmentRecord.status = AppointmentStatus.ACCEPTED;
 
     // // Todo: check if the appointment date has expired, then postpone to the following week and send notifications to user
     // const currentDate = new Date();
@@ -163,19 +153,18 @@ export class EventEmitterListeners {
     //   appointmentRecord.reschedule_count =
     //     appointmentRecord.reschedule_count + 1;
     // }
-    // await appointmentRecord.save();
-    // console.log(appointmentRecord.date.toString());
+    await appointmentRecord.save();
     // Schedule notification and send notification to user
     this.appointmentQueueService.scheduleNotification({
       appointment: appointmentRecord,
     });
-    // this.notificationService.create(appointmentRecord.user, {
-    //   title: 'Mentorship Request Accepted',
-    //   body: `${
-    //     appointment.mentor.user.name
-    //   } has accepted your mentorship session request! Session is scheduled for ${appointmentRecord.date.toString()} by ${appointmentRecord.date.toTimeString()}. You will be notified before the session starts.`,
-    //   sendEmail: true,
-    // });
+    this.notificationService.create(appointmentRecord.user, {
+      title: 'Mentorship Request Accepted',
+      body: `${
+        appointment.mentor.user.name
+      } has accepted your mentorship session request! Session is scheduled for ${appointmentRecord.date.toString()} by ${appointmentRecord.date.toTimeString()}. You will be notified before the session starts.`,
+      sendEmail: true,
+    });
   }
 
   @OnEvent(EVENTS.APPOINTMENT_RESCHEDULE)
@@ -223,6 +212,14 @@ export class EventEmitterListeners {
     reason: string;
   }) {
     try {
+      await AppointmentRefundRequest.save({
+        appointment,
+        paymentReference: appointment.paymentReference,
+        reason,
+        requestedAt: new Date(),
+        userId: appointment.user.id,
+      });
+
       let cancelledBy = appointment.status
         .split('_')
         .join(' ')
@@ -231,7 +228,7 @@ export class EventEmitterListeners {
       const title = 'Mentorship Session Cancelled';
       let msg;
       if (cancelledBy === 'user') {
-        msg = `The appointment with ${
+        msg = `Your appointment with ${
           appointment.user.name
         } scheduled for ${appointment.date.toString()} has been cancelled by ${
           appointment.user.name
@@ -243,18 +240,18 @@ export class EventEmitterListeners {
         });
         msg = `You have cancelled your appointment with ${
           appointment.mentor.user.name
-        } scheduled for ${appointment.date.toString()}.`;
+        } scheduled for ${appointment.date.toString()}. If your payment was successful, it will be refunded within 5-business days.`;
         this.notificationService.create(appointment.user, {
           title,
           body: msg,
           sendEmail: true,
         });
       } else if (cancelledBy === 'mentor') {
-        msg = `The appointment with ${
+        msg = `Your appointment with ${
           appointment.mentor.user.name
         } scheduled for ${appointment.date.toString()} has been cancelled by ${
           appointment.mentor.user.name
-        }.`;
+        }. If your payment was successful, it will be refunded within 5-business days.`;
         this.notificationService.create(appointment.user, {
           title,
           body: msg,
@@ -269,13 +266,6 @@ export class EventEmitterListeners {
           sendEmail: true,
         });
       }
-      await AppointmentRefundRequest.save({
-        appointment,
-        paymentReference: appointment.paymentReference,
-        reason,
-        requestedAt: new Date(),
-        userId: appointment.user.id,
-      });
     } catch (error) {
       const stack = new Error().stack;
       this.logger.error(error, stack);

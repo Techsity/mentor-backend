@@ -1,9 +1,11 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Inject,
   Injectable,
   Logger,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,6 +16,8 @@ import { isEnum, isUUID } from 'class-validator';
 import { CustomStatusCodes } from 'src/common/constants';
 import { Workshop } from 'src/modules/workshop/entities/workshop.entity';
 import { SubscriptionType } from '../enums/subscription.enum';
+import { Payment } from 'src/modules/payment/entities/payment.entity';
+import { PaymentStatus } from 'src/modules/payment/enum';
 
 @Injectable()
 export class SubscriptionService {
@@ -26,6 +30,8 @@ export class SubscriptionService {
     private courseRepository: Repository<Course>,
     @InjectRepository(Workshop)
     private workshopRepository: Repository<Workshop>,
+    @InjectRepository(Payment)
+    private paymentsRepository: Repository<Payment>,
   ) {}
 
   async viewSubscriptions(subscriptionType: SubscriptionType): Promise<any> {
@@ -143,14 +149,27 @@ export class SubscriptionService {
   }
 
   async subscribeToCourse(courseId: string) {
+    const authUser = this.request.req.user;
     if (!isUUID(courseId)) throw new BadRequestException('Invalid Course ID');
+
     try {
-      const authUser = this.request.req.user;
       const course = await this.courseRepository.findOne({
         where: { id: courseId },
         relations: ['mentor.user'],
       });
       if (!course) throw new NotFoundException('Course not found');
+      if (course.price > 0) {
+        const paymentRecord = await this.paymentsRepository.findOne({
+          where: {
+            resourceId: courseId,
+            resourceType: SubscriptionType.COURSE,
+            user_id: authUser.id,
+          },
+        });
+        if (!paymentRecord) throw new ForbiddenException();
+        if (paymentRecord.status !== PaymentStatus.SUCCESS)
+          throw new UnprocessableEntityException();
+      }
       if (course.mentor.user.id === authUser.id)
         throw new BadRequestException("You can't subscribe to your own course");
       let sub = await this.subscriptionRepository.findOne({
@@ -182,6 +201,18 @@ export class SubscriptionService {
         relations: ['mentor.user'],
       });
       if (!workshop) throw new NotFoundException('Workshop not found');
+      if (workshop.price > 0) {
+        const paymentRecord = await this.paymentsRepository.findOne({
+          where: {
+            resourceId: workshop.id,
+            resourceType: SubscriptionType.WORKSHOP,
+            user_id: authUser.id,
+          },
+        });
+        if (!paymentRecord) throw new ForbiddenException();
+        if (paymentRecord.status !== PaymentStatus.SUCCESS)
+          throw new UnprocessableEntityException();
+      }
       if (workshop.mentor.user.id === authUser.id)
         throw new BadRequestException(
           "You can't subscribe to your own workshop",

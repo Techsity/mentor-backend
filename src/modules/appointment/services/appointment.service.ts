@@ -22,6 +22,7 @@ import { PaymentStatus } from 'src/modules/payment/enum';
 import { UserAvailability } from 'src/modules/mentor/types/mentor.type';
 import { daysOfTheWeek, RESCHDULE_THRESHOLD } from 'src/common/constants';
 import { AppointmentRefundRequest } from '../entities/appointment-refund-request.entity';
+import { PaymentService } from 'src/modules/payment/services/payment.service';
 
 @Injectable()
 export class AppointmentService {
@@ -69,6 +70,7 @@ export class AppointmentService {
         "Session not available on mentor's availability schedule",
       );
     if (!slot.isOpen) throw new BadRequestException('Session is booked');
+
     return { id, day, slot, slotIndex };
   }
 
@@ -76,7 +78,6 @@ export class AppointmentService {
    *
    * @param input
    * @param mentor
-   * TODO: Send email to both users, integrate payment
    */
 
   async createAppointment(input: CreateAppointmentInput, mentor: string) {
@@ -90,11 +91,30 @@ export class AppointmentService {
       relations: ['user'],
     });
     if (!mentorProfile) throw new NotFoundException('Mentor not found');
+    const currentAppointment = await this.appointmentRepository.findOne({
+      where: {
+        user: { id: authUser.id },
+        mentor: { id: mentorProfile.id },
+        status: Not(
+          In([
+            AppointmentStatus.DECLINED,
+            AppointmentStatus.PENDING,
+            AppointmentStatus.COMPLETED,
+            AppointmentStatus.CANCELLED_BY_USER,
+            AppointmentStatus.CANCELLED_BY_MENTOR,
+          ]),
+        ),
+      },
+    });
+    // Check if user has a pending appointment
+    if (currentAppointment)
+      throw new BadRequestException(
+        'You already have an appointment with this mentor',
+      );
     const { id, slotIndex } = this.checkAvailability(
       date,
       mentorProfile.availability,
     );
-
     try {
       // Check if user is a premium user
       if (!authUser.isPremium && mentorProfile.user.isPremium)
@@ -102,28 +122,6 @@ export class AppointmentService {
           'You are not allowed to schedule appointments with a premium mentor',
         );
 
-      const currentAppointment = await this.appointmentRepository.findOne({
-        where: {
-          user: { id: authUser.id },
-          mentor: { id: mentorProfile.id },
-          status: Not(
-            In([
-              AppointmentStatus.DECLINED,
-              AppointmentStatus.PENDING,
-              AppointmentStatus.COMPLETED,
-              AppointmentStatus.CANCELLED_BY_USER,
-              AppointmentStatus.CANCELLED_BY_MENTOR,
-            ]),
-          ),
-        },
-      });
-
-      // Check if user has a pending appointment
-      if (currentAppointment)
-        throw new BadRequestException(
-          'You already have an appointment with this mentor',
-        );
-      const reference = 'ref_' + Date.now();
       mentorProfile.availability.forEach((d) => {
         if (d.id === id) d.timeSlots[slotIndex].isOpen = false;
       });
@@ -132,7 +130,6 @@ export class AppointmentService {
         date: new Date(date),
         mentor: mentorProfile,
         user: authUser,
-        paymentReference: reference,
       });
       return appointment;
     } catch (error) {
@@ -170,16 +167,21 @@ export class AppointmentService {
     try {
       if (!isUUID(appointmentId))
         throw new BadRequestException('Invalid appointmentId');
+      const opts = {
+        id: appointmentId,
+        // status: Not(
+        //   In([
+        //     AppointmentStatus.CANCELLED_BY_MENTOR,
+        //     AppointmentStatus.CANCELLED_BY_USER,
+        //   ]),
+        // ),
+      };
       const appointment = await this.appointmentRepository.findOne({
-        where: {
-          id: appointmentId,
-          user_id: authUser.id,
-          status: Not(
-            AppointmentStatus.CANCELLED_BY_MENTOR ||
-              AppointmentStatus.CANCELLED_BY_USER,
-          ),
-        },
-        relations: ['mentor', 'mentor.user'],
+        where: [
+          { ...opts, mentor: { user: { id: authUser.id } } },
+          { ...opts, user_id: authUser.id },
+        ],
+        relations: ['mentor', 'mentor.user', 'user'],
       });
       if (!appointment) throw new BadRequestException('Appointment not found');
       return appointment;
@@ -214,6 +216,10 @@ export class AppointmentService {
       throw new BadRequestException(
         `This appointment has already being ${cancelledBy}`,
       );
+    } else if (appointment.status === AppointmentStatus.COMPLETED) {
+      throw new BadRequestException(
+        `This appointment has already being concluded`,
+      );
     }
     if (appointment.status === AppointmentStatus.PENDING)
       this.eventEmitter.emit(EVENTS.MENTOR_ACCEPT_APPOINTMENT, { appointment });
@@ -247,6 +253,11 @@ export class AppointmentService {
       throw new BadRequestException(
         'Limit reached. No further rescheduling is allowed for this appointment',
       );
+    else if (appointment.status === AppointmentStatus.COMPLETED) {
+      throw new BadRequestException(
+        `This appointment has already being concluded`,
+      );
+    }
 
     let mentorProfile = await this.mentorRepository.findOneBy({
       user: { id: user.id },
@@ -306,6 +317,10 @@ export class AppointmentService {
         // `This appointment has already been ${cancelledBy}`,
         `This appointment has already been cancelled`,
       );
+    } else if (appointment.status === AppointmentStatus.COMPLETED) {
+      throw new BadRequestException(
+        `This appointment has already being concluded`,
+      );
     }
     let mentorProfile = await this.mentorRepository.findOne({
       where: { user: { id: user.id } },
@@ -335,7 +350,11 @@ export class AppointmentService {
     });
     await mentorProfile.save();
     await appointment.save();
-    this.eventEmitter.emit(EVENTS.CANCEL_APPOINTMENT, { appointment, reason });
+    if (appointment.paymentReference)
+      this.eventEmitter.emit(EVENTS.CANCEL_APPOINTMENT, {
+        appointment,
+        reason,
+      });
     //notify mentor and user
     return appointment;
   }

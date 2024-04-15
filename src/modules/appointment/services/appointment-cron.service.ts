@@ -16,7 +16,8 @@ export class AppointmentCronService {
   //   console.log(CronExpression.EVERY_SECOND);
   // }
   // Todo: implement a cron that runs every midnight:
+  //* to check appointment that are still pending, but 'createdAt' is past a day, then delete appointment and send notification to user email and set payment to failed
+  async deleteStalledAppointment() {}
   //* to check appointment that are awaiting funds - get appointment and payment record and send a payment link to the user's email
-  //* to check appointment that are still pending, but date is past a day, then set as overdue and send reminder notification to mentor's email - update status to overdue, update reschedule count, update date to the following week
   //* to check appointment that has status accepted, but date is past a day, then set status to no-show and send reminder notification to mentor's email, update reschedule count, update date to the following week
 }

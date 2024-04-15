@@ -17,8 +17,13 @@ import { isEnum, isUUID } from 'class-validator';
 import { SubscriptionType } from '../../subscription/enums/subscription.enum';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Payment } from '../entities/payment.entity';
-import { FindOptionsWhere, Repository } from 'typeorm';
-import { PaymentStatus, TransactionStatus, TransactionType } from '../enum';
+import { FindOptionsWhere, In, Not, Repository } from 'typeorm';
+import {
+  PAYMENT_CHANNELS,
+  PaymentStatus,
+  TransactionStatus,
+  TransactionType,
+} from '../enum';
 import { Workshop } from '../../workshop/entities/workshop.entity';
 import { Course } from '../../course/entities/course.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -30,9 +35,10 @@ import PaystackProvider from 'src/providers/paystack/paystack.provider';
 import Decimal from 'decimal.js';
 import { ISOCurrency } from '../types/payment.type';
 import { Appointment } from '../../appointment/entities/appointment.entity';
-import VerifyPaymentDTO from '../dto/verify-payment.response';
+import VerifyPaymentDTO from '../dto/verify-payment.response.dto';
 import { AppointmentStatus } from '../../appointment/enums/appointment.enum';
 import { Transaction } from '../entities/transaction.entity';
+import { InitializePaymentInput } from '../dto/initialize-payment-input.dto';
 
 @Injectable()
 export class PaymentService {
@@ -57,202 +63,251 @@ export class PaymentService {
     private paystackService: PaystackProvider,
   ) {}
 
-  private async validatePaymentInput(resourceId: string, resourceType: string) {
-    // Validate input
-    if (!isEnum(resourceType, SubscriptionType))
-      throw new BadRequestException(
-        `Invalid resourceType | Expected either 'course' or 'workshop' o 'mentorship_appointment'`,
-      );
-    if (!isUUID(resourceId))
-      throw new BadRequestException(`Invalid ${resourceType} Id`);
+  private async resourceValidation(
+    resourceId: string,
+    resourceType: SubscriptionType,
+  ) {
+    const user = this.request.req.user;
     // confirm if course or workshop exist
+    let resource;
     if (resourceType !== SubscriptionType.MENTORSHIP_APPOINTMENT) {
-      let resource;
-      if (resourceType === SubscriptionType.COURSE)
+      if (resourceType === SubscriptionType.COURSE) {
         resource = await this.courseRepository.findOneBy({ id: resourceId });
-      else if (resourceType === SubscriptionType.WORKSHOP)
+      } else if (resourceType === SubscriptionType.WORKSHOP) {
         resource = await this.workshopRepository.findOneBy({ id: resourceId });
-      if (!resource)
-        throw new BadRequestException(`Invalid ${resourceType} Id`);
+      }
+      if (!resource) throw new BadRequestException(`Unknown resource`);
+    }
+    //   if (
+    //     user.subscriptions.some(
+    //       (sub) =>
+    //         sub.course_id === resourceId || sub.workshop_id === resourceId,
+    //     )
+    //   )
+    //     throw new BadRequestException(
+    //       `You have already subscribed to this ${resourceType.toLowerCase()}`,
+    //     );
+    // if (resourceType == SubscriptionType.MENTORSHIP_APPOINTMENT) {
+    //   resource = await Appointment.findOne({
+    //     where: {
+    //       id: resourceId,
+    //       user_id: user.id,
+    //       status: In([
+    //         AppointmentStatus.PENDING,
+    //         AppointmentStatus.AWAITING_PAYMENT,
+    //       ]),
+    //     },
+    //   });
+    //   if (resource)
+    //     throw new BadRequestException(
+    //       `You already have an appointment with this mentor`,
+    //     );
+    // }
+  }
+
+  async initiatePayment(input: InitializePaymentInput) {
+    const user = this.request.req.user;
+    try {
+      await this.resourceValidation(input.resourceId, input.resourceType);
+      const isValidAcct = await this.paystackService.validateAccount(
+        input.accountNumber,
+        input.bankCode,
+      );
+      if (!isValidAcct.status)
+        throw new BadRequestException('Invalid bank account details');
+
+      // const rate = await this.paystackService.getExchangeRate(input.currency);
+      // console.log({ rate });
+      // console.log({ amount: input.amount, exchanged: input.amount * rate });
+
+      // check
+      const exisitingSuccessPayment = await this.paymentsRepository.findOne({
+        where: {
+          resourceId: input.resourceId,
+          user_id: user.id,
+          status: PaymentStatus.SUCCESS,
+        },
+      });
+
+      if (exisitingSuccessPayment) {
+        return {
+          display_text: 'Approved',
+          reference: exisitingSuccessPayment.reference,
+          status: 'success',
+        };
+      }
+
+      const {
+        data: { display_text, reference, status },
+      } = await this.paystackService.chargeAccount({
+        ...input,
+        email: user.email,
+      });
+      const pendingPayment = await this.paymentsRepository.findOne({
+        where: {
+          resourceId: input.resourceId,
+          user_id: user.id,
+          status: PaymentStatus.PENDING,
+        },
+      });
+      if (pendingPayment) {
+        pendingPayment.reference = reference;
+        pendingPayment.amount = input.amount;
+        pendingPayment.currency = input.currency;
+        pendingPayment.accountNumber = input.accountNumber;
+        pendingPayment.accountName = isValidAcct.data.account_name;
+        pendingPayment.bankCode = input.bankCode;
+        pendingPayment.attempts = pendingPayment.attempts + 1;
+        await pendingPayment.save();
+      } else {
+        await this.paymentsRepository.save({
+          user,
+          currency: input.currency,
+          channel: PAYMENT_CHANNELS.BANK,
+          amount: input.amount,
+          accountNumber: input.accountNumber,
+          accountName: isValidAcct.data.account_name,
+          bankCode: input.bankCode,
+          reference,
+          resourceId: input.resourceId,
+          resourceType: input.resourceType,
+        });
+      }
+      return { display_text, reference, status };
+    } catch (error) {
+      this.logger.error('An error occured while initiating transaction', error);
+      if (error.response && error.response.data) {
+        console.log({ error: error.response.data });
+        // && error.response.status == 400
+        throw new BadRequestException(
+          error.response.data?.data
+            ? error.response.data?.data.message
+            : error.response.data.message,
+        );
+      }
+      console.error({ error });
+      throw new InternalServerErrorException('Something went wrong');
     }
   }
 
-  async initiatePayment(
-    amount: number,
-    resourceId: string,
-    resourceType: string,
-    currency: ISOCurrency,
-  ): Promise<InitializePaymentResponse> {
-    await this.validatePaymentInput(resourceId, resourceType);
+  async verifyTransaction(ref: string, otp: string): Promise<VerifyPaymentDTO> {
     const user = this.request.req.user;
-    let reference = 'ref_' + Date.now();
-    let appointment;
-
-    if (resourceType !== SubscriptionType.MENTORSHIP_APPOINTMENT) {
-      const sub = await this.subscriptionRepository.findOne({
-        where: [
-          {
-            course_id: resourceId,
-            type: resourceType as SubscriptionType,
-            user: { id: user.id },
-          },
-          {
-            workshop_id: resourceId,
-            type: resourceType as SubscriptionType,
-            user: { id: user.id },
-          },
-        ],
-      });
-      if (sub) throw new BadRequestException('Already subscribed');
-    } else if (resourceType == SubscriptionType.MENTORSHIP_APPOINTMENT) {
-      appointment = await Appointment.findOne({ where: { id: resourceId } });
-      if (!appointment) throw new NotFoundException('Appointment not found');
-      reference = appointment.paymentReference;
-    }
-    // Get the currency's exchange rate to NGN
-    const exchangeRate = await this.paystackService.getExchangeRate(currency),
-      amountDesc = new Decimal(amount * exchangeRate);
-
-    const metadata = {
-      resourceId,
-      resourceType: resourceType as SubscriptionType,
-    };
-    let callbackUrl = this.configService.get('PAYMENT_CALLBACK_URL');
-
-    // Cancel exisiting pending payments for the resource
-    this.eventEmitter.emit(EVENTS.CANCEL_EXISTING_PAYMENT, { metadata, user });
-
-    //* create payment record
-    let paymentRecord = this.paymentsRepository.create({
-      amount: Number(amountDesc.toFixed(2)),
-      currency,
-      user_id: user.id,
-      exchange_rate: exchangeRate,
-      reference,
-      metadata,
+    const payment = await this.paymentsRepository.findOne({
+      where: {
+        reference: ref,
+        user_id: user.id,
+        status: PaymentStatus.PENDING,
+      },
     });
-
-    const payload = {
-      amount: Number(new Decimal(Number(amountDesc) * 100).toFixed(2)),
-      email: user.email,
-      currency: ISOCurrency.NGN,
-      callback_url: callbackUrl + `/${reference}`,
-      reference: paymentRecord.reference,
-      metadata,
-    };
+    if (!payment) throw new UnprocessableEntityException();
     try {
-      const response = await this.paystackService.initializePayment({
-        payload,
-      });
-      if (Boolean(response.status) && response.authorization_url)
-        //save payment record
-        await this.paymentsRepository.save({
-          ...paymentRecord,
-          access_code: response.access_code,
+      let {
+        data: {
+          amount,
+          reference,
+          display_text,
+          status,
+          gateway_response,
+          authorization,
+        },
+        message,
+      } = await this.paystackService.verifyChargeOTP(ref, otp);
+      amount = amount ? amount / 100 : null;
+      if (status == 'success') {
+        await this.paymentsRepository.update(
+          { reference },
+          { status: PaymentStatus.SUCCESS, metadata: authorization },
+        );
+        this.eventEmitter.emit(EVENTS.NOTIFY_MENTOR_SUBSCRIPTION_PAYMENT, {
+          reference,
+          user,
         });
-      // Todo: send notification to user email with a link to verify their payment
+      }
       return {
+        data: { amount, reference, status, gateway_response },
         reference,
-        status: String(response.status),
-        authorization_url: response.authorization_url,
+        status,
+        display_text: display_text || message,
       };
     } catch (error) {
-      // payment record won't be saved
-      console.error(
-        'Payment error:',
-        error.response.data || error.response || error,
-      );
-      const err = new InternalServerErrorException('Payment initiation failed');
-      this.logger.error(error, err.stack);
-      throw err;
+      this.logger.error('An error occured while verifying transaction', error);
+      console.log({ error: error.response.data });
+      if (error.response)
+        if (
+          error.response.status == 400 &&
+          error.response.data.message == 'Charge attempted' &&
+          error.response.data.data
+        )
+          throw new BadRequestException(
+            error.response.data.data.message.includes('Incorrect Token')
+              ? 'Invalid OTP'
+              : error.response.data.data.message,
+          );
+        else if (error.response.status == 400)
+          throw new BadRequestException(error.response.data.message);
+      throw new InternalServerErrorException('Something went wrong', error);
     }
   }
 
-  async verifyPayment(reference: string): Promise<VerifyPaymentDTO> {
+  async confirmPendingTransaction(input: {
+    // reference: string;
+    resourceId: string;
+    resourceType;
+  }): Promise<Payment> {
     const user = this.request.req.user;
+    const { resourceType, resourceId } = input;
+    if (!isUUID(resourceId))
+      throw new BadRequestException('resourceId must be a valid uuid');
+
     const paymentRecord = await this.paymentsRepository.findOne({
-      where: { user_id: user.id, reference },
-      relations: ['user'],
+      where: { resourceId, resourceType, user_id: user.id },
     });
     if (!paymentRecord)
-      throw new NotFoundException(
-        'We could not find the transaction. The reference you provided might be incorrect',
+      throw new UnprocessableEntityException('No payment record found');
+    if (paymentRecord.status !== PaymentStatus.SUCCESS) {
+      const isCompleted = await this.paystackService.confirmPendingCharge(
+        paymentRecord.reference,
       );
-    // check if payment has been processed
-    if (paymentRecord.status === PaymentStatus.SUCCESS)
-      throw new BadRequestException(
-        'Transaction is already completed. Kindly wait for confirmation',
-      );
-    else if (paymentRecord.status === PaymentStatus.FAILED)
-      throw new BadRequestException('Transaction failed. Contact support');
-    else if (paymentRecord.status === PaymentStatus.REVERSED)
-      throw new BadRequestException(
-        'Transaction has been reversed. Contact support if you have any questions.',
-      );
-
-    try {
-      const { status } = await this.paystackService.verifyTransaction(
-        reference,
-      );
-
-      if (status === 'abandoned')
-        throw new UnprocessableEntityException(
-          CustomResponseMessage.getErrorMessage(
-            CustomStatusCodes.ABANDONED_PAYMENT,
-          ).concat(` | ${paymentRecord.access_code}`),
-        );
-
-      if (status !== 'success')
-        throw new UnprocessableEntityException(
-          'This request cannot be processed. The reference you provided might be incorrect',
-        );
-
-      if (
-        paymentRecord.metadata.resourceType ===
-        SubscriptionType.MENTORSHIP_APPOINTMENT
-      ) {
+      if (isCompleted.data.status !== 'success') return paymentRecord;
+      // throw new UnprocessableEntityException(
+      //   'Payment has not been verified. Please contact support.',
+      // );
+      if (isCompleted.data.status === 'success') {
         paymentRecord.status = PaymentStatus.SUCCESS;
         await paymentRecord.save();
-        return await this.processAppointmentPayment(paymentRecord);
-      } else {
-        // subscribe to course or workshop
-        let subscription;
-
-        if (paymentRecord.metadata.resourceType === SubscriptionType.COURSE)
-          subscription = await this.subscriptionService.subscribeToCourse(
-            paymentRecord.metadata.resourceId,
-          );
-        else if (
-          paymentRecord.metadata.resourceType === SubscriptionType.WORKSHOP
-        )
-          subscription = await this.subscriptionService.subscribeToWorkshop(
-            paymentRecord.metadata.resourceId,
-          );
-        paymentRecord.status = PaymentStatus.SUCCESS;
-        await Payment.update(paymentRecord.id, paymentRecord);
-
-        this.eventEmitter.emit(EVENTS.PAID_COURSE_SUB_SUCCESSFUL, {
-          paymentRecord,
-          subscription,
+        this.eventEmitter.emit(EVENTS.NOTIFY_MENTOR_SUBSCRIPTION_PAYMENT, {
+          reference: paymentRecord.reference,
+          user,
         });
-        // console.log({ res: response.data });
-        // return 'Payment Verified';
-        return { subscription };
       }
+    }
+    if (
+      paymentRecord.status === PaymentStatus.SUCCESS &&
+      paymentRecord.resourceType == SubscriptionType.MENTORSHIP_APPOINTMENT
+    )
+      await this.processAppointmentPayment(paymentRecord);
+
+    return paymentRecord;
+  }
+
+  async fetchBanks() {
+    try {
+      const data = await this.paystackService.fetchBanks();
+      return data;
     } catch (error) {
-      console.log({ error });
-      // payment record won't be saved
-      const errMsg = new Error('Payment verification error');
-      this.logger.error(error, errMsg.stack);
-      if (error.status === HttpStatus.UNPROCESSABLE_ENTITY) throw error;
-      throw new InternalServerErrorException(errMsg.message);
+      this.logger.error('Error fetching banks');
+      throw error;
     }
   }
 
   private async processAppointmentPayment(paymentRecord: Payment) {
     const user = this.request.req.user;
     const appointment = await Appointment.findOne({
-      where: { id: paymentRecord.metadata.resourceId, user_id: user.id },
+      where: {
+        id: paymentRecord.resourceId,
+        user_id: user.id,
+        status: AppointmentStatus.AWAITING_PAYMENT,
+      },
       relations: ['mentor', 'mentor.user', 'user'],
     });
     if (!appointment)
@@ -267,3 +322,4 @@ export class PaymentService {
     return { appointment };
   }
 }
+//and sign  &&
