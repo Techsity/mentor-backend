@@ -92,7 +92,12 @@ export class MentorService {
     );
     try {
       const user = this.request.req.user;
-      const mentorProfile = this.mentorRepository.create({
+      let mentorProfile = await this.mentorRepository.findOne({
+        where: { user: { id: user.id } },
+      });
+      if (mentorProfile) return mentorProfile;
+
+      mentorProfile = this.mentorRepository.create({
         ...createMentorInput,
         user,
       });
