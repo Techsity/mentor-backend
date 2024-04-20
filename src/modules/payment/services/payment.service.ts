@@ -63,6 +63,16 @@ export class PaymentService {
     private paystackService: PaystackProvider,
   ) {}
 
+  async fetchBanks() {
+    try {
+      const data = await this.paystackService.fetchBanks();
+      return data;
+    } catch (error) {
+      this.logger.error('Error fetching banks');
+      throw error;
+    }
+  }
+
   private async resourceValidation(
     resourceId: string,
     resourceType: SubscriptionType,
@@ -288,16 +298,6 @@ export class PaymentService {
       await this.processAppointmentPayment(paymentRecord);
 
     return paymentRecord;
-  }
-
-  async fetchBanks() {
-    try {
-      const data = await this.paystackService.fetchBanks();
-      return data;
-    } catch (error) {
-      this.logger.error('Error fetching banks');
-      throw error;
-    }
   }
 
   private async processAppointmentPayment(paymentRecord: Payment) {

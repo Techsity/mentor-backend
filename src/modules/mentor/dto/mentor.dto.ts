@@ -51,11 +51,9 @@ export class EducationDTO {
 @ObjectType()
 class TimeSlot {
   @Field()
-  @Column({ type: 'time' })
   startTime: string;
 
   @Field()
-  @Column({ type: 'time' })
   endTime: string;
 
   @Field(() => Boolean)

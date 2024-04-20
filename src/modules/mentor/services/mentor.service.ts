@@ -35,15 +35,24 @@ export class MentorService {
     private userRepository: Repository<User>,
   ) {}
 
-  private parseTime(time: string): Date | null {
-    const match = time.match(/(\d+):(\d+)(am|pm)/i);
+  private parseTime(time: string) {
+    // const match = time.match(/(\d+):(\d+)(am|pm)/i);
+    const match = time.match(/(\d+):(\d+)/i);
     if (match) {
-      const hour = parseInt(match[1]);
-      const minute = parseInt(match[2]);
-      const period = match[3].toLowerCase();
-      let hours = hour % 12;
-      if (period === 'pm') hours += 12;
-      return new Date(1970, 0, 1, hours, minute);
+      let hour: any = parseInt(match[1]);
+      let minute: any = parseInt(match[2]);
+      let meridan: 'am' | 'pm' = hour >= 12 ? 'pm' : 'am';
+      if (hour >= 12) {
+        if (hour === 12) hour = 12;
+        else hour = hour % 12;
+        meridan = 'pm';
+      } else if (hour < 12) {
+        if (hour === 0) hour = 12;
+        meridan = 'am';
+      }
+      hour = String(hour).padStart(2, '0');
+      minute = String(minute).padStart(2, '0');
+      return hour.concat(':').concat(minute).concat(meridan);
     }
     return null;
   }
@@ -66,17 +75,10 @@ export class MentorService {
       date.timeSlots.forEach((timeSlot) => {
         const startTime = this.parseTime(timeSlot.startTime);
         const endTime = this.parseTime(timeSlot.endTime);
-
         if (!startTime || !endTime)
           throw new BadRequestException('Invalid time format');
-
-        const durationInMinutes = this.calculateDuration(startTime, endTime);
-
-        // Check if the duration is exactly one hour (60 minutes)
-        if (durationInMinutes !== 60)
-          throw new BadRequestException(
-            `The time slot duration at ${date.day} must be exactly one hour`,
-          );
+        timeSlot.startTime = startTime;
+        timeSlot.endTime = endTime;
       });
 
       date.id = randomUUID();
@@ -94,12 +96,16 @@ export class MentorService {
         ...createMentorInput,
         user,
       });
-      mentorProfile.availability = availability;
-      mentorProfile.availability.forEach((day) => {
-        day.timeSlots.forEach((time) => {
-          time.isOpen = true;
-        });
-      });
+      mentorProfile.availability = [
+        ...availability.map((day) => {
+          return {
+            ...day,
+            timeSlots: day.timeSlots.map((time) => {
+              return { ...time, isOpen: true };
+            }),
+          };
+        }),
+      ];
       await this.mentorRepository.save(mentorProfile);
       return mentorProfile;
     } catch (error) {

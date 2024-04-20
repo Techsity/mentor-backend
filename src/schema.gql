@@ -409,7 +409,7 @@ type BankDTO {
 
 input SkillInput {
   skill_name: String!
-  years_of_exp: Int!
+  years_of_exp: Int
 }
 
 input WorkExperienceInput {

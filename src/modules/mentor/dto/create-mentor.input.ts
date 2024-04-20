@@ -1,16 +1,15 @@
 import { InputType, Field, Int, Float } from '@nestjs/graphql';
 import { Column } from 'typeorm';
 import { MentorExpLevel } from '../enums/mentor.enum';
-import { IsArray, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsArray, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 
 @InputType()
 export class SkillInput {
   @Field()
   @IsNotEmpty({ message: "'skill_name' is required" })
   skill_name: string;
-  @IsNotEmpty({ message: "'years_of_exp' is required" })
-  @IsNumber({ allowNaN: false }, { message: "'years_of_exp' must be a number" })
-  @Field(() => Int)
+  @IsOptional()
+  @Field(() => Int, { nullable: true })
   years_of_exp: number;
 }
 

@@ -122,49 +122,57 @@ export class EventEmitterListeners {
       );
       return;
     }
-    // Notify user
-    if (payment.status === PaymentStatus.SUCCESS) {
-      this.notificationService.create(appointment.user, {
-        title: 'Payment Confirmed',
-        body: `Your payment for the mentorship session with ${appointment.mentor.user.name} has been confirmed.`,
-        sendEmail: true,
-      });
+    try {
+      // Notify user
+      if (payment.status === PaymentStatus.SUCCESS) {
+        this.notificationService.create(appointment.user, {
+          title: 'Payment Confirmed',
+          body: `Your payment for the mentorship session with ${appointment.mentor.user.name} has been confirmed.`,
+          sendEmail: true,
+        });
+      }
+    } catch (error) {
+      this.logger.error(error);
     }
   }
 
   @OnEvent(EVENTS.MENTOR_ACCEPT_APPOINTMENT)
   async processAppointment({ appointment }: { appointment: Appointment }) {
-    const appointmentRecord = await Appointment.findOne({
-      where: { id: appointment.id },
-      relations: ['user', 'mentor', 'mentor.user'],
-    });
-    // // Update status
-    appointmentRecord.status = AppointmentStatus.ACCEPTED;
+    try {
+      const appointmentRecord = await Appointment.findOne({
+        where: { id: appointment.id },
+        relations: ['user', 'mentor', 'mentor.user'],
+      });
+      // // Update status
+      appointmentRecord.status = AppointmentStatus.ACCEPTED;
 
-    // // Todo: check if the appointment date has expired, then postpone to the following week and send notifications to user
-    // const currentDate = new Date();
-    // const appointmentDate = new Date(appointmentRecord.date);
-    // const isOverdue = currentDate.getTime() > appointmentDate.getTime();
+      // // Todo: check if the appointment date has expired, then postpone to the following week and send notifications to user
+      // const currentDate = new Date();
+      // const appointmentDate = new Date(appointmentRecord.date);
+      // const isOverdue = currentDate.getTime() > appointmentDate.getTime();
 
-    // if (isOverdue || appointment.status == AppointmentStatus.OVERDUE) {
-    //   const nextWeek = new Date(appointmentDate);
-    //   nextWeek.setDate(nextWeek.getDate() + 7);
-    //   appointmentRecord.date = nextWeek;
-    //   appointmentRecord.reschedule_count =
-    //     appointmentRecord.reschedule_count + 1;
-    // }
-    await appointmentRecord.save();
-    // Schedule notification and send notification to user
-    this.appointmentQueueService.scheduleNotification({
-      appointment: appointmentRecord,
-    });
-    this.notificationService.create(appointmentRecord.user, {
-      title: 'Mentorship Request Accepted',
-      body: `${
-        appointment.mentor.user.name
-      } has accepted your mentorship session request! Session is scheduled for ${appointmentRecord.date.toString()} by ${appointmentRecord.date.toTimeString()}. You will be notified before the session starts.`,
-      sendEmail: true,
-    });
+      // if (isOverdue || appointment.status == AppointmentStatus.OVERDUE) {
+      //   const nextWeek = new Date(appointmentDate);
+      //   nextWeek.setDate(nextWeek.getDate() + 7);
+      //   appointmentRecord.date = nextWeek;
+      //   appointmentRecord.reschedule_count =
+      //     appointmentRecord.reschedule_count + 1;
+      // }
+      await appointmentRecord.save();
+      // Schedule notification and send notification to user
+      this.appointmentQueueService.scheduleNotification({
+        appointment: appointmentRecord,
+      });
+      this.notificationService.create(appointmentRecord.user, {
+        title: 'Mentorship Request Accepted',
+        body: `${
+          appointment.mentor.user.name
+        } has accepted your mentorship session request! Session is scheduled for ${appointmentRecord.date.toString()} by ${appointmentRecord.date.toTimeString()}. You will be notified before the session starts.`,
+        sendEmail: true,
+      });
+    } catch (error) {
+      this.logger.error(error);
+    }
   }
 
   @OnEvent(EVENTS.APPOINTMENT_RESCHEDULE)
