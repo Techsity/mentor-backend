@@ -18,7 +18,12 @@ import { User } from '../../user/entities/user.entity';
 import { Auth } from '../entities/auth.entity';
 import { CustomResponseMessage, CustomStatusCodes } from 'src/common/constants';
 import { JwtService } from '@nestjs/jwt';
-import { checkPassword, generateOTP, hashPassword } from 'src/lib/utils';
+import {
+  checkPassword,
+  generateOTP,
+  hashPassword,
+  validatePhoneNumber,
+} from 'src/lib/utils';
 import { UserDTO } from 'src/modules/user/dto/user.dto';
 import EVENTS from 'src/common/events.constants';
 import { isUUID } from 'class-validator';
@@ -59,10 +64,25 @@ export class AuthService {
   }
 
   async register(registerPayload: CreateRegisterInput) {
+    //Todo: set a constants for country names
+    if (registerPayload.country.toLowerCase().includes('nigeria'))
+      registerPayload.phone = validatePhoneNumber(registerPayload.phone);
+    let { email, phone } = registerPayload;
     try {
       const hashedPassword = await hashPassword(registerPayload.password);
       registerPayload.password = hashedPassword;
-      const user = await this.userRepository.save(registerPayload);
+      let user = await this.userRepository.findOne({
+        where: [{ email }, { phone }],
+      });
+      if (user)
+        throw new BadRequestException(
+          `This ${
+            user.email === email
+              ? 'email'
+              : user.phone === phone && 'phone number'
+          } has already been used`,
+        );
+      user = await this.userRepository.save(registerPayload);
       // Create OTP
       await this.createUpdateOtp(user.id);
       return {
@@ -76,8 +96,9 @@ export class AuthService {
         throw new CustomResponseMessage(CustomStatusCodes.REG_DUPLICATE_USER);
       if (error.status === HttpStatus.NOT_FOUND)
         throw new CustomResponseMessage(CustomStatusCodes.USER_NOT_FOUND);
+      if (error.status === HttpStatus.BAD_REQUEST) throw error;
       throw new InternalServerErrorException(
-        'An Error Occured. Please try again.',
+        'An Error Occured. Please check your details and try again.',
       );
     }
   }

@@ -122,7 +122,7 @@ enum CourseLevel {
 
 type SkillDTO {
   skill_name: String!
-  years_of_exp: Int!
+  years_of_exp: Int
 }
 
 type WorkExperienceDTO {

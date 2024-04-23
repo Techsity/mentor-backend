@@ -250,6 +250,8 @@ export class MentorService {
     try {
       return await this.mentorRepository.find({
         relations: ['user', 'reviews', 'followers'],
+        take: 30,
+        skip: 0,
       });
     } catch (error) {
       const stack = new Error().stack;

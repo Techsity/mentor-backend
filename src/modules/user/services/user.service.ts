@@ -78,7 +78,7 @@ export class UserService {
     if (!isUUID(mentorId)) throw new BadRequestException('Invalid mentorId');
     const mentor = await this.mentorRepository.findOne({
       where: { id: mentorId },
-      relations: ['followers'],
+      relations: ['followers', 'user'],
     });
     if (!mentor)
       throw new NotFoundException(`Mentor with ID ${mentorId} not found`);
@@ -87,7 +87,7 @@ export class UserService {
       where: { id: authUser.id },
     });
     if (!user) throw new NotFoundException(`User with ID not found`);
-
+    if (mentor.user.id === user.id) return false;
     const isFollowing = mentor.followers.some(
       (follower) => follower.id === user.id,
     );

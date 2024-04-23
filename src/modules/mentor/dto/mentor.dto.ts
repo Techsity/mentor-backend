@@ -17,7 +17,7 @@ export class SkillDTO {
   @Field()
   skill_name: string;
 
-  @Field(() => Int)
+  @Field(() => Int, { nullable: true })
   years_of_exp: number;
 }
 @ObjectType()
